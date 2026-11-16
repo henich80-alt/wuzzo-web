@@ -1,0 +1,49 @@
+:root {
+  --abyss: #060a1f;
+  --deep: #0c1433;
+  --panel: #121d47;
+  --line: #22306a;
+  --text: #eaf1ff;
+  --muted: #8d9cc9;
+  --volt: #2ee6ff;
+  --azure: #2a6bff;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: radial-gradient(900px 500px at 50% -10%, rgba(42, 107, 255, .35), transparent 70%), var(--abyss);
+  color: var(--text);
+  font: 16px/1.6 -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  min-height: 100vh;
+}
+a { color: var(--volt); }
+.wrap { max-width: 860px; margin: 0 auto; padding: 24px 16px 48px; }
+header.top { display: flex; align-items: center; gap: 12px; padding: 8px 0 24px; }
+header.top img { width: 44px; height: 44px; border-radius: 12px; }
+.logo { font-weight: 800; font-size: 26px; letter-spacing: 1.5px; text-decoration: none; color: var(--text); }
+.logo span { color: var(--volt); text-shadow: 0 0 14px var(--volt); }
+.hero { text-align: center; padding: 32px 0 24px; }
+.hero img { width: 120px; height: 120px; border-radius: 28px; box-shadow: 0 0 40px rgba(46, 230, 255, .35); }
+.hero h1 { font-size: clamp(28px, 6vw, 44px); margin: 18px 0 6px; line-height: 1.15; }
+.hero p { color: var(--muted); font-size: 18px; margin: 0 auto 24px; max-width: 560px; }
+.btn {
+  display: inline-block; padding: 14px 26px; border-radius: 14px; font-weight: 700; text-decoration: none;
+  background: linear-gradient(90deg, var(--volt), #62b4ff); color: var(--abyss);
+  box-shadow: 0 0 24px rgba(46, 230, 255, .4);
+}
+.note { color: var(--muted); font-size: 14px; margin-top: 12px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; margin: 32px 0; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 18px; }
+.card h3 { margin: 0 0 6px; font-size: 17px; }
+.card p { margin: 0; color: var(--muted); font-size: 15px; }
+.doc { background: var(--deep); border: 1px solid var(--line); border-radius: 16px; padding: 22px 20px; }
+.doc h1 { margin-top: 0; font-size: clamp(24px, 5vw, 32px); }
+.doc h2 { font-size: 19px; margin: 28px 0 6px; color: var(--volt); }
+.doc p, .doc li { color: #d3dcf5; }
+.doc ul { padding-left: 20px; }
+.doc table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 8px 0; }
+.doc th, .doc td { border: 1px solid var(--line); padding: 8px; text-align: left; vertical-align: top; }
+.doc th { background: var(--panel); }
+.table-wrap { overflow-x: auto; }
+footer { text-align: center; color: var(--muted); font-size: 14px; margin-top: 36px; }
+footer a { margin: 0 8px; }
