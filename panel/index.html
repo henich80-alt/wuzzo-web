@@ -123,6 +123,15 @@ tr:last-child td{border-bottom:none}
 .card input{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
 .card .primary{background:var(--volt);color:var(--abyss);border:none;border-radius:12px;padding:11px;font-weight:700}
 .note{font-size:13px;color:var(--muted)}
+.kgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;margin:10px 0 14px}
+.kcard{background:var(--deep);border:1px solid var(--line);border-radius:12px;align-self:start}
+.kcard>summary{cursor:pointer;padding:10px 12px;font-weight:700;font-size:14px;list-style:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kcard>summary::-webkit-details-marker{display:none}
+.kcard>summary::before{content:"▸ ";color:var(--volt)}
+.kcard[open]{grid-column:1/-1}
+.kcard[open]>summary::before{content:"▾ "}
+.kcard>.card{margin:0!important;max-width:none!important;border:0!important;border-top:1px solid var(--line)!important;border-radius:0 0 12px 12px!important}
+
 .err{color:var(--rose);font-size:13px}
 
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
@@ -288,6 +297,29 @@ function render(){
   else if (S.tab === "finance") renderFinance(main);
   else if (S.tab === "authority") renderAuthority(main);
   else renderUsers(main);
+  compactCards(main);
+}
+/* 📦 Kompakt: Alle Karten als zugeklappte Kacheln nebeneinander – ein Klick klappt sie auf. */
+function compactCards(main){
+  const cards = [...main.children].filter(el => el.classList && el.classList.contains("card"));
+  if (!cards.length) return;
+  const grid = $("div","kgrid");
+  cards[0].before(grid);
+  cards.forEach(c => {
+    const d = document.createElement("details"); d.className = "kcard";
+    const s = document.createElement("summary");
+    const t = c.querySelector(":scope > b, :scope > h2, :scope > h3");
+    s.textContent = t ? t.textContent : "Einstellungen";
+    if (t){
+      t.style.display = "none";
+      try { new MutationObserver(() => { s.textContent = t.textContent; }).observe(t, { childList:true, characterData:true, subtree:true }); } catch(e){}
+    }
+    const key = "wz-k:" + S.tab + ":" + s.textContent.replace(/[0-9]+/g, "").slice(0, 30);
+    try { if (sessionStorage.getItem(key) === "1") d.open = true; } catch(e){}
+    d.addEventListener("toggle", () => { try { sessionStorage.setItem(key, d.open ? "1" : "0"); } catch(e){} });
+    d.append(s, c);
+    grid.append(d);
+  });
 }
 function renderBanner(){
   const b = document.getElementById("banner"); b.replaceChildren();
@@ -684,8 +716,9 @@ function renderUsers(main){
   }
   // Team auf einen Blick: wer hat welche Rolle?
   const team = (S.users || []).filter(u => u.admin_role).sort((a,b) => (STUFE[b.admin_role]||0) - (STUFE[a.admin_role]||0));
-  const th = $("h3",null,"👥 Dein Team (" + team.length + ")"); th.style.margin = "14px 0 4px"; main.append(th);
-  main.append($("p","note","👑 Programmierer = alles · 🛡️ Admin = sperren, Tester verwalten · 👮 Moderator = Meldungen bearbeiten. In der App sehen alle das Zeichen hinter dem Namen."));
+  const teamCard = $("div","card");
+  teamCard.append($("b",null,"👥 Dein Team (" + team.length + ")"));
+  teamCard.append($("p","note","👑 Programmierer = alles · 🛡️ Admin = sperren, Tester verwalten · 👮 Moderator = Meldungen bearbeiten. In der App sehen alle das Zeichen hinter dem Namen."));
   const tw = $("div","team");
   if (!team.length) tw.append($("span","note","Noch niemand mit Rolle."));
   team.forEach(u => {
@@ -695,7 +728,7 @@ function renderUsers(main){
     c.append($("small",null,u.phone || ""));
     tw.append(c);
   });
-  main.append(tw);
+  teamCard.append(tw); main.append(teamCard);
   // 🏅 Tester & Familie – gehören zum Team (früher oben als Tabelle)
   if (S.mode === "live" && darf("admin")) main.append(inviteCard());
   const wrap = $("div","tablewrap"); const table = $("table");
@@ -718,8 +751,8 @@ function copyText(t, btn){
   else prompt("Bitte kopieren (Strg+C):", t);
 }
 function inviteCard(){
-  const c = $("div"); c.style.cssText = "margin:4px 0 16px";
-  const h = $("h3",null,"✉️ Leute einladen"); h.style.margin = "10px 0 4px"; c.append(h);
+  const c = $("div","card");
+  const h = $("b",null,"✉️ Leute einladen"); c.append(h);
   const fold = document.createElement("details"); fold.style.cssText = "margin:4px 0 8px";
   const sum = document.createElement("summary"); sum.textContent = "➕ Neue Person eintragen"; sum.style.cssText = "cursor:pointer;font-weight:700;color:var(--volt,#2ee6ff)";
   fold.append(sum);
