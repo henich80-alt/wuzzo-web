@@ -279,6 +279,10 @@ function render(){
   const tabs = document.getElementById("tabs");
   const inside = S.mode === "demo" || S.mode === "live";
   tabs.hidden = !inside;
+  tabs.style.display = inside ? "" : "none";            // 🔒 vor der Anmeldung keine Reiter
+  document.getElementById("logout").style.display = inside ? "" : "none";
+  const links = document.getElementById("wz-links");     // 🔒 Schnell-Links nur für den Programmierer
+  if (links) links.style.display = (S.mode === "live" && S.role === "programmierer") ? "" : "none";
   if ((S.tab === "finance" || S.tab === "authority" || S.tab === "costs") && !darf("programmierer")) S.tab = "overview";
   tabs.querySelectorAll(".tab").forEach(b => {
     b.setAttribute("aria-selected", String(b.dataset.tab === S.tab));
@@ -673,6 +677,17 @@ function renderUsers(main){
         act_(() => rpc("admin_set_payment_required", { p_on: !d.required }));
       };
     }).catch(() => { bi.textContent = "Noch nicht eingerichtet (plus32.sql ausführen)."; });
+  }
+  // 👑 VIP-Familie (plus41.sql)
+  if (S.mode === "live" && darf("admin")){
+    const vc2 = $("div","card"); vc2.style.margin = "10px 0 4px";
+    vc2.append($("b",null,"👑 VIP-Familie"));
+    const vi = $("p","note","Lädt …"); vc2.append(vi);
+    vc2.append($("p","note","5,99 € für 6 Monate, Käufer + bis zu 4 Familienmitglieder. Produkt-ID in der Play Console: wuzzo_vip_6m. Tester und Team haben VIP immer."));
+    main.append(vc2);
+    rpc("admin_vip_info").then(d => {
+      vi.textContent = "🛒 VIP-Käufe: " + nf(d.vip_sales) + " · 👑 aktive Käufer: " + nf(d.vip_owners) + " · 👨‍👩‍👧 eingeladene Familienmitglieder: " + nf(d.vip_members);
+    }).catch(() => { vi.textContent = "Noch nicht eingerichtet (plus41.sql ausführen)."; });
   }
   // 💚 Fürsorge & Familie (plus40.sql)
   if (S.mode === "live" && darf("admin")){
@@ -1194,8 +1209,8 @@ function renderLogin(main){
 }
 function renderNoAdmin(main){
   const c = $("div","card");
-  c.append($("h2",null,"Kein Admin-Zugang"), $("p","note","Dieses Konto ist kein Admin. Führe in Supabase die Zeile am Ende von email_login.sql mit deiner E-Mail-Adresse aus und melde dich neu an."));
-  const out = $("button","ghost","Abmelden"); out.onclick = logout; c.append(out); main.append(c);
+  c.append($("h2",null,"🔒 Kein Zugang"), $("p","note","Dieser Bereich ist nur für den Wuzzo-Programmierer. Du wurdest abgemeldet."));
+  const out = $("button","ghost","Zurück"); out.onclick = () => { S.mode = "login"; render(); }; c.append(out); main.append(c);
 }
 
 async function connect(){
@@ -1210,7 +1225,9 @@ async function afterLogin(){
   try {
     const admin = await S.client.rpc("is_admin");
     if (admin.error || admin.data !== true){ S.mode = "noadmin"; render(); return; }
-    const r = await S.client.rpc("admin_role"); S.role = r.error ? "programmierer" : r.data; // alte Datenbank ohne Rollen: wie bisher
+    const r = await S.client.rpc("admin_role"); S.role = r.error ? null : r.data;
+    // 🔒 Das Panel ist NUR für den Programmierer – alle anderen kommen nicht hinein
+    if (S.role !== "programmierer"){ S.mode = "noadmin"; try { await S.client.auth.signOut(); } catch(e){} render(); return; }
     S.mode = "live"; S.tab = "overview"; await loadAll(); render();
   } catch(e){ S.mode = "login"; render(); alertNote("Verbindung fehlgeschlagen. Prüfe URL und Schlüssel."); }
 }
