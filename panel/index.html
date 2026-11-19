@@ -443,7 +443,7 @@ function renderReports(main){
 const DIENSTE = {
   anthropic: { name:"🤖 Claude (KI)", what:"Übersetzen, Umformulieren, Zusammenfassen, Assistent", link:"https://console.anthropic.com/", linkName:"Claude Console" },
   deepgram:  { name:"🎤 Deepgram", what:"Sprachnachricht als Text", link:"https://console.deepgram.com/", linkName:"Deepgram" },
-  sms:       { name:"📱 Brevo SMS", what:"SMS-Codes für die Handynummer (geschätzt ca. 0,09 $ pro SMS)", link:"https://app.brevo.com/", linkName:"Brevo" },
+  sms:       { name:"📱 Brevo SMS", what:"SMS-Codes für die Handynummer + Notruf-SMS (geschätzt ca. 0,09 $ pro SMS)", link:"https://app.brevo.com/", linkName:"Brevo" },
   giphy:     { name:"🎞️ GIPHY", what:"GIF-Suche in der Smiley-Leiste – kostenlos", link:"https://developers.giphy.com/dashboard/", linkName:"GIPHY", free:true }
 };
 const usd = (n, d) => "$ " + Number(n || 0).toLocaleString("de-DE", { minimumFractionDigits: d ?? 2, maximumFractionDigits: d ?? 2 });
@@ -700,6 +700,66 @@ function renderUsers(main){
       ci.textContent = "👥 " + nf(d.with_people) + " Nutzer mit Vertrauenspersonen · ✅ " + nf(d.checkin_on) +
         " melden sich täglich · 💊 " + nf(d.meds_users) + " mit Tabletten-Erinnerung · 🆘 Notrufe (30 Tage): " + nf(d.sos_30d);
     }).catch(() => { ci.textContent = "Noch nicht eingerichtet (plus40.sql ausführen)."; });
+  }
+  // 💶 Wirtschaftlichkeit (plus45.sql) – Einnahmen, Kosten, Ergebnis diesen Monat
+  if (S.mode === "live" && darf("admin")){
+    const ec = $("div","card"); ec.style.margin = "10px 0 4px";
+    ec.append($("b",null,"💶 Wirtschaftlichkeit (dieser Monat)"));
+    const ei = $("div"); ei.append($("p","note","Lädt …")); ec.append(ei);
+    const fix = (() => { try { return JSON.parse(localStorage.getItem("wz_fixkosten") || "{}"); } catch(e){ return {}; } })();
+    const F = { supabase: fix.supabase ?? 0, livekit: fix.livekit ?? 0, domain: fix.domain ?? 1 };
+    const inp = (key, label) => {
+      const w = $("label"); w.style.cssText = "display:inline-flex;gap:6px;align-items:center;margin:4px 12px 4px 0;font-size:13px";
+      w.append(document.createTextNode(label));
+      const i = document.createElement("input"); i.type = "number"; i.step = "1"; i.min = "0"; i.value = F[key];
+      i.style.cssText = "width:70px;padding:4px;border-radius:6px;border:1px solid #2a3a7a;background:#0c1433;color:#e6eeff";
+      i.onchange = () => { F[key] = Number(i.value) || 0; try { localStorage.setItem("wz_fixkosten", JSON.stringify(F)); } catch(e){} show(); };
+      w.append(i, document.createTextNode("€")); return w;
+    };
+    const fx = $("div"); fx.append(inp("supabase","Supabase"), inp("livekit","LiveKit"), inp("domain","Domain"));
+    ec.append($("p","note","Feste Kosten pro Monat (bitte aus den Rechnungen eintragen – wird nur in diesem Browser gespeichert):"), fx);
+    main.append(ec);
+    let D = null;
+    const eur = v => (Math.round(v * 100) / 100).toFixed(2).replace(".", ",") + " €";
+    const show = () => {
+      if (!D) return;
+      ei.innerHTML = "";
+      const brutto = (D.revenue_month_cents || 0) / 100;
+      const netto = brutto * 0.85;
+      const ai = Number(D.ai_usd_month || 0) * 0.92;
+      const sms = Number(D.sms_month || 0) * 0.08;
+      const kosten = ai + sms + F.supabase + F.livekit + F.domain;
+      const zahl = Math.max(1, (D.users || 0) - (D.team || 0));
+      const rows = [
+        ["👥 Nutzer", nf(D.users) + " (aktiv 30 Tage: " + nf(D.active_30d) + ", neu diesen Monat: " + nf(D.new_month) + ")"],
+        ["⭐ Premium / 👑 VIP", nf(D.premium) + " / " + nf(D.vip) + "  (" + Math.round((D.premium + D.vip) / zahl * 100) + " % der zahlenden Nutzer)"],
+        ["💰 Einnahmen", eur(brutto) + " brutto → " + eur(netto) + " nach Google (15 %)"],
+        ["🤖 KI (Claude + Deepgram)", eur(ai)],
+        ["📲 SMS (ca. 8 Cent)", nf(D.sms_month) + " SMS ≈ " + eur(sms)],
+        ["🏢 Feste Kosten", eur(F.supabase + F.livekit + F.domain)],
+        [(netto - kosten >= 0 ? "🟢" : "🔴") + " Ergebnis", eur(netto - kosten)],
+      ];
+      for (const [k, v] of rows) {
+        const r = $("div"); r.style.cssText = "display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-bottom:1px solid #1d2a5c";
+        r.append($("span",null,k), $("b",null,v)); ei.append(r);
+      }
+      ei.append($("p","note","Grobe Rechnung ohne Steuern. Ab ca. 7–8 % Premium-/VIP-Käufern trägt sich Wuzzo selbst."));
+    };
+    rpc("admin_economics").then(d => { D = d; show(); })
+      .catch(() => { ei.innerHTML = ""; ei.append($("p","note","Noch nicht eingerichtet (plus45.sql ausführen).")); });
+  }
+  // 🆘 Notfall-Nummern & Notruf-SMS (plus44.sql, Edge Function "sos")
+  if (S.mode === "live" && darf("admin")){
+    const sc = $("div","card"); sc.style.margin = "10px 0 4px";
+    sc.append($("b",null,"🆘 Notruf-SMS (Notfall-Nummern)"));
+    const si = $("p","note","Lädt …"); sc.append(si);
+    sc.append($("p","note","SMS laufen über Brevo (dasselbe Guthaben wie der SMS-Code, ca. 7–10 Cent pro SMS). Schutz: echter Notruf höchstens alle 2 Minuten und 5× am Tag, Test höchstens 3× am Tag. Guthaben prüfen: app.brevo.com → SMS."));
+    main.append(sc);
+    rpc("admin_sos_info").then(d => {
+      si.textContent = "📞 " + nf(d.users_with_numbers) + " Nutzer mit Notfall-Nummern · 🆘 Notrufe diesen Monat: " + nf(d.sos_month) +
+        " · 🧪 Tests: " + nf(d.tests_month) + " · 📲 SMS gesendet: " + nf(d.sms_month) +
+        (d.sms_failed_month ? " · ⚠️ fehlgeschlagen: " + nf(d.sms_failed_month) : "");
+    }).catch(() => { si.textContent = "Noch nicht eingerichtet (plus44.sql ausführen)."; });
   }
   // 📊 Verbrauch im kostenlosen Supabase-Konto (plus27.sql)
   if (S.mode === "live" && darf("admin")){

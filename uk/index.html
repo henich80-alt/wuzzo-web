@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wuzzo – спілкування без мовних кордонів</title>
+<meta name="description" content="Wuzzo – месенджер із шифруванням, перекладачем, голосовими й відеодзвінками.">
+<link rel="canonical" href="https://wuzzo.de/uk/">
+<link rel="alternate" hreflang="de" href="https://wuzzo.de/">
+<link rel="alternate" hreflang="uk" href="https://wuzzo.de/uk/">
+<link rel="alternate" hreflang="ru" href="https://wuzzo.de/ru/">
+<link rel="alternate" hreflang="en" href="https://wuzzo.de/en/">
+<link rel="alternate" hreflang="pl" href="https://wuzzo.de/pl/">
+<link rel="alternate" hreflang="tr" href="https://wuzzo.de/tr/">
+<link rel="alternate" hreflang="es" href="https://wuzzo.de/es/">
+<link rel="alternate" hreflang="fr" href="https://wuzzo.de/fr/">
+<link rel="alternate" hreflang="it" href="https://wuzzo.de/it/">
+<link rel="alternate" hreflang="pt" href="https://wuzzo.de/pt/">
+<link rel="alternate" hreflang="x-default" href="https://wuzzo.de/">
+<link rel="icon" href="../icon.png">
+<link rel="stylesheet" href="../style.css">
+<script>
+/* 🌍 Sprache: einmal gewählt = gemerkt. Sonst Handy-Sprache erkennen (nur auf den deutschen Seiten). */
+(function(){
+  var L=['de', 'uk', 'ru', 'en', 'pl', 'tr', 'es', 'fr', 'it', 'pt'], here="uk", page="", s=null;
+  try{ s=localStorage.getItem("wz_lang"); }catch(e){}
+  if(here!=="de"){ return; }
+  if(s===null){ var b=((navigator.languages&&navigator.languages[0])||navigator.language||"de").slice(0,2).toLowerCase(); if(b!=="de"){ s=L.indexOf(b)>=0?b:"en"; } }
+  if(s && s!=="de" && L.indexOf(s)>=0){ location.replace("/"+s+"/"+page+location.search+location.hash); }
+})();
+function wzLang(c,u){ try{ localStorage.setItem("wz_lang",c); }catch(e){} location.href=u; }
+</script>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><img src="../icon.png" alt=""><a class="logo" href="./">WU<span>ZZ</span>O</a></div>
+    <nav class="nav"><a href="./" class="on">Головна</a><a href="hilfe.html">Допомога</a><select class="lang" aria-label="Мова" onchange="var v=this.value.split('|');wzLang(v[0],v[1])"><option value="de|/">🇩🇪 Deutsch</option><option value="uk|/uk/" selected>🇺🇦 Українська</option><option value="ru|/ru/">🇷🇺 Русский</option><option value="en|/en/">🇬🇧 English</option><option value="pl|/pl/">🇵🇱 Polski</option><option value="tr|/tr/">🇹🇷 Türkçe</option><option value="es|/es/">🇪🇸 Español</option><option value="fr|/fr/">🇫🇷 Français</option><option value="it|/it/">🇮🇹 Italiano</option><option value="pt|/pt/">🇵🇹 Português</option></select></nav>
+  </header>
+
+  <section class="hero2">
+    <div>
+      <h1>Спілкування без мовних кордонів</h1>
+      <p>Месенджер для тебе й твоєї родини – зашифрований, з перекладачем, голосовими й відеодзвінками.</p>
+      <a class="btn" href="https://play.google.com/apps/internaltest/4700548647227979651">▶️ Завантажити Wuzzo з Google Play</a>
+      <div class="note">Зараз лише для запрошених тестувальників · iPhone згодом</div>
+    </div>
+    <div class="qr"><img src="../qr-installieren.png" alt="QR-код: встановити Wuzzo"><small>Скануй камерою телефону</small></div>
+  </section>
+
+  <section class="feat">
+    <div><b>🔒</b>Зашифровано</div>
+    <div><b>🌍</b>Перекладач</div>
+    <div><b>📞</b>Відео й дзвінки</div>
+    <div><b>💚</b>Турбота й SOS</div>
+  </section>
+
+  <div class="tip">❓ Проблеми зі встановленням, оновленням чи після видалення? → <a href="hilfe.html">До допомоги</a></div>
+  <footer>
+    <a href="hilfe.html">Допомога</a> · <a href="../datenschutz.html">Конфіденційність</a> · <a href="../impressum.html">Вихідні дані</a> · <a href="../nutzungsbedingungen.html">Умови використання</a> · <a href="../konto-loeschen.html">Видалити обліковий запис</a>
+    <div class="legalnote">Юридичні сторінки німецькою мовою.</div>
+  </footer>
+</div>
+</body>
+</html>

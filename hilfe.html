@@ -5,14 +5,37 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Wuzzo – Hilfe</title>
 <meta name="description" content="Wuzzo – Messenger mit Verschlüsselung, Übersetzer, Sprach- und Videoanrufen.">
+<link rel="canonical" href="https://wuzzo.de/hilfe.html">
+<link rel="alternate" hreflang="de" href="https://wuzzo.de/hilfe.html">
+<link rel="alternate" hreflang="uk" href="https://wuzzo.de/uk/hilfe.html">
+<link rel="alternate" hreflang="ru" href="https://wuzzo.de/ru/hilfe.html">
+<link rel="alternate" hreflang="en" href="https://wuzzo.de/en/hilfe.html">
+<link rel="alternate" hreflang="pl" href="https://wuzzo.de/pl/hilfe.html">
+<link rel="alternate" hreflang="tr" href="https://wuzzo.de/tr/hilfe.html">
+<link rel="alternate" hreflang="es" href="https://wuzzo.de/es/hilfe.html">
+<link rel="alternate" hreflang="fr" href="https://wuzzo.de/fr/hilfe.html">
+<link rel="alternate" hreflang="it" href="https://wuzzo.de/it/hilfe.html">
+<link rel="alternate" hreflang="pt" href="https://wuzzo.de/pt/hilfe.html">
+<link rel="alternate" hreflang="x-default" href="https://wuzzo.de/hilfe.html">
 <link rel="icon" href="icon.png">
 <link rel="stylesheet" href="style.css">
+<script>
+/* 🌍 Sprache: einmal gewählt = gemerkt. Sonst Handy-Sprache erkennen (nur auf den deutschen Seiten). */
+(function(){
+  var L=['de', 'uk', 'ru', 'en', 'pl', 'tr', 'es', 'fr', 'it', 'pt'], here="de", page="hilfe.html", s=null;
+  try{ s=localStorage.getItem("wz_lang"); }catch(e){}
+  if(here!=="de"){ return; }
+  if(s===null){ var b=((navigator.languages&&navigator.languages[0])||navigator.language||"de").slice(0,2).toLowerCase(); if(b!=="de"){ s=L.indexOf(b)>=0?b:"en"; } }
+  if(s && s!=="de" && L.indexOf(s)>=0){ location.replace("/"+s+"/"+page+location.search+location.hash); }
+})();
+function wzLang(c,u){ try{ localStorage.setItem("wz_lang",c); }catch(e){} location.href=u; }
+</script>
 </head>
 <body>
 <div class="wrap">
   <header class="top">
     <div class="brand"><img src="icon.png" alt=""><a class="logo" href="./">WU<span>ZZ</span>O</a></div>
-    <nav class="nav"><a href="./">Start</a><a href="hilfe.html" class="on">Hilfe</a></nav>
+    <nav class="nav"><a href="./">Start</a><a href="hilfe.html" class="on">Hilfe</a><select class="lang" aria-label="Sprache" onchange="var v=this.value.split('|');wzLang(v[0],v[1])"><option value="de|/hilfe.html" selected>🇩🇪 Deutsch</option><option value="uk|/uk/hilfe.html">🇺🇦 Українська</option><option value="ru|/ru/hilfe.html">🇷🇺 Русский</option><option value="en|/en/hilfe.html">🇬🇧 English</option><option value="pl|/pl/hilfe.html">🇵🇱 Polski</option><option value="tr|/tr/hilfe.html">🇹🇷 Türkçe</option><option value="es|/es/hilfe.html">🇪🇸 Español</option><option value="fr|/fr/hilfe.html">🇫🇷 Français</option><option value="it|/it/hilfe.html">🇮🇹 Italiano</option><option value="pt|/pt/hilfe.html">🇵🇹 Português</option></select></nav>
   </header>
 
   <section class="faq">
@@ -67,6 +90,24 @@
     </details>
 
     <details>
+      <summary>🧰 Alltags-Helfer & SOS</summary>
+      <ol>
+        <li>In Wuzzo: <b>Profil → 🧰 Alltags-Helfer</b> – Brief-Erklärer, Dolmetscher, Kalender, Aufgaben, Notfall-Pass und mehr.</li>
+        <li><b>SOS</b>: oben links in den Chats oder lange auf das Wuzzo-Symbol drücken.</li>
+        <li>Notfall-Nummern eintragen: <b>Profil → 💚 Fürsorge & Familie</b>.</li>
+      </ol>
+    </details>
+
+    <details>
+      <summary>🌍 Sprache der App ändern</summary>
+      <ol>
+        <li>In Wuzzo: <b>Profil → Profil bearbeiten</b>.</li>
+        <li>Bei <b>„Meine Sprache“</b> deine Sprache wählen.</li>
+        <li><b>Speichern</b> – die ganze App wechselt sofort.</li>
+      </ol>
+    </details>
+
+    <details>
       <summary>🔐 Chats sichern & neues Handy</summary>
       <ol>
         <li>In Wuzzo: <b>Profil → 🔐 Chat-Sicherung (PIN)</b> – PIN selbst ausdenken.</li>
@@ -81,6 +122,7 @@
   </section>
   <footer>
     <a href="hilfe.html">Hilfe</a> · <a href="datenschutz.html">Datenschutz</a> · <a href="impressum.html">Impressum</a> · <a href="nutzungsbedingungen.html">Nutzungsbedingungen</a> · <a href="konto-loeschen.html">Konto löschen</a>
+    
   </footer>
 </div>
 </body>

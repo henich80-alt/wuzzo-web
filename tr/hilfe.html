@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wuzzo – Yardım</title>
+<meta name="description" content="Wuzzo – şifreleme, çevirmen, sesli ve görüntülü aramalı mesajlaşma uygulaması.">
+<link rel="canonical" href="https://wuzzo.de/tr/hilfe.html">
+<link rel="alternate" hreflang="de" href="https://wuzzo.de/hilfe.html">
+<link rel="alternate" hreflang="uk" href="https://wuzzo.de/uk/hilfe.html">
+<link rel="alternate" hreflang="ru" href="https://wuzzo.de/ru/hilfe.html">
+<link rel="alternate" hreflang="en" href="https://wuzzo.de/en/hilfe.html">
+<link rel="alternate" hreflang="pl" href="https://wuzzo.de/pl/hilfe.html">
+<link rel="alternate" hreflang="tr" href="https://wuzzo.de/tr/hilfe.html">
+<link rel="alternate" hreflang="es" href="https://wuzzo.de/es/hilfe.html">
+<link rel="alternate" hreflang="fr" href="https://wuzzo.de/fr/hilfe.html">
+<link rel="alternate" hreflang="it" href="https://wuzzo.de/it/hilfe.html">
+<link rel="alternate" hreflang="pt" href="https://wuzzo.de/pt/hilfe.html">
+<link rel="alternate" hreflang="x-default" href="https://wuzzo.de/hilfe.html">
+<link rel="icon" href="../icon.png">
+<link rel="stylesheet" href="../style.css">
+<script>
+/* 🌍 Sprache: einmal gewählt = gemerkt. Sonst Handy-Sprache erkennen (nur auf den deutschen Seiten). */
+(function(){
+  var L=['de', 'uk', 'ru', 'en', 'pl', 'tr', 'es', 'fr', 'it', 'pt'], here="tr", page="hilfe.html", s=null;
+  try{ s=localStorage.getItem("wz_lang"); }catch(e){}
+  if(here!=="de"){ return; }
+  if(s===null){ var b=((navigator.languages&&navigator.languages[0])||navigator.language||"de").slice(0,2).toLowerCase(); if(b!=="de"){ s=L.indexOf(b)>=0?b:"en"; } }
+  if(s && s!=="de" && L.indexOf(s)>=0){ location.replace("/"+s+"/"+page+location.search+location.hash); }
+})();
+function wzLang(c,u){ try{ localStorage.setItem("wz_lang",c); }catch(e){} location.href=u; }
+</script>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><img src="../icon.png" alt=""><a class="logo" href="./">WU<span>ZZ</span>O</a></div>
+    <nav class="nav"><a href="./">Ana sayfa</a><a href="hilfe.html" class="on">Yardım</a><select class="lang" aria-label="Dil" onchange="var v=this.value.split('|');wzLang(v[0],v[1])"><option value="de|/hilfe.html">🇩🇪 Deutsch</option><option value="uk|/uk/hilfe.html">🇺🇦 Українська</option><option value="ru|/ru/hilfe.html">🇷🇺 Русский</option><option value="en|/en/hilfe.html">🇬🇧 English</option><option value="pl|/pl/hilfe.html">🇵🇱 Polski</option><option value="tr|/tr/hilfe.html" selected>🇹🇷 Türkçe</option><option value="es|/es/hilfe.html">🇪🇸 Español</option><option value="fr|/fr/hilfe.html">🇫🇷 Français</option><option value="it|/it/hilfe.html">🇮🇹 Italiano</option><option value="pt|/pt/hilfe.html">🇵🇹 Português</option></select></nav>
+  </header>
+
+  <section class="faq">
+    <h1>🛟 Yardım</h1>
+    <p class="sub">Bir soruya dokun – cevap açılır.</p>
+
+    <details>
+      <summary>📲 Wuzzo'yu yükle</summary>
+      <ol>
+        <li><b>Play Store Gmail</b> adresini Wuzzo ekibine gönder (testçi olarak eklenirsin).</li>
+        <li><a href="https://play.google.com/apps/internaltest/4700548647227979651">Buraya dokun</a> veya <a href="./">ana sayfadaki</a> QR kodu tara.</li>
+        <li><b>"Kabul et"</b> → <b>"Download test app"</b> → <b>"Yükle"</b>.</li>
+        <li>Wuzzo'yu aç, <b>e-postanla</b> giriş yap – bitti.</li>
+      </ol>
+    </details>
+
+    <details>
+      <summary>🔄 Güncellemeleri al</summary>
+      <ol>
+        <li><a href="https://play.google.com/store/apps/details?id=de.wuzzo.wuzzo">Wuzzo'yu Play Store'da aç</a>.</li>
+        <li>Sağ üstte <b>⋮</b> → <b>"Otomatik güncellemeyi etkinleştir"</b>i işaretle.</li>
+        <li>Hemen: Wuzzo'da <b>Profil → "Güncellemeleri ara"</b>.</li>
+      </ol>
+      <p class="hint">Güncellemeler genelde gece gelir (Wi-Fi + şarj). Hiçbir şey silmen gerekmez.</p>
+    </details>
+
+    <details>
+      <summary>🗑️ Wuzzo silindi – yeniden yükle</summary>
+      <ol>
+        <li><a href="https://play.google.com/apps/internaltest/4700548647227979651">Buraya dokun</a> → <b>"Download test app"</b> → <b>"Yükle"</b>.</li>
+        <li><b>Aynı e-postayla</b> giriş yap – hesap, kişiler ve sohbetler geri gelir.</li>
+        <li>PIN yedeğiyle: <b>PIN'i gir</b> – eski mesajlar yeniden okunur.</li>
+      </ol>
+    </details>
+
+    <details>
+      <summary>⚠️ "Uygulama mevcut değil" / "Bulunamadı"</summary>
+      <ol>
+        <li>Play Store'da sağ üstteki <b>harfine</b> dokun – hangi Google hesabı açık?</li>
+        <li>Bu Gmail Wuzzo ekibi tarafından testçi olarak eklenmiş olmalı – yoksa hesabı değiştir veya adresi gönder.</li>
+        <li><b>10–30 dakika</b> bekle ve tekrar dene.</li>
+      </ol>
+    </details>
+
+    <details>
+      <summary>📦 Eski Wuzzo (0.26 veya daha eski)</summary>
+      <ol>
+        <li><b>Ayarlar → Uygulamalar → Wuzzo → Kaldır</b> (sadece bir kez).</li>
+        <li>Yukarıdaki gibi yeniden yükle – aynı e-postayla giriş yap.</li>
+      </ol>
+      <p class="hint">Google Play'den Wuzzo (0.27 veya daha yeni)? O zaman <b>silme</b>, sadece güncelle.</p>
+    </details>
+
+    <details>
+      <summary>🧰 Günlük yardımcılar ve SOS</summary>
+      <ol>
+        <li>Wuzzo'da: <b>Profil → 🧰 Günlük yardımcılar</b> – mektup açıklayıcı, tercüman, takvim, görevler, acil durum kartı ve daha fazlası.</li>
+        <li><b>SOS</b>: sohbetlerde sol üstte veya Wuzzo simgesine uzun bas.</li>
+        <li>Acil numaralar: <b>Profil → 💚 Bakım ve aile</b>.</li>
+      </ol>
+    </details>
+
+    <details>
+      <summary>🌍 Uygulama dilini değiştir</summary>
+      <ol>
+        <li>Wuzzo'da: <b>Profil → Profili düzenle</b>.</li>
+        <li><b>"Dilim"</b> alanında dilini seç.</li>
+        <li><b>Kaydet</b> – tüm uygulama hemen değişir.</li>
+      </ol>
+    </details>
+
+    <details>
+      <summary>🔐 Sohbet yedeği ve yeni telefon</summary>
+      <ol>
+        <li>Wuzzo'da: <b>Profil → 🔐 Sohbet yedeği (PIN)</b> – kendi PIN'ini belirle.</li>
+        <li>Yeni telefon: <b>Profil → Telefon taşıma</b>.</li>
+      </ol>
+    </details>
+
+    <details>
+      <summary>💬 İletişim</summary>
+      <p><a href="mailto:wuzzo.1980@gmail.com">wuzzo.1980@gmail.com</a> veya Wuzzo'da <b>Profil → Yardım ve geri bildirim</b>.</p>
+    </details>
+  </section>
+  <footer>
+    <a href="hilfe.html">Yardım</a> · <a href="../datenschutz.html">Gizlilik</a> · <a href="../impressum.html">Künye</a> · <a href="../nutzungsbedingungen.html">Kullanım koşulları</a> · <a href="../konto-loeschen.html">Hesabı sil</a>
+    <div class="legalnote">Yasal sayfalar Almancadır.</div>
+  </footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wuzzo – Ayuda</title>
+<meta name="description" content="Wuzzo – mensajería con cifrado, traductor, llamadas de voz y videollamadas.">
+<link rel="canonical" href="https://wuzzo.de/es/hilfe.html">
+<link rel="alternate" hreflang="de" href="https://wuzzo.de/hilfe.html">
+<link rel="alternate" hreflang="uk" href="https://wuzzo.de/uk/hilfe.html">
+<link rel="alternate" hreflang="ru" href="https://wuzzo.de/ru/hilfe.html">
+<link rel="alternate" hreflang="en" href="https://wuzzo.de/en/hilfe.html">
+<link rel="alternate" hreflang="pl" href="https://wuzzo.de/pl/hilfe.html">
+<link rel="alternate" hreflang="tr" href="https://wuzzo.de/tr/hilfe.html">
+<link rel="alternate" hreflang="es" href="https://wuzzo.de/es/hilfe.html">
+<link rel="alternate" hreflang="fr" href="https://wuzzo.de/fr/hilfe.html">
+<link rel="alternate" hreflang="it" href="https://wuzzo.de/it/hilfe.html">
+<link rel="alternate" hreflang="pt" href="https://wuzzo.de/pt/hilfe.html">
+<link rel="alternate" hreflang="x-default" href="https://wuzzo.de/hilfe.html">
+<link rel="icon" href="../icon.png">
+<link rel="stylesheet" href="../style.css">
+<script>
+/* 🌍 Sprache: einmal gewählt = gemerkt. Sonst Handy-Sprache erkennen (nur auf den deutschen Seiten). */
+(function(){
+  var L=['de', 'uk', 'ru', 'en', 'pl', 'tr', 'es', 'fr', 'it', 'pt'], here="es", page="hilfe.html", s=null;
+  try{ s=localStorage.getItem("wz_lang"); }catch(e){}
+  if(here!=="de"){ return; }
+  if(s===null){ var b=((navigator.languages&&navigator.languages[0])||navigator.language||"de").slice(0,2).toLowerCase(); if(b!=="de"){ s=L.indexOf(b)>=0?b:"en"; } }
+  if(s && s!=="de" && L.indexOf(s)>=0){ location.replace("/"+s+"/"+page+location.search+location.hash); }
+})();
+function wzLang(c,u){ try{ localStorage.setItem("wz_lang",c); }catch(e){} location.href=u; }
+</script>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><img src="../icon.png" alt=""><a class="logo" href="./">WU<span>ZZ</span>O</a></div>
+    <nav class="nav"><a href="./">Inicio</a><a href="hilfe.html" class="on">Ayuda</a><select class="lang" aria-label="Idioma" onchange="var v=this.value.split('|');wzLang(v[0],v[1])"><option value="de|/hilfe.html">🇩🇪 Deutsch</option><option value="uk|/uk/hilfe.html">🇺🇦 Українська</option><option value="ru|/ru/hilfe.html">🇷🇺 Русский</option><option value="en|/en/hilfe.html">🇬🇧 English</option><option value="pl|/pl/hilfe.html">🇵🇱 Polski</option><option value="tr|/tr/hilfe.html">🇹🇷 Türkçe</option><option value="es|/es/hilfe.html" selected>🇪🇸 Español</option><option value="fr|/fr/hilfe.html">🇫🇷 Français</option><option value="it|/it/hilfe.html">🇮🇹 Italiano</option><option value="pt|/pt/hilfe.html">🇵🇹 Português</option></select></nav>
+  </header>
+
+  <section class="faq">
+    <h1>🛟 Ayuda</h1>
+    <p class="sub">Toca una pregunta – se abre la respuesta.</p>
+
+    <details>
+      <summary>📲 Instalar Wuzzo</summary>
+      <ol>
+        <li>Envía tu <b>Gmail de Play Store</b> al equipo de Wuzzo (te añadirán como tester).</li>
+        <li><a href="https://play.google.com/apps/internaltest/4700548647227979651">Toca aquí</a> o escanea el código QR de la <a href="./">página de inicio</a>.</li>
+        <li><b>«Aceptar»</b> → <b>«Download test app»</b> → <b>«Instalar»</b>.</li>
+        <li>Abre Wuzzo e inicia sesión con tu <b>correo</b> – listo.</li>
+      </ol>
+    </details>
+
+    <details>
+      <summary>🔄 Recibir actualizaciones</summary>
+      <ol>
+        <li><a href="https://play.google.com/store/apps/details?id=de.wuzzo.wuzzo">Abre Wuzzo en Play Store</a>.</li>
+        <li>Arriba a la derecha <b>⋮</b> → marca <b>«Habilitar actualización automática»</b>.</li>
+        <li>Ahora mismo: en Wuzzo <b>Perfil → «Buscar actualizaciones»</b>.</li>
+      </ol>
+      <p class="hint">Las actualizaciones suelen llegar de noche (wifi + cargando). No hace falta borrar nada.</p>
+    </details>
+
+    <details>
+      <summary>🗑️ Wuzzo borrado – reinstalar</summary>
+      <ol>
+        <li><a href="https://play.google.com/apps/internaltest/4700548647227979651">Toca aquí</a> → <b>«Download test app»</b> → <b>«Instalar»</b>.</li>
+        <li>Inicia sesión con el <b>mismo correo</b> – cuenta, contactos y chats vuelven.</li>
+        <li>Con copia PIN: <b>introduce el PIN</b> – los mensajes antiguos se pueden leer de nuevo.</li>
+      </ol>
+    </details>
+
+    <details>
+      <summary>⚠️ «App no disponible» / «No encontrada»</summary>
+      <ol>
+        <li>En Play Store toca tu <b>letra</b> arriba a la derecha – ¿qué cuenta de Google está activa?</li>
+        <li>Ese Gmail debe estar añadido como tester por el equipo de Wuzzo – si no, cambia de cuenta o envía la dirección.</li>
+        <li>Espera <b>10–30 minutos</b> y vuelve a intentarlo.</li>
+      </ol>
+    </details>
+
+    <details>
+      <summary>📦 Wuzzo antiguo (0.26 o anterior)</summary>
+      <ol>
+        <li><b>Ajustes → Aplicaciones → Wuzzo → Desinstalar</b> (solo una vez).</li>
+        <li>Reinstala como arriba – con el mismo correo.</li>
+      </ol>
+      <p class="hint">¿Wuzzo de Google Play (0.27 o más nuevo)? Entonces <b>no</b> lo borres, solo actualiza.</p>
+    </details>
+
+    <details>
+      <summary>🧰 Ayudantes y SOS</summary>
+      <ol>
+        <li>En Wuzzo: <b>Perfil → 🧰 Ayudantes del día a día</b> – explicador de cartas, intérprete, calendario, tareas, pase de emergencia y más.</li>
+        <li><b>SOS</b>: arriba a la izquierda en los chats o mantén pulsado el icono de Wuzzo.</li>
+        <li>Números de emergencia: <b>Perfil → 💚 Cuidado y familia</b>.</li>
+      </ol>
+    </details>
+
+    <details>
+      <summary>🌍 Cambiar el idioma de la app</summary>
+      <ol>
+        <li>En Wuzzo: <b>Perfil → Editar perfil</b>.</li>
+        <li>En <b>«Mi idioma»</b> elige tu idioma.</li>
+        <li><b>Guardar</b> – toda la app cambia al instante.</li>
+      </ol>
+    </details>
+
+    <details>
+      <summary>🔐 Copia de chats y móvil nuevo</summary>
+      <ol>
+        <li>En Wuzzo: <b>Perfil → 🔐 Copia de seguridad (PIN)</b> – elige tu propio PIN.</li>
+        <li>Móvil nuevo: <b>Perfil → Cambio de móvil</b>.</li>
+      </ol>
+    </details>
+
+    <details>
+      <summary>💬 Contacto</summary>
+      <p><a href="mailto:wuzzo.1980@gmail.com">wuzzo.1980@gmail.com</a> o en Wuzzo <b>Perfil → Ayuda y comentarios</b>.</p>
+    </details>
+  </section>
+  <footer>
+    <a href="hilfe.html">Ayuda</a> · <a href="../datenschutz.html">Privacidad</a> · <a href="../impressum.html">Aviso legal</a> · <a href="../nutzungsbedingungen.html">Condiciones de uso</a> · <a href="../konto-loeschen.html">Eliminar cuenta</a>
+    <div class="legalnote">Las páginas legales están en alemán.</div>
+  </footer>
+</div>
+</body>
+</html>

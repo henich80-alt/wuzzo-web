@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wuzzo – Допомога</title>
+<meta name="description" content="Wuzzo – месенджер із шифруванням, перекладачем, голосовими й відеодзвінками.">
+<link rel="canonical" href="https://wuzzo.de/uk/hilfe.html">
+<link rel="alternate" hreflang="de" href="https://wuzzo.de/hilfe.html">
+<link rel="alternate" hreflang="uk" href="https://wuzzo.de/uk/hilfe.html">
+<link rel="alternate" hreflang="ru" href="https://wuzzo.de/ru/hilfe.html">
+<link rel="alternate" hreflang="en" href="https://wuzzo.de/en/hilfe.html">
+<link rel="alternate" hreflang="pl" href="https://wuzzo.de/pl/hilfe.html">
+<link rel="alternate" hreflang="tr" href="https://wuzzo.de/tr/hilfe.html">
+<link rel="alternate" hreflang="es" href="https://wuzzo.de/es/hilfe.html">
+<link rel="alternate" hreflang="fr" href="https://wuzzo.de/fr/hilfe.html">
+<link rel="alternate" hreflang="it" href="https://wuzzo.de/it/hilfe.html">
+<link rel="alternate" hreflang="pt" href="https://wuzzo.de/pt/hilfe.html">
+<link rel="alternate" hreflang="x-default" href="https://wuzzo.de/hilfe.html">
+<link rel="icon" href="../icon.png">
+<link rel="stylesheet" href="../style.css">
+<script>
+/* 🌍 Sprache: einmal gewählt = gemerkt. Sonst Handy-Sprache erkennen (nur auf den deutschen Seiten). */
+(function(){
+  var L=['de', 'uk', 'ru', 'en', 'pl', 'tr', 'es', 'fr', 'it', 'pt'], here="uk", page="hilfe.html", s=null;
+  try{ s=localStorage.getItem("wz_lang"); }catch(e){}
+  if(here!=="de"){ return; }
+  if(s===null){ var b=((navigator.languages&&navigator.languages[0])||navigator.language||"de").slice(0,2).toLowerCase(); if(b!=="de"){ s=L.indexOf(b)>=0?b:"en"; } }
+  if(s && s!=="de" && L.indexOf(s)>=0){ location.replace("/"+s+"/"+page+location.search+location.hash); }
+})();
+function wzLang(c,u){ try{ localStorage.setItem("wz_lang",c); }catch(e){} location.href=u; }
+</script>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><img src="../icon.png" alt=""><a class="logo" href="./">WU<span>ZZ</span>O</a></div>
+    <nav class="nav"><a href="./">Головна</a><a href="hilfe.html" class="on">Допомога</a><select class="lang" aria-label="Мова" onchange="var v=this.value.split('|');wzLang(v[0],v[1])"><option value="de|/hilfe.html">🇩🇪 Deutsch</option><option value="uk|/uk/hilfe.html" selected>🇺🇦 Українська</option><option value="ru|/ru/hilfe.html">🇷🇺 Русский</option><option value="en|/en/hilfe.html">🇬🇧 English</option><option value="pl|/pl/hilfe.html">🇵🇱 Polski</option><option value="tr|/tr/hilfe.html">🇹🇷 Türkçe</option><option value="es|/es/hilfe.html">🇪🇸 Español</option><option value="fr|/fr/hilfe.html">🇫🇷 Français</option><option value="it|/it/hilfe.html">🇮🇹 Italiano</option><option value="pt|/pt/hilfe.html">🇵🇹 Português</option></select></nav>
+  </header>
+
+  <section class="faq">
+    <h1>🛟 Допомога</h1>
+    <p class="sub">Торкнись питання – відповідь розкриється.</p>
+
+    <details>
+      <summary>📲 Встановити Wuzzo</summary>
+      <ol>
+        <li>Надішли команді Wuzzo свій <b>Gmail із Play Store</b> (тебе додадуть як тестувальника).</li>
+        <li><a href="https://play.google.com/apps/internaltest/4700548647227979651">Торкнись тут</a> або скануй QR-код на <a href="./">головній сторінці</a>.</li>
+        <li><b>«Прийняти»</b> → <b>«Download test app»</b> → <b>«Встановити»</b>.</li>
+        <li>Відкрий Wuzzo, увійди зі своїм <b>e-mail</b> – готово.</li>
+      </ol>
+    </details>
+
+    <details>
+      <summary>🔄 Отримувати оновлення</summary>
+      <ol>
+        <li><a href="https://play.google.com/store/apps/details?id=de.wuzzo.wuzzo">Відкрий Wuzzo у Play Store</a>.</li>
+        <li>Угорі праворуч <b>⋮</b> → увімкни <b>«Автооновлення»</b>.</li>
+        <li>Одразу: у Wuzzo <b>Профіль → «Шукати оновлення»</b>.</li>
+      </ol>
+      <p class="hint">Оновлення зазвичай приходять уночі (Wi-Fi + зарядка). Нічого видаляти не треба.</p>
+    </details>
+
+    <details>
+      <summary>🗑️ Wuzzo видалено – встановити знову</summary>
+      <ol>
+        <li><a href="https://play.google.com/apps/internaltest/4700548647227979651">Торкнись тут</a> → <b>«Download test app»</b> → <b>«Встановити»</b>.</li>
+        <li>Увійди з <b>тим самим e-mail</b> – обліковий запис, контакти й чати повернуться.</li>
+        <li>Із резервною копією: <b>введи PIN</b> – старі повідомлення знову читаються.</li>
+      </ol>
+    </details>
+
+    <details>
+      <summary>⚠️ «Додаток недоступний» / «Не знайдено»</summary>
+      <ol>
+        <li>У Play Store угорі праворуч торкнись своєї <b>літери</b> – який обліковий запис Google активний?</li>
+        <li>Цей Gmail має бути доданий командою Wuzzo як тестувальник – інакше зміни обліковий запис або надішли адресу.</li>
+        <li>Зачекай <b>10–30 хвилин</b> і спробуй ще раз.</li>
+      </ol>
+    </details>
+
+    <details>
+      <summary>📦 Старий Wuzzo (0.26 або старіший)</summary>
+      <ol>
+        <li><b>Налаштування → Додатки → Wuzzo → Видалити</b> (лише один раз).</li>
+        <li>Встанови знову, як описано вище, – увійди з тим самим e-mail.</li>
+      </ol>
+      <p class="hint">Wuzzo з Google Play (0.27 або новіший)? Тоді <b>не</b> видаляй, лише онови.</p>
+    </details>
+
+    <details>
+      <summary>🧰 Помічники й SOS</summary>
+      <ol>
+        <li>У Wuzzo: <b>Профіль → 🧰 Помічники на щодень</b> – пояснення листів, перекладач, календар, завдання, медична картка тощо.</li>
+        <li><b>SOS</b>: угорі ліворуч у чатах або довго натисни на значок Wuzzo.</li>
+        <li>Екстрені номери: <b>Профіль → 💚 Турбота й родина</b>.</li>
+      </ol>
+    </details>
+
+    <details>
+      <summary>🌍 Змінити мову додатка</summary>
+      <ol>
+        <li>У Wuzzo: <b>Профіль → Редагувати профіль</b>.</li>
+        <li>У полі <b>«Моя мова»</b> вибери свою мову.</li>
+        <li><b>Зберегти</b> – увесь додаток одразу зміниться.</li>
+      </ol>
+    </details>
+
+    <details>
+      <summary>🔐 Резервна копія й новий телефон</summary>
+      <ol>
+        <li>У Wuzzo: <b>Профіль → 🔐 Резервна копія чатів (PIN)</b> – придумай PIN сам.</li>
+        <li>Новий телефон: <b>Профіль → Переїзд на новий телефон</b>.</li>
+      </ol>
+    </details>
+
+    <details>
+      <summary>💬 Контакт</summary>
+      <p><a href="mailto:wuzzo.1980@gmail.com">wuzzo.1980@gmail.com</a> або у Wuzzo <b>Профіль → Допомога й відгуки</b>.</p>
+    </details>
+  </section>
+  <footer>
+    <a href="hilfe.html">Допомога</a> · <a href="../datenschutz.html">Конфіденційність</a> · <a href="../impressum.html">Вихідні дані</a> · <a href="../nutzungsbedingungen.html">Умови використання</a> · <a href="../konto-loeschen.html">Видалити обліковий запис</a>
+    <div class="legalnote">Юридичні сторінки німецькою мовою.</div>
+  </footer>
+</div>
+</body>
+</html>

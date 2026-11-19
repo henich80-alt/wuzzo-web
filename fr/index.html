@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wuzzo – Discute sans barrière de langue</title>
+<meta name="description" content="Wuzzo – messagerie avec chiffrement, traducteur, appels vocaux et vidéo.">
+<link rel="canonical" href="https://wuzzo.de/fr/">
+<link rel="alternate" hreflang="de" href="https://wuzzo.de/">
+<link rel="alternate" hreflang="uk" href="https://wuzzo.de/uk/">
+<link rel="alternate" hreflang="ru" href="https://wuzzo.de/ru/">
+<link rel="alternate" hreflang="en" href="https://wuzzo.de/en/">
+<link rel="alternate" hreflang="pl" href="https://wuzzo.de/pl/">
+<link rel="alternate" hreflang="tr" href="https://wuzzo.de/tr/">
+<link rel="alternate" hreflang="es" href="https://wuzzo.de/es/">
+<link rel="alternate" hreflang="fr" href="https://wuzzo.de/fr/">
+<link rel="alternate" hreflang="it" href="https://wuzzo.de/it/">
+<link rel="alternate" hreflang="pt" href="https://wuzzo.de/pt/">
+<link rel="alternate" hreflang="x-default" href="https://wuzzo.de/">
+<link rel="icon" href="../icon.png">
+<link rel="stylesheet" href="../style.css">
+<script>
+/* 🌍 Sprache: einmal gewählt = gemerkt. Sonst Handy-Sprache erkennen (nur auf den deutschen Seiten). */
+(function(){
+  var L=['de', 'uk', 'ru', 'en', 'pl', 'tr', 'es', 'fr', 'it', 'pt'], here="fr", page="", s=null;
+  try{ s=localStorage.getItem("wz_lang"); }catch(e){}
+  if(here!=="de"){ return; }
+  if(s===null){ var b=((navigator.languages&&navigator.languages[0])||navigator.language||"de").slice(0,2).toLowerCase(); if(b!=="de"){ s=L.indexOf(b)>=0?b:"en"; } }
+  if(s && s!=="de" && L.indexOf(s)>=0){ location.replace("/"+s+"/"+page+location.search+location.hash); }
+})();
+function wzLang(c,u){ try{ localStorage.setItem("wz_lang",c); }catch(e){} location.href=u; }
+</script>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><img src="../icon.png" alt=""><a class="logo" href="./">WU<span>ZZ</span>O</a></div>
+    <nav class="nav"><a href="./" class="on">Accueil</a><a href="hilfe.html">Aide</a><select class="lang" aria-label="Langue" onchange="var v=this.value.split('|');wzLang(v[0],v[1])"><option value="de|/">🇩🇪 Deutsch</option><option value="uk|/uk/">🇺🇦 Українська</option><option value="ru|/ru/">🇷🇺 Русский</option><option value="en|/en/">🇬🇧 English</option><option value="pl|/pl/">🇵🇱 Polski</option><option value="tr|/tr/">🇹🇷 Türkçe</option><option value="es|/es/">🇪🇸 Español</option><option value="fr|/fr/" selected>🇫🇷 Français</option><option value="it|/it/">🇮🇹 Italiano</option><option value="pt|/pt/">🇵🇹 Português</option></select></nav>
+  </header>
+
+  <section class="hero2">
+    <div>
+      <h1>Discute sans barrière de langue</h1>
+      <p>La messagerie pour toi et ta famille – chiffrée, avec traducteur, appels vocaux et vidéo.</p>
+      <a class="btn" href="https://play.google.com/apps/internaltest/4700548647227979651">▶️ Obtenir Wuzzo sur Google Play</a>
+      <div class="note">Pour l'instant réservé aux testeurs invités · iPhone plus tard</div>
+    </div>
+    <div class="qr"><img src="../qr-installieren.png" alt="Code QR : installer Wuzzo"><small>Scanne avec l'appareil photo</small></div>
+  </section>
+
+  <section class="feat">
+    <div><b>🔒</b>Chiffré</div>
+    <div><b>🌍</b>Traducteur</div>
+    <div><b>📞</b>Vidéo et appels</div>
+    <div><b>💚</b>Bienveillance et urgence</div>
+  </section>
+
+  <div class="tip">❓ Un souci pour installer, mettre à jour ou après une suppression ? → <a href="hilfe.html">Vers l'aide</a></div>
+  <footer>
+    <a href="hilfe.html">Aide</a> · <a href="../datenschutz.html">Confidentialité</a> · <a href="../impressum.html">Mentions légales</a> · <a href="../nutzungsbedingungen.html">Conditions d'utilisation</a> · <a href="../konto-loeschen.html">Supprimer le compte</a>
+    <div class="legalnote">Les pages juridiques sont en allemand.</div>
+  </footer>
+</div>
+</body>
+</html>
