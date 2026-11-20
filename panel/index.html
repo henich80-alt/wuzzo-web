@@ -761,6 +761,100 @@ function renderUsers(main){
         (d.sms_failed_month ? " · ⚠️ fehlgeschlagen: " + nf(d.sms_failed_month) : "");
     }).catch(() => { si.textContent = "Noch nicht eingerichtet (plus44.sql ausführen)."; });
   }
+  // 🛠️ System heute (plus46.sql) – Anmeldungen, SMS-Codes, Fehler, Aufräumen
+  if (S.mode === "live" && darf("admin")){
+    const yc = $("div","card"); yc.style.margin = "10px 0 4px";
+    yc.append($("b",null,"🛠️ System heute"));
+    const yi = $("div"); yi.append($("p","note","Lädt …")); yc.append(yi);
+    const links = $("div"); links.style.cssText = "display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px";
+    [["🤖 Claude: Ausgaben-Limit", "https://console.anthropic.com/settings/limits"],
+     ["💳 Supabase: Rechnung & Paket", "https://supabase.com/dashboard/org/vnzuowikhrjobtyztfki/billing"],
+     ["📈 Supabase: Verbrauch", "https://supabase.com/dashboard/org/vnzuowikhrjobtyztfki/usage"],
+     ["📲 Brevo: SMS-Guthaben", "https://app.brevo.com/"]].forEach(([t, h]) => {
+      const a = $("a",null,t); a.href = h; a.target = "_blank"; a.rel = "noopener"; a.style.color = "var(--volt,#2ee6ff)"; links.append(a);
+    });
+    yc.append(links);
+    main.append(yc);
+    rpc("admin_system").then(d => {
+      yi.innerHTML = "";
+      const capPct = Math.round((d.sms_codes_today || 0) / (d.sms_codes_cap || 50) * 100);
+      const cl = d.cleanup_last;
+      const rows = [
+        ["🔑 Anmeldungen heute", nf(d.logins_today) + " (≈ Code-Mails · Brevo kostenlos: 300 am Tag)" + (d.logins_today >= 250 ? " 🔴" : d.logins_today >= 200 ? " 🟡" : "")],
+        ["🆕 Neue Nutzer heute", nf(d.signups_today)],
+        ["📲 SMS-Codes heute", nf(d.sms_codes_today) + " von " + nf(d.sms_codes_cap) + " (" + capPct + " %)" + (capPct >= 90 ? " 🔴" : "")],
+        ["🆘 Andere SMS heute (Notruf, Check-in)", nf(d.sms_other_today)],
+        ["🐞 Fehler (24 Std.) / offen", nf(d.errors_24h) + " / " + nf(d.errors_open)],
+        ["⚠️ Offene KI-Meldungen", nf(d.ai_reports_open || 0)],
+        ["🖼️ Chat-Dateien auf dem Server", nf(d.media_files) + " Dateien · " + nf(d.media_mb) + " MB"],
+        ["🗄️ Datenbank", nf(d.db_mb) + " MB"],
+        ["🧹 Letztes Aufräumen", cl ? new Date(cl.started).toLocaleString("de-DE") + " · " + nf(cl.deleted) + " Dateien gelöscht" : "noch nie (startet am 01.01.2027)"],
+      ];
+      for (const [k, v] of rows) {
+        const r = $("div"); r.style.cssText = "display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-bottom:1px solid #1d2a5c";
+        r.append($("span",null,k), $("b",null,v)); yi.append(r);
+      }
+      yi.append($("p","note","SMS-Schutz: Codes nur an europäische Nummern und höchstens 50 am Tag für ganz Wuzzo. Ist das Limit voll, bekommen Nutzer „Bitte morgen nochmal“."));
+    }).catch(() => { yi.innerHTML = ""; yi.append($("p","note","Noch nicht eingerichtet (plus46.sql ausführen).")); });
+  }
+  // 🐞 Fehler-Berichte aus der App (plus46.sql)
+  if (S.mode === "live" && darf("admin")){
+    const fc = $("div","card"); fc.style.margin = "10px 0 4px";
+    fc.append($("b",null,"🐞 Fehler-Berichte aus der App"));
+    fc.append($("p","note","Die App meldet Abstürze und Fehler automatisch (ohne Chat-Inhalte). Gleiche Fehler werden zusammengezählt. Schick mir einfach einen Screenshot vom Fehler – dann repariere ich ihn."));
+    const fi = $("div"); fi.append($("p","note","Lädt …")); fc.append(fi);
+    main.append(fc);
+    const load = () => rpc("admin_errors", { p_days: 14, p_solved: false }).then(list => {
+      fi.innerHTML = "";
+      if (!list || !list.length){ fi.append($("p","note","🎉 Keine offenen Fehler in den letzten 14 Tagen.")); return; }
+      list.forEach(e => {
+        const box = $("div"); box.style.cssText = "border:1px solid #2a3a7a;border-radius:10px;padding:8px 10px;margin:8px 0";
+        const head = $("div"); head.style.cssText = "display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap";
+        head.append($("b",null,"×" + nf(e.count) + " · " + nf(e.users) + " Nutzer"),
+                    $("span","meta","v" + (e.version || "?") + " · zuletzt " + new Date(e.last_at).toLocaleString("de-DE")));
+        const msg = $("div",null,e.message); msg.style.cssText = "margin:6px 0;word-break:break-word";
+        const det = document.createElement("details");
+        const sum = document.createElement("summary"); sum.textContent = "Technische Details"; det.append(sum);
+        const pre = document.createElement("pre"); pre.textContent = e.stack || "–";
+        pre.style.cssText = "white-space:pre-wrap;font-size:11px;max-height:220px;overflow:auto;margin:6px 0"; det.append(pre);
+        const act = $("div","row");
+        const ok = $("button","btn","✅ Erledigt");
+        ok.onclick = () => rpc("admin_error_mark", { p_hash: e.hash, p_delete: false }).then(load);
+        const del = $("button","btn danger","🗑️ Löschen");
+        del.onclick = () => rpc("admin_error_mark", { p_hash: e.hash, p_delete: true }).then(load);
+        act.append(ok, del);
+        box.append(head, msg, det, act); fi.append(box);
+      });
+    }).catch(() => { fi.innerHTML = ""; fi.append($("p","note","Noch nicht eingerichtet (plus46.sql ausführen).")); });
+    load();
+  }
+  // ⚠️ Gemeldete KI-Antworten (plus46.sql) – Pflicht bei Google Play
+  if (S.mode === "live" && darf("admin")){
+    const kc = $("div","card"); kc.style.margin = "10px 0 4px";
+    kc.append($("b",null,"⚠️ Gemeldete KI-Antworten"));
+    kc.append($("p","note","Nutzer können Antworten vom Wuzzo Bot, Brief-Erklärer, Dolmetscher und Übersetzer melden. Anschauen, bei Bedarf mir schicken, dann „Erledigt“."));
+    const ki = $("div"); ki.append($("p","note","Lädt …")); kc.append(ki);
+    main.append(kc);
+    const NAMES = { assistant: "🤖 Wuzzo Bot", letter: "📄 Brief-Erklärer", interpret: "🗣️ Dolmetscher", translate: "🌍 Übersetzung" };
+    const WHY = { offensive: "🤬 Beleidigend", wrong: "❌ Falsch/gefährlich", inappropriate: "🔞 Unpassend", other: "💬 Anderes" };
+    const loadK = () => rpc("admin_ai_reports", { p_done: false }).then(list => {
+      ki.innerHTML = "";
+      if (!list || !list.length){ ki.append($("p","note","🎉 Keine offenen Meldungen.")); return; }
+      list.forEach(r => {
+        const box = $("div"); box.style.cssText = "border:1px solid #2a3a7a;border-radius:10px;padding:8px 10px;margin:8px 0";
+        const head = $("div"); head.style.cssText = "display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap";
+        head.append($("b",null,(NAMES[r.kind] || r.kind) + " · " + (WHY[r.reason] || r.reason)),
+                    $("span","meta",new Date(r.created_at).toLocaleString("de-DE")));
+        const t = $("div",null,r.text); t.style.cssText = "margin:6px 0;white-space:pre-wrap;word-break:break-word;max-height:200px;overflow:auto";
+        box.append(head, t);
+        if (r.note) box.append($("p","note","Nutzer schreibt: " + r.note));
+        const ok = $("button","btn","✅ Erledigt");
+        ok.onclick = () => rpc("admin_ai_report_done", { p_id: r.id }).then(loadK);
+        box.append(ok); ki.append(box);
+      });
+    }).catch(() => { ki.innerHTML = ""; ki.append($("p","note","Noch nicht eingerichtet (plus46.sql ausführen).")); });
+    loadK();
+  }
   // 📊 Verbrauch im kostenlosen Supabase-Konto (plus27.sql)
   if (S.mode === "live" && darf("admin")){
     const vc = $("div","card"); vc.style.margin = "10px 0 4px";
