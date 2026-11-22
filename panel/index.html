@@ -1226,7 +1226,9 @@ function ampel(){
   const start = m.first_purchase ? new Date(m.first_purchase) : new Date();
   const monate = Math.max(1, (new Date().getFullYear() - start.getFullYear()) * 12 + new Date().getMonth() - start.getMonth() + 1);
   const plus = netOf(m.revenue_total_cents) - k.fix * monate - Number(m.ai_usd_total || 0) * 0.92 - Number(m.sms_total || 0) * 0.08;
-  const lvl = k.sum > ein ? "red" : k.sum > ein * 0.8 ? "yel" : "ok";
+  // ⚪ Testphase: Bezahlen aus und noch nie etwas verkauft → keine rote Warnung
+  const test = !m.pay_on && !Number(m.revenue_total_cents || 0);
+  const lvl = test ? "test" : k.sum > ein ? "red" : k.sum > ein * 0.8 ? "yel" : "ok";
   return { lvl, ein, kosten: k, erg: ein - k.sum, plus, goal: Number(m.reserve_goal_eur || 3000), monate };
 }
 
@@ -1485,10 +1487,10 @@ function preiseCard(){
 function renderCockpit(main){
   if (!S.money && S.mode !== "demo"){ main.append($("p","note","Noch nicht eingerichtet – plus48.sql ausführen.")); return; }
   const A = ampel(), m = S.money || {};
-  const farbe = { ok:"#34d399", yel:"#FFC94D", red:"#ff5c7a" }[A.lvl];
+  const farbe = { ok:"#34d399", yel:"#FFC94D", red:"#ff5c7a", test:"#8aa0d6" }[A.lvl];
   const big = $("div","card wide"); big.style.cssText = "border:2px solid " + farbe + ";margin-bottom:12px";
-  big.append($("b",null,{ ok:"🟢 Alles im grünen Bereich", yel:"🟡 Achtung: Ausgaben über 80 % der Einnahmen", red:"🔴 Minus: Ausgaben höher als Einnahmen" }[A.lvl]));
-  big.append($("p","note", A.lvl === "ok" ? "Die Einnahmen tragen die Kosten. Weiter so!" :
+  big.append($("b",null,{ ok:"🟢 Alles im grünen Bereich", yel:"🟡 Achtung: Ausgaben über 80 % der Einnahmen", red:"🔴 Minus: Ausgaben höher als Einnahmen", test:"⚪ Testphase – es wird noch nichts verkauft" }[A.lvl]));
+  big.append($("p","note", A.lvl === "test" ? "Die Ampel startet, sobald du den Jahrespass einschaltest oder der erste Kauf da ist (nach Händlerkonto + Gewerbe). Bis dahin zeigt sie nur deine laufenden Kosten." : A.lvl === "ok" ? "Die Einnahmen tragen die Kosten. Weiter so!" :
     "Tipp: ⚙️ System → 🚦 Betrieb → 🐢 Spar-Modus einschalten und die 🤖 KI-Bremse senken. Video starten geht ohnehin nur mit Premium/VIP."));
   main.append(big);
   const tiles = $("div","tiles6");
