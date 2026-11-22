@@ -125,5 +125,27 @@ function wzLang(c,u){ try{ localStorage.setItem("wz_lang",c); }catch(e){} locati
     <div class="legalnote">Le pagine legali sono in tedesco.</div>
   </footer>
 </div>
+<!-- 🔒 Wuzzo-Schutz: kein Rechtsklick-Fenster, kein Kopieren, kein Drucken, keine Entwickler-Tasten -->
+<style id="wz-schutz">
+  html,body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  input,textarea,select,[contenteditable="true"]{-webkit-user-select:text;user-select:text}
+  img,a{-webkit-user-drag:none}
+  @media print{body{display:none!important}}
+</style>
+<script id="wz-schutz-js">
+(function(){
+  var frei = function(e){ var t = e.target; return t && t.closest && t.closest('input,textarea,select,[contenteditable="true"]'); };
+  ['contextmenu','dragstart'].forEach(function(n){ document.addEventListener(n, function(e){ e.preventDefault(); }, true); });
+  ['copy','cut','selectstart'].forEach(function(n){ document.addEventListener(n, function(e){ if (!frei(e)) e.preventDefault(); }, true); });
+  document.addEventListener('keydown', function(e){
+    var k = (e.key || '').toLowerCase(), c = e.ctrlKey || e.metaKey;
+    var weg = k === 'f12'
+      || (c && e.shiftKey && (k === 'i' || k === 'j' || k === 'c' || k === 'k'))
+      || (c && (k === 'u' || k === 's' || k === 'p'))
+      || (c && (k === 'c' || k === 'x' || k === 'a') && !frei(e));
+    if (weg){ e.preventDefault(); e.stopPropagation(); }
+  }, true);
+})();
+</script>
 </body>
 </html>

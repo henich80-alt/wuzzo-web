@@ -48,8 +48,10 @@
     <p><b>SOS und Fürsorge-Funktionen sind kein Notruf.</b> Der SOS-Knopf, „Mir geht's gut“ und Erinnerungen benachrichtigen nur die Personen, die du selbst eingetragen hast, per SMS oder Nachricht. Diese können zum Beispiel wegen fehlendem Netz, ausgeschaltetem Handy oder einer Störung bei einem Dienstleister ausbleiben oder verspätet ankommen. <b>Im Notfall rufe immer selbst den Notruf 112 an.</b></p>
 
     <h2>7. Kosten, Pakete und Verfügbarkeit</h2>
-    <p><b>Einstieg:</b> Für neue Nutzer kann Wuzzo einen einmaligen Einstieg verlangen (derzeit 0,99 €). Er schaltet dein Konto frei, solange Wuzzo betrieben wird. Er ist kein Abo und kein Anspruch darauf, dass Wuzzo für eine bestimmte Dauer betrieben wird.</p>
-    <p><b>⭐ Premium und 👑 VIP-Familie</b> sind Zusatzpakete mit fester Laufzeit (derzeit je 6 Monate; Premium 2,99 €, VIP-Familie 5,99 €). Sie verlängern sich <b>nicht</b> automatisch und enden nach Ablauf der Laufzeit von selbst. Welche Funktionen dazugehören, steht in der App beim jeweiligen Paket.</p>
+    <p><b>🎟️ Jahrespass:</b> Für die volle Nutzung kann Wuzzo einen Jahrespass verlangen (derzeit erstes Jahr 0,99 €, jedes weitere Jahr 1,99 €). Er gilt 12 Monate ab dem Kauf, ist <b>kein Abo</b> und verlängert sich <b>nicht</b> automatisch. Verlängerst du vor dem Ablauf, wird die neue Zeit angehängt.</p>
+    <p><b>💤 Basis:</b> Ohne gültigen Jahrespass bleibt dein Konto mit allen Daten bestehen. Du kannst weiter deine Chats lesen, Nachrichten und Anrufe empfangen, bis zu 20 Textnachrichten am Tag schreiben und den SOS-Knopf nutzen. Fotos, Videos und Sprachnachrichten senden, Anrufe starten, Gruppen, Status und KI-Funktionen gehören zum Jahrespass.</p>
+    <p><b>Wer den einmaligen Einstieg bezahlt hat, bevor der Jahrespass eingeführt wurde (App-Version 0.48)</b>, behält Wuzzo ohne Jahrespass dauerhaft freigeschaltet, solange Wuzzo betrieben wird.</p>
+    <p><b>⭐ Premium und 👑 VIP-Familie</b> sind Zusatzpakete mit fester Laufzeit (derzeit je 6 Monate; Premium 3,99 €, VIP-Familie 6,99 €). Der Jahrespass ist für diese Zeit enthalten. Sie verlängern sich <b>nicht</b> automatisch und enden nach Ablauf der Laufzeit von selbst. Videoanrufe starten gehört zu Premium und VIP. Welche Funktionen dazugehören, steht in der App beim jeweiligen Paket.</p>
     <p><b>Bezahlung</b> läuft über Google Play; dafür gelten zusätzlich die Bedingungen von Google. Deine gesetzlichen Rechte (z. B. bei Mängeln) bleiben unberührt. Zum Widerrufsrecht wirst du vor dem Kauf in der App informiert.</p>
     <p><b>Geschenkte Zugänge</b> (z. B. für Tester oder Familie, „für immer kostenlos“) gelten kostenlos, solange Wuzzo betrieben wird.</p>
     <p>Wir entwickeln Wuzzo laufend weiter. Funktionen können sich ändern, hinzukommen oder wegfallen; wesentliche Funktionen eines gekauften Pakets bleiben während seiner Laufzeit erhalten. Wir bemühen uns um einen störungsfreien Betrieb, können aber keine ständige Verfügbarkeit garantieren – zum Beispiel bei Wartungen oder Störungen bei unseren Dienstleistern.</p>
@@ -77,5 +79,27 @@
     <a href="impressum.html">Impressum</a>
   </footer>
 </div>
+<!-- 🔒 Wuzzo-Schutz: kein Rechtsklick-Fenster, kein Kopieren, kein Drucken, keine Entwickler-Tasten -->
+<style id="wz-schutz">
+  html,body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  input,textarea,select,[contenteditable="true"]{-webkit-user-select:text;user-select:text}
+  img,a{-webkit-user-drag:none}
+  @media print{body{display:none!important}}
+</style>
+<script id="wz-schutz-js">
+(function(){
+  var frei = function(e){ var t = e.target; return t && t.closest && t.closest('input,textarea,select,[contenteditable="true"]'); };
+  ['contextmenu','dragstart'].forEach(function(n){ document.addEventListener(n, function(e){ e.preventDefault(); }, true); });
+  ['copy','cut','selectstart'].forEach(function(n){ document.addEventListener(n, function(e){ if (!frei(e)) e.preventDefault(); }, true); });
+  document.addEventListener('keydown', function(e){
+    var k = (e.key || '').toLowerCase(), c = e.ctrlKey || e.metaKey;
+    var weg = k === 'f12'
+      || (c && e.shiftKey && (k === 'i' || k === 'j' || k === 'c' || k === 'k'))
+      || (c && (k === 'u' || k === 's' || k === 'p'))
+      || (c && (k === 'c' || k === 'x' || k === 'a') && !frei(e));
+    if (weg){ e.preventDefault(); e.stopPropagation(); }
+  }, true);
+})();
+</script>
 </body>
 </html>

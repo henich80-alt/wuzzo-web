@@ -107,7 +107,7 @@ tr:last-child td{border-bottom:none}
 .app{display:flex;min-height:100vh}
 .side{position:sticky;top:0;align-self:flex-start;height:100vh;width:210px;flex:0 0 210px;box-sizing:border-box;padding:18px 12px;
   background:rgba(12,20,51,.85);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:14px}
-.side[hidden]{display:none!important}
+.side[hidden],.tab[hidden]{display:none!important}
 .side .brand{padding:0 8px 6px}
 .nav{display:flex;flex-direction:column;gap:4px}
 .nav .tab{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:10px 12px;border-radius:12px;font-size:15px;position:relative}
@@ -115,7 +115,7 @@ tr:last-child td{border-bottom:none}
 .nav .tab:hover{background:rgba(46,230,255,.06);color:var(--text)}
 .badge{margin-left:auto;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--rose);color:#fff;font-size:12px;display:none;align-items:center;justify-content:center;box-sizing:border-box}
 .badge.on{display:inline-flex}
-.side #logout{margin-top:auto}
+.side #logout{margin-top:6px}
 .wrap{flex:1;min-width:0;max-width:1180px}
 .top{display:none}
 @media (max-width:860px){
@@ -127,6 +127,7 @@ tr:last-child td{border-bottom:none}
   .nav .tab i{width:auto;font-size:18px}
   .badge{position:absolute;top:0;right:0;min-width:16px;height:16px;font-size:10px;padding:0 4px}
   .side #logout{margin:0 0 0 auto;font-size:12px;padding:6px 8px;white-space:nowrap}
+  .side #who{display:none}
 }
 .ph{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin:16px 0 12px}
 .ph h1{font-family:var(--f-brand);font-size:22px;margin:0}
@@ -141,6 +142,9 @@ tr:last-child td{border-bottom:none}
 .cgrid>.card,.cgrid>.form,.cgrid>.chart{max-width:none;margin:0!important}
 .cgrid>.card>b:first-child{font-size:15px}
 .card .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.card.wide{max-width:none;width:100%;box-sizing:border-box;margin:12px 0 0}
+.card.wide input{flex:0 0 auto!important}
+.card.wide .tiles6{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
 .cgrid .btn+.btn{margin-left:6px}
 .todo{display:flex;flex-direction:column;gap:8px}
 .todo button{display:flex;align-items:center;gap:12px;text-align:left;width:100%;padding:12px 14px;border-radius:12px;background:var(--deep);border:1px solid var(--line);color:var(--text)}
@@ -241,6 +245,7 @@ tr:last-child td{border-bottom:none}
       <button class="tab" data-tab="links"><i>🔗</i><span>Dienste</span></button>
       <button class="tab" data-tab="authority"><i>⚖️</i><span>Behörden</span></button>
     </nav>
+    <div id="who" class="note" style="padding:0 8px;margin-top:auto"></div>
     <button class="ghost" id="logout" style="display:none">Abmelden</button>
   </aside>
   <div class="wrap">
@@ -345,7 +350,8 @@ async function loadAll(){
     const reqs = await S.client.from("authority_requests").select("*").order("created_at", { ascending:false });
     if (!reqs.error) S.authReqs = reqs.data || [];
     try { S.costs = await rpc("admin_costs"); } catch(e){ S.costs = null; }
-  } else { S.fin = []; S.authReqs = []; S.costs = null; }
+    try { S.money = await rpc("admin_money_info"); } catch(e){ S.money = null; }
+  } else { S.fin = []; S.authReqs = []; S.costs = null; S.money = null; }
 }
 
 /* ---------- Anzeige ---------- */
@@ -357,11 +363,15 @@ function render(){
   document.getElementById("top").style.display = inside ? "none" : "flex";
   document.getElementById("logout").style.display = inside ? "" : "none";
   if (!["start","users","inbox","money","system","links","authority"].includes(S.tab)) S.tab = "start";
-  if ((S.tab === "authority" || S.tab === "links") && !darf("programmierer")) S.tab = "start";
+  // 🔐 Wer sieht was? 👮 Moderator: Start, Nutzer, Meldungen · 🛡️ Admin: + System · 👑 Programmierer: alles
+  const NEED = { start:"moderator", users:"moderator", inbox:"moderator", system:"admin", money:"programmierer", links:"programmierer", authority:"programmierer" };
+  if (!darf(NEED[S.tab] || "programmierer")) S.tab = "start";
   tabs.querySelectorAll(".tab").forEach(b => {
     b.setAttribute("aria-selected", String(b.dataset.tab === S.tab));
-    if (b.dataset.tab === "authority" || b.dataset.tab === "links") b.hidden = !darf("programmierer");
+    b.hidden = !darf(NEED[b.dataset.tab] || "programmierer");
   });
+  const who = document.getElementById("who");
+  if (who) who.textContent = S.mode === "live" ? "Angemeldet als " + (ROLLEN[S.role] || S.role || "") : (S.mode === "demo" ? "Demo" : "");
   document.getElementById("logout").textContent = S.mode === "demo" ? "Verbinden" : "Abmelden";
   updateBadges();
   renderBanner();
@@ -768,17 +778,17 @@ function legacyCards(main, list){
     bc.append($("b",null,"💳 Bezahlung über Google Play"));
     const bi = $("p","note","Lädt …"); bc.append(bi);
     const bb = $("button","btn","…"); bb.disabled = true; bc.append(bb);
-    bc.append($("p","note","Einstieg 0,99 € (einmalig, + 1 Monat Premium geschenkt) · Premium 2,99 € = 6 Monate (kein Abo). Wer schon dabei war, Tester und das Team zahlen nie. ⚠️ Erst EINSCHALTEN, wenn beide Produkte in der Play Console aktiv sind – sonst kommen neue Nutzer nicht weiter."));
+    bc.append($("p","note","🎟️ Jahrespass: erstes Jahr 0,99 € (+1 Monat Premium), danach 1,99 € im Jahr · ⭐ Premium 3,99 € · 👑 VIP 6,99 € (je 6 Monate, Pass inklusive). Alt-Kunden, 🏅 Familie/Tester und das Team zahlen nie. AN = wer keinen Pass hat, ist 💤 Basis (lesen, 20 Nachrichten/Tag, SOS). ⚠️ Erst EINSCHALTEN, wenn alle 4 Produkte in der Play Console aktiv sind."));
     main.append(bc);
     rpc("admin_payment_info").then(d => {
-      bi.textContent = (d.required ? "🟢 Einstieg 0,99 € wird verlangt" : "⚪ Einstieg ist gerade KOSTENLOS") +
+      bi.textContent = (d.required ? "🟢 Jahrespass wird verlangt (sonst 💤 Basis)" : "⚪ Gerade KOSTENLOS – alle haben alles") +
         " · Einstiege verkauft: " + nf(d.paid) + " · Premium verkauft: " + nf(d.premium_sales) +
         " · Umsatz (brutto): " + ((d.revenue_cents || 0) / 100).toFixed(2).replace(".", ",") + " €" +
         (d.waiting ? " · " + nf(d.waiting) + " warten aufs Bezahlen" : "");
-      bb.textContent = d.required ? "Einstieg wieder kostenlos machen" : "Einstieg 0,99 € einschalten";
+      bb.textContent = d.required ? "Wieder kostenlos machen" : "Jahrespass einschalten";
       bb.disabled = !darf("programmierer");
       bb.onclick = () => {
-        if (!confirm(d.required ? "Neue Nutzer können Wuzzo dann wieder kostenlos nutzen.\n\nFortfahren?" : "Ab jetzt müssen NEUE Nutzer nach der Anmeldung 0,99 € bezahlen.\nSind beide Produkte in der Play Console aktiv?\n\nFortfahren?")) return;
+        if (!confirm(d.required ? "Alle können Wuzzo dann wieder ohne Jahrespass voll nutzen.\n\nFortfahren?" : "Ab jetzt braucht man den Jahrespass (erstes Jahr 0,99 €). Wer keinen hat, ist 💤 Basis.\nAlt-Kunden, 🏅 Familie/Tester und das Team sind ausgenommen.\nSind alle 4 Produkte in der Play Console aktiv?\n\nFortfahren?")) return;
         act_(() => rpc("admin_set_payment_required", { p_on: !d.required }));
       };
     }).catch(() => { bi.textContent = "Noch nicht eingerichtet (plus32.sql ausführen)."; });
@@ -790,7 +800,7 @@ function legacyCards(main, list){
     const vc2 = $("div","card"); vc2.style.margin = "10px 0 4px";
     vc2.append($("b",null,"👑 VIP-Familie"));
     const vi = $("p","note","Lädt …"); vc2.append(vi);
-    vc2.append($("p","note","5,99 € für 6 Monate, Käufer + bis zu 4 Familienmitglieder. Produkt-ID in der Play Console: wuzzo_vip_6m. Tester und Team haben VIP immer."));
+    vc2.append($("p","note","6,99 € für 6 Monate (ab 0.48), Käufer + bis zu 4 Familienmitglieder, Jahrespass inklusive. Produkt-ID in der Play Console: wuzzo_vip_6m. Tester und Team haben VIP immer."));
     main.append(vc2);
     rpc("admin_vip_info").then(d => {
       vi.textContent = "🛒 VIP-Käufe: " + nf(d.vip_sales) + " · 👑 aktive Käufer: " + nf(d.vip_owners) + " · 👨‍👩‍👧 eingeladene Familienmitglieder: " + nf(d.vip_members);
@@ -1109,16 +1119,22 @@ function renderStart(main){
   const todo = [];
   const add = (lvl, ic, t, small, fn) => todo.push({ lvl, ic, t, small, fn });
   if (h.reports_open) add("red","🚩", nf(h.reports_open) + " Nutzer-Meldung(en) offen", "Jemand hat eine Nachricht gemeldet – bitte prüfen", () => go("inbox","reports"));
-  if (h.ai_reports_open) add("yel","⚠️", nf(h.ai_reports_open) + " gemeldete KI-Antwort(en)", "Pflicht bei Google Play: anschauen und erledigen", () => go("inbox","ai"));
+  if (h.ai_reports_open && darf("admin")) add("yel","⚠️", nf(h.ai_reports_open) + " gemeldete KI-Antwort(en)", "Pflicht bei Google Play: anschauen und erledigen", () => go("inbox","ai"));
   if (h.feedback_open) add("yel","💬", nf(h.feedback_open) + " neues Feedback", "Was Nutzer unter Hilfe & Feedback schreiben", () => go("inbox","feedback"));
-  if (h.errors_open) add(h.errors_24h > 20 ? "red" : "yel","🐞", nf(h.errors_open) + " offene Fehler-Berichte", nf(h.errors_24h) + " Fehler in den letzten 24 Stunden – Screenshot an Claude schicken", () => go("system","errors"));
+  if (h.errors_open && darf("admin")) add(h.errors_24h > 20 ? "red" : "yel","🐞", nf(h.errors_open) + " offene Fehler-Berichte", nf(h.errors_24h) + " Fehler in den letzten 24 Stunden – Screenshot an Claude schicken", () => go("system","errors"));
   if (h.old_version) add("yel","📲", nf(h.old_version) + " Nutzer mit alter Version", "Neueste Version: Build " + (h.newest_build || "?"), () => { S.ufilter = "old"; go("users"); });
   const cap = h.sms_codes_cap || 20;
-  if ((h.sms_codes_today || 0) >= cap * 0.8) add("red","📲", "SMS-Codes heute: " + nf(h.sms_codes_today) + " von " + nf(cap), "Tageslimit fast voll – ist das echt oder Betrug?", () => go("system","today"));
-  if ((h.logins_today || 0) >= 200) add((h.logins_today >= 260 ? "red" : "yel"),"✉️", "Anmeldungen heute: " + nf(h.logins_today) + " von 300", "Brevo verschickt kostenlos 300 Code-Mails am Tag – bald Paket erweitern", () => go("links"));
+  if (darf("admin") && (h.sms_codes_today || 0) >= cap * 0.8) add("red","📲", "SMS-Codes heute: " + nf(h.sms_codes_today) + " von " + nf(cap), "Tageslimit fast voll – ist das echt oder Betrug?", () => go("system","today"));
+  if (darf("programmierer") && (h.logins_today || 0) >= 200) add((h.logins_today >= 260 ? "red" : "yel"),"✉️", "Anmeldungen heute: " + nf(h.logins_today) + " von 300", "Brevo verschickt kostenlos 300 Code-Mails am Tag – bald Paket erweitern", () => go("links"));
   const heute = new Date();
   let proOn = false; try { proOn = localStorage.getItem("wz_supa_pro") === "1"; } catch(e){}
-  if (heute < new Date("2026-12-09") && !proOn) add("yel","💳","Supabase Pro einschalten – bis 8.12.2026", "Sonst wird Wuzzo ab 15.12. eingeschränkt (25 $ im Monat). Erledigt? System → Heute → Haken bei „Supabase Pro“", () => window.open("https://supabase.com/dashboard/org/vnzuowikhrjobtyztfki/billing","_blank"));
+  if (darf("programmierer") && heute < new Date("2026-12-09") && !proOn) add("yel","💳","Supabase Pro einschalten – bis 8.12.2026", "Sonst wird Wuzzo ab 15.12. eingeschränkt (25 $ im Monat). Erledigt? System → Heute → Haken bei „Supabase Pro“", () => window.open("https://supabase.com/dashboard/org/vnzuowikhrjobtyztfki/billing","_blank"));
+  if (darf("programmierer") && S.money){
+    const A = ampel();
+    if (A.lvl === "red") add("red","🔴","Finanz-Ampel ROT: Ausgaben höher als Einnahmen", "Geld → Cockpit: Spar-Modus einschalten oder Kosten senken", () => go("money","cockpit"));
+    else if (A.lvl === "yel") add("yel","🟡","Finanz-Ampel GELB: Ausgaben über 80 % der Einnahmen", "Geld → Cockpit ansehen", () => go("money","cockpit"));
+    if (S.money.expiring_30d) add("yel","🎟️", nf(S.money.expiring_30d) + " Jahrespässe laufen in 30 Tagen ab", "Der Wuzzo Bot erinnert automatisch – hier siehst du, wer", () => go("money","pass"));
+  }
   if (!todo.length) add("ok","🎉","Alles erledigt!","Keine offenen Meldungen, keine Fehler.", null);
   todo.forEach(x => {
     const b = $("button", x.lvl); const ic = $("span","ic",x.ic); const tx = $("span","tx"); tx.append($("b",null,x.t), $("small",null,x.small));
@@ -1126,10 +1142,13 @@ function renderStart(main){
     td.append(b);
   });
 
+  // 🧭 Wegweiser gleich unter den Aufgaben
+  if (darf("admin")) main.append(wegweiser());
+
   // Zahlen
   main.append($("h2",null,"📊 Zahlen"));
   const F = fixKosten();
-  const netto = (h.revenue_month_cents || 0) / 100 * 0.85;
+  const netto = netOf(h.revenue_month_cents || 0);
   const kosten = Number(h.ai_usd_month || 0) * 0.92 + (h.sms_month || 0) * 0.08 + F.supabase + F.livekit + F.domain;
   const erg = netto - kosten;
   const tiles = $("div","tiles6");
@@ -1138,16 +1157,18 @@ function renderStart(main){
   tile("👥 Nutzer", nf(h.users), "+" + nf(h.new_today) + " heute · +" + nf(h.new_7d) + " in 7 Tagen", "", () => go("users"));
   tile("🟢 Aktiv heute", nf(h.active_today), nf(h.online_now) + " gerade online · " + nf(h.active_7d) + " in 7 Tagen");
   tile("💬 Nachrichten heute", nf(h.messages_today), "");
+  if (darf("programmierer")){
   tile("💰 Einnahmen Monat", euro(h.revenue_month_cents), "heute " + euro(h.revenue_today_cents) + " · gesamt " + euro(h.revenue_total_cents), "", () => go("money"));
   tile("💸 Kosten Monat", (Math.round(kosten * 100) / 100).toLocaleString("de-DE",{style:"currency",currency:"EUR"}), "KI, SMS, Supabase, Domain", "", () => go("money"));
-  tile("📈 Ergebnis Monat", (Math.round(erg * 100) / 100).toLocaleString("de-DE",{style:"currency",currency:"EUR"}), "nach Google (15 %) und Kosten", erg >= 0 ? "good" : "bad", () => go("money"));
+  tile("📈 Ergebnis Monat", (Math.round(erg * 100) / 100).toLocaleString("de-DE",{style:"currency",currency:"EUR"}), "nach MwSt, Google (15 %) und Kosten", erg >= 0 ? "good" : "bad", () => go("money"));
+  }
   main.append(tiles);
 
   // Pakete
   const pk = $("div","chart"); pk.style.marginTop = "12px";
   const free = h.free || 0, vip = h.vip || 0, prem = h.premium || 0, norm = Math.max(0, (h.users || 0) - free - vip - prem);
   const all = Math.max(1, free + vip + prem + norm);
-  pk.append($("h3",null,"🎛️ Pakete: wer hat was?"), $("div","sub", nf(h.buyers) + " Nutzer haben schon etwas gekauft"));
+  pk.append($("h3",null,"🎛️ Pakete: wer hat was?"), $("div","sub", darf("programmierer") ? nf(h.buyers) + " Nutzer haben schon etwas gekauft" : ""));
   const bar = $("div","planbar");
   [[norm,"#5d6b9a"],[prem,"#FFC94D"],[vip,"#B98CFF"],[free,"#34d399"]].forEach(([n,c]) => { const d = $("div"); d.style.cssText = "width:" + (n / all * 100) + "%;background:" + c; bar.append(d); });
   const lg = $("div","legend");
@@ -1164,6 +1185,51 @@ function renderStart(main){
   main.append($("p","note","🔒 Private Chats sind auch für dich nicht lesbar. Du siehst nur Zahlen und gemeldete Nachrichten."));
 }
 
+/* ---------- 🧭 Wegweiser: Wo finde ich was? ---------- */
+function wegweiser(){
+  const c = $("div","card wide"); c.style.marginTop = "16px";
+  c.append($("b",null,"🧭 Wo finde ich was?"), $("p","note","Antippen = direkt hin."));
+  const gw = $("div"); gw.style.cssText = "display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:8px"; c.append(gw);
+  const L = [
+    ["programmierer","💶 Geld → 🚦 Cockpit","Finanz-Ampel, Plus seit Start, Rücklage, Steuer-Topf, Preise", () => go("money","cockpit")],
+    ["programmierer","💶 Geld → 🎟️ Jahrespass","Wer hat einen Pass, wer ist 💤 Basis, wer läuft bald ab, Alt-Kunden", () => go("money","pass")],
+    ["programmierer","💶 Geld → 🧮 Rechner","Was bleibt bei 1.000 / 20.000 Nutzern übrig?", () => go("money","calc")],
+    ["programmierer","💶 Geld → 🔋 Guthaben · 🧾 EÜR","Kosten der Dienste, Buchhaltung fürs Finanzamt", () => go("money","credit")],
+    ["programmierer","⚙️ System → 🚦 Betrieb","Anmeldungen offen/zu, Verkauf an/aus, 🐢 Spar-Modus, 🤖 KI-Bremse, 🌅 Abschied", () => go("system","ops")],
+    ["admin","⚙️ System → 🛠️ Heute","Server-Zustand, SMS an/aus, SMS pro Tag", () => go("system","today")],
+    ["admin","⚙️ System → 🐞 Fehler · 📲 Updates · 📢 Nachricht an alle","", () => go("system","errors")],
+    ["admin","👥 Nutzer → Person antippen","Paket schenken, 🎟️ Jahrespass +1 Jahr, 🏅 Familie, Rolle, sperren, löschen", () => go("users")],
+    ["moderator","📥 Meldungen","Gemeldete Nachrichten, KI-Meldungen, Feedback", () => go("inbox")],
+    ["programmierer","🔗 Dienste","🔐 Sicherheits-Liste + alle Konten mit Kosten und Links", () => go("links")],
+    ["programmierer","⚖️ Behörden","Anfragen von Polizei & Co. – Auskunft drucken", () => go("authority")],
+  ];
+  L.filter(x => darf(x[0])).forEach(([, t, sub, fn]) => {
+    const r = $("button","opt"); r.style.cssText = "display:block;width:100%;text-align:left;margin:0;padding:10px 12px";
+    r.append($("b",null,t)); if (sub){ const sm = $("div","note",sub); sm.style.margin = "2px 0 0"; r.append(sm); }
+    r.onclick = fn; gw.append(r);
+  });
+  return c;
+}
+
+/* ---------- 💶 Geld-Hilfen ---------- */
+// Brutto → was bei dir ankommt: 19 % MwSt raus, dann 15 % Google
+function netOf(cents){ return (Number(cents || 0) / 100) / 1.19 * 0.85; }
+function monatsKosten(){
+  const h = S.home || {}, F = fixKosten(), m = S.money || {};
+  const ai = Number(m.ai_usd_month ?? h.ai_usd_month ?? 0) * 0.92, sms = Number(m.sms_month ?? h.sms_month ?? 0) * 0.08;
+  return { fix: F.supabase + F.livekit + F.domain, ai, sms, sum: F.supabase + F.livekit + F.domain + ai + sms };
+}
+function ampel(){
+  const m = S.money || {}, k = monatsKosten();
+  const ein = netOf(m.revenue_month_cents);
+  // Plus seit Start: alle Einnahmen netto – Fixkosten je Monat seit dem ersten Kauf – KI – SMS
+  const start = m.first_purchase ? new Date(m.first_purchase) : new Date();
+  const monate = Math.max(1, (new Date().getFullYear() - start.getFullYear()) * 12 + new Date().getMonth() - start.getMonth() + 1);
+  const plus = netOf(m.revenue_total_cents) - k.fix * monate - Number(m.ai_usd_total || 0) * 0.92 - Number(m.sms_total || 0) * 0.08;
+  const lvl = k.sum > ein ? "red" : k.sum > ein * 0.8 ? "yel" : "ok";
+  return { lvl, ein, kosten: k, erg: ein - k.sum, plus, goal: Number(m.reserve_goal_eur || 3000), monate };
+}
+
 /* ---------- 👥 Nutzer ---------- */
 function renderUsers(main){
   const users = (S.users || []).filter(u => u.display_name !== "Wuzzo Bot");
@@ -1171,7 +1237,8 @@ function renderUsers(main){
   const newest = Math.max(0, ...users.map(u => u.app_build || 0));
   const inviteBtn = $("button","btn","➕ Person einladen"); inviteBtn.onclick = openInvite;
   const playBtn = $("a","btn","▶️ Tester in Google Play"); playBtn.href = "https://play.google.com/console/u/0/developers/8787141740191790937/app/4974409909997434422/tracks/4700548647227979651?tab=testers"; playBtn.target = "_blank"; playBtn.rel = "noopener"; playBtn.style.textDecoration = "none";
-  pageHead(main, "👥 Nutzer", nf(users.length) + " Nutzer" + (inv.length ? " · " + nf(inv.length) + " eingeladen" : "") + " · auf eine Person tippen = alles ändern", [inviteBtn, playBtn]);
+  pageHead(main, "👥 Nutzer", nf(users.length) + " Nutzer" + (inv.length ? " · " + nf(inv.length) + " eingeladen" : "") + " · auf eine Person tippen = alles ändern",
+    darf("admin") ? (darf("programmierer") ? [inviteBtn, playBtn] : [inviteBtn]) : []);
   const F = [
     ["all","Alle", u => true],
     ["free","🏅 Für immer kostenlos", u => planOf(u).k === "free"],
@@ -1179,7 +1246,7 @@ function renderUsers(main){
     ["vip","👑 VIP", u => planOf(u).k === "vip"],
     ["normal","🙂 Normal", u => planOf(u).k === "normal"],
     ["team","🛡️ Team", u => !!u.admin_role],
-    ["buyers","💰 Käufer", u => (u.purchases || 0) > 0],
+    ...(darf("programmierer") ? [["buyers","💰 Käufer", u => (u.purchases || 0) > 0]] : []),
     ["old","📲 Alte Version", u => !u.app_build || u.app_build < newest],
     ["banned","🚫 Gesperrt", u => u.banned],
   ];
@@ -1272,12 +1339,12 @@ function openUser(u){
     [["Sprache",(SPRACHE[u.language] || "") + " " + (u.language || "–")],["Zuletzt aktiv",ago(u.last_seen || u.app_seen_at)],
      ["Dabei seit",fmtDate(u.created_at)],["App-Version",u.app_version || (u.app_build ? "Build " + u.app_build : "unbekannt")],
      ["Chats",nf(u.chats)],["Gemeldet",nf(u.reports) + "×"],
-     ["Käufe",nf(u.purchases || 0) + " · " + euro(u.spent_cents || 0)],["Nutzer-ID",String(u.user_id).slice(0,8) + "…"]]
+     ...(darf("programmierer") ? [["Käufe",nf(u.purchases || 0) + " · " + euro(u.spent_cents || 0)]] : []),["Nutzer-ID",String(u.user_id).slice(0,8) + "…"]]
      .forEach(([k,v]) => { const d = $("div",null,k); d.append($("b",null,v)); f.append(d); });
     p.append(f);
     const live = S.mode === "live" && darf("admin");
-    // Paket
-    const s1 = $("div","dsec"); s1.append($("h3",null,"🎛️ Paket"));
+    // Paket (ab 🛡️ Admin)
+    const s1 = $("div","dsec"); if (!live) s1.style.display = "none"; s1.append($("h3",null,"🎛️ Paket"));
     const o1 = $("div","opts");
     const opt = (t, on, fn, cls) => { const b = $("button","opt" + (on ? " on" : "") + (cls ? " " + cls : ""), t); b.disabled = !live; b.onclick = fn; return b; };
     o1.append(opt("🙂 Normal", pl.k === "normal", () => planAct(u, "normal", 0, null, close)));
@@ -1289,6 +1356,24 @@ function openUser(u){
     s1.append($("p","note","🏅 Für immer kostenlos – mit allem (Premium + VIP):"));
     const o4 = $("div","opts"); Object.entries(FREI).forEach(([k,t]) => o4.append(opt("🏅 " + t, pl.k === "free" && (u.free_label || "tester") === k, () => planAct(u, "free", 0, k, close)))); s1.append(o4);
     p.append(s1);
+    // 🎟️ Jahrespass (ab 0.48)
+    if (S.mode === "live" && darf("moderator")){
+      const sp = $("div","dsec"); sp.append($("h3",null,"🎟️ Jahrespass"));
+      const st = $("p","note","Lädt …"); sp.append(st); p.append(sp);
+      rpc("admin_user_pass", { p_user:u.user_id }).then(d => {
+        if (!d){ st.textContent = "–"; return; }
+        st.textContent = d.legacy ? "🎟️ Alt-Kunde – für immer frei" : pl.k === "free" ? "🏅 Für immer frei" :
+          d.pass_until && new Date(d.pass_until) > new Date() ? "✅ Läuft bis " + fmtDate(d.pass_until) :
+          d.has_pass ? "✅ In Premium/VIP enthalten" : d.basis ? "💤 Basis – kein Jahrespass" + (d.pass_until ? " (abgelaufen " + fmtDate(d.pass_until) + ")" : "") : "⚪ Bezahlen ist aus – hat alles";
+        if (darf("admin") && !d.legacy && pl.k !== "free"){
+          const o = $("div","opts");
+          const b = opt("🎁 Jahrespass +1 Jahr schenken", false, () => {
+            if (!confirm((u.display_name || "Diese Person") + " bekommt 1 Jahr Jahrespass geschenkt (wird angehängt). Der Wuzzo Bot sagt Bescheid.\n\nFortfahren?")) return;
+            act_(() => rpc("admin_gift_pass", { p_user:u.user_id, p_years:1 })).then(close); });
+          o.append(b); sp.append(o);
+        }
+      }).catch(() => { st.textContent = "Noch nicht eingerichtet – plus48.sql ausführen."; });
+    }
     // Rolle
     if (S.mode === "live" && darf("programmierer")){
       const s2 = $("div","dsec"); s2.append($("h3",null,"🛡️ Rolle im Team"));
@@ -1307,7 +1392,8 @@ function openUser(u){
       if (!confirm((u.display_name || "Diese Person") + (u.force_update ? ": Pflicht-Update wieder aus." : " muss beim nächsten Öffnen sofort aktualisieren.") + "\n\nFortfahren?")) return;
       act_(() => rpc("admin_force_update", { p_user:u.user_id, p_on:!u.force_update })).then(close); }));
     const rolle = u.admin_role;
-    if (live && (!rolle || (darf("programmierer") && rolle !== "programmierer"))) o5.append(opt(u.banned ? "✅ Entsperren" : "🚫 Sperren", false, () => {
+    // 🚫 Sperren dürfen auch Moderatoren – aber nur normale Nutzer (Team-Mitglieder nur der Programmierer)
+    if (S.mode === "live" && darf("moderator") && (!rolle || (darf("programmierer") && rolle !== "programmierer"))) o5.append(opt(u.banned ? "✅ Entsperren" : "🚫 Sperren", false, () => {
       if (!confirm((u.display_name || "Diese Person") + (u.banned ? " wieder entsperren?" : " sperren? Sie kann Wuzzo dann nicht mehr nutzen."))) return;
       act_(() => rpc("admin_set_banned", { p_user:u.user_id, p_banned:!u.banned })).then(close); }, u.banned ? "" : "danger"));
     if (S.mode === "live" && darf("programmierer") && !rolle) o5.append(opt("🗑️ Konto löschen", false, () => {
@@ -1354,7 +1440,7 @@ function renderInbox(main){
   pageHead(main, "📥 Meldungen", "Alles, was Nutzer melden oder schreiben – an einem Ort");
   const sub = subnav(main, "inbox", [
     { id:"reports", t:"🚩 Nutzer-Meldungen", n:h.reports_open },
-    { id:"ai", t:"⚠️ KI-Antworten", n:h.ai_reports_open },
+    { id:"ai", t:"⚠️ KI-Antworten", n:h.ai_reports_open, need:"admin" },
     { id:"feedback", t:"💬 Feedback", n:h.feedback_open },
   ]);
   if (sub === "reports") renderReports(main);
@@ -1365,23 +1451,147 @@ function renderInbox(main){
 
 /* ---------- 💶 Geld ---------- */
 function renderMoney(main){
-  pageHead(main, "💶 Geld", "Einnahmen, Kosten, Käufer – bis zum letzten Cent");
+  pageHead(main, "💶 Geld", "Einnahmen, Kosten, Jahrespass, Rücklage – bis zum letzten Cent");
   const sub = subnav(main, "money", [
-    { id:"overview", t:"📈 Überblick" },
+    { id:"cockpit", t:"🚦 Cockpit" },
+    { id:"pass", t:"🎟️ Jahrespass", n:(S.money || {}).expiring_30d },
+    { id:"calc", t:"🧮 Rechner" },
+    { id:"overview", t:"📈 Verkäufe" },
     { id:"credit", t:"🔋 Guthaben & Verbrauch", need:"programmierer" },
     { id:"books", t:"🧾 Buchhaltung (EÜR)", need:"programmierer" },
   ]);
-  if (sub === "overview"){
+  if (sub === "cockpit") renderCockpit(main);
+  else if (sub === "pass") renderPass(main);
+  else if (sub === "calc") renderCalc(main);
+  else if (sub === "overview"){
     const g = grid(main); legacyCards(g, ["econ","premium","vip","payment"]);
-    const info = $("div","card"); info.append($("b",null,"🏷️ Preise in Wuzzo"));
-    [["🎟️ Start (Eintritt)","0,99 € einmalig · Produkt wuzzo_start"],["⭐ Premium","2,99 € für 6 Monate · wuzzo_premium_6m"],["👑 VIP-Familie","5,99 € für 6 Monate · wuzzo_vip_6m"],["Google behält","15 % von jedem Kauf"]]
-      .forEach(([k,v]) => { const r = $("div"); r.style.cssText = "display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px solid #1d2a5c"; r.append($("span",null,k), $("b",null,v)); info.append(r); });
-    const a = $("a",null,"→ Produkte in der Play Console"); a.href = "https://play.google.com/console/u/0/developers/8787141740191790937/app/4974409909997434422/monetization/products"; a.target = "_blank"; a.rel = "noopener"; a.style.cssText = "color:var(--volt);font-size:13px;margin-top:6px";
-    info.append(a); g.append(info);
+    g.append(preiseCard());
   }
   else if (sub === "credit") renderCosts(main);
   else renderFinance(main);
   main.querySelectorAll(":scope > h2:first-of-type").forEach(e => { if (/^(Kosten & Guthaben|Finanzen)$/.test(e.textContent)) e.remove(); });
+}
+function preiseCard(){
+  const info = $("div","card wide"); info.append($("b",null,"🏷️ Preise in Wuzzo (ab 0.48)"));
+  [["🎟️ Jahrespass – erstes Jahr","0,99 € · wuzzo_start (+1 Monat Premium)"],["🔄 Jahrespass – jedes weitere Jahr","1,99 € · wuzzo_jahr"],
+   ["⭐ Premium (Pass inklusive)","3,99 € für 6 Monate · wuzzo_premium_6m"],["👑 VIP-Familie (Pass inklusive)","6,99 € für 6 Monate · wuzzo_vip_6m"],
+   ["🎟️ Alt-Kunden (vor 0.48 bezahlt)","für immer frei"],["Davon kommt bei dir an","Preis ÷ 1,19 (MwSt) × 0,85 (Google)"]]
+    .forEach(([k,v]) => { const r = $("div"); r.style.cssText = "display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px solid #1d2a5c"; r.append($("span",null,k), $("b",null,v)); info.append(r); });
+  const a = $("a",null,"→ Produkte & Preise in der Play Console"); a.href = "https://play.google.com/console/u/0/developers/8787141740191790937/app/4974409909997434422/monetization/products"; a.target = "_blank"; a.rel = "noopener"; a.style.cssText = "color:var(--volt);font-size:13px;margin-top:6px";
+  info.append(a); return info;
+}
+
+/* ---------- 🚦 Cockpit: Finanz-Ampel, Rücklage, Steuer ---------- */
+function renderCockpit(main){
+  if (!S.money && S.mode !== "demo"){ main.append($("p","note","Noch nicht eingerichtet – plus48.sql ausführen.")); return; }
+  const A = ampel(), m = S.money || {};
+  const farbe = { ok:"#34d399", yel:"#FFC94D", red:"#ff5c7a" }[A.lvl];
+  const big = $("div","card wide"); big.style.cssText = "border:2px solid " + farbe + ";margin-bottom:12px";
+  big.append($("b",null,{ ok:"🟢 Alles im grünen Bereich", yel:"🟡 Achtung: Ausgaben über 80 % der Einnahmen", red:"🔴 Minus: Ausgaben höher als Einnahmen" }[A.lvl]));
+  big.append($("p","note", A.lvl === "ok" ? "Die Einnahmen tragen die Kosten. Weiter so!" :
+    "Tipp: ⚙️ System → 🚦 Betrieb → 🐢 Spar-Modus einschalten und die 🤖 KI-Bremse senken. Video starten geht ohnehin nur mit Premium/VIP."));
+  main.append(big);
+  const tiles = $("div","tiles6");
+  const tile = (k, v, sub, cls) => { const t = $("div","tile" + (cls ? " " + cls : "")); t.append($("div","k",k), $("div","v",v)); if (sub) t.append($("div","s",sub)); tiles.append(t); };
+  tile("💰 Einnahmen Monat (netto)", eur(A.ein), "brutto " + euro(m.revenue_month_cents) + " – MwSt – 15 % Google");
+  tile("💸 Ausgaben Monat", eur(A.kosten.sum), "fest " + eur(A.kosten.fix) + " · KI " + eur(A.kosten.ai) + " · SMS " + eur(A.kosten.sms));
+  tile("📈 Ergebnis Monat", eur(A.erg), "", A.erg >= 0 ? "good" : "bad");
+  tile("🏦 Plus seit Start", eur(A.plus), "über " + A.monate + " Monat" + (A.monate > 1 ? "e" : "") + " (geschätzt)", A.plus >= 0 ? "good" : "bad");
+  tile("🧾 Fürs Finanzamt zurücklegen", eur(Math.max(0, A.plus) * 0.3), "Faustregel 30 % vom Plus – kein Steuerrat");
+  tile("🎯 Rücklage-Ziel", eur(A.goal), Math.round(Math.max(0, A.plus * 0.7) / Math.max(1, A.goal) * 100) + " % erreicht (nach Steuer-Topf)");
+  main.append(tiles);
+  // Fortschritt Rücklage
+  const pr = $("div","card wide"); pr.style.marginTop = "12px";
+  const pct = Math.max(0, Math.min(100, A.plus * 0.7 / Math.max(1, A.goal) * 100));
+  pr.append($("b",null,"🏦 Rücklage: " + eur(Math.max(0, A.plus * 0.7)) + " von " + eur(A.goal)));
+  const bar = $("div"); bar.style.cssText = "height:14px;border-radius:8px;background:#1d2a5c;overflow:hidden;margin:8px 0";
+  const fill = $("div"); fill.style.cssText = "height:100%;width:" + pct + "%;background:" + (pct >= 100 ? "#34d399" : "#FFC94D"); bar.append(fill); pr.append(bar);
+  pr.append($("p","note","Regel: Immer mindestens 3 Monate Ausgaben (jetzt " + eur(A.kosten.sum * 3) + ") liegen lassen. Das Ziel stellst du hier ein:"));
+  const row = $("div"); row.style.cssText = "display:flex;gap:8px;align-items:center;flex-wrap:wrap";
+  const inp = document.createElement("input"); inp.type = "number"; inp.min = "0"; inp.step = "100"; inp.value = A.goal; inp.style.cssText = IN_STYLE + ";max-width:140px";
+  const sv = $("button","btn","Ziel speichern"); sv.onclick = () => act_(() => rpc("admin_set_setting", { p_key:"reserve_goal_eur", p_value:String(Math.max(0, Math.round(Number(inp.value) || 0))) }));
+  row.append($("span",null,"🎯 Ziel in €:"), inp, sv); pr.append(row);
+  main.append(pr);
+  // Feste Kosten (im Browser gemerkt)
+  const fk = $("div","card wide"); fk.style.marginTop = "12px"; const F = fixKosten();
+  fk.append($("b",null,"🧾 Feste Kosten pro Monat (für die Ampel)"), $("p","note","Trag hier ein, was du jeden Monat zahlst. Wird in diesem Browser gemerkt."));
+  [["supabase","Supabase (Pro 25 $ ≈ 23 €)"],["livekit","LiveKit (Anrufe)"],["domain","Domain wuzzo.de"]].forEach(([k,t]) => {
+    const r = $("div"); r.style.cssText = "display:flex;gap:8px;align-items:center;margin:4px 0";
+    const i2 = document.createElement("input"); i2.type = "number"; i2.step = "0.5"; i2.value = F[k]; i2.style.cssText = IN_STYLE + ";max-width:110px";
+    i2.onchange = () => { const f = fixKosten(); f[k] = Number(i2.value) || 0; try { localStorage.setItem("wz_fixkosten", JSON.stringify(f)); } catch(e){} render(); };
+    r.append($("span",null,t + ":"), i2, $("span","note","€")); fk.append(r);
+  });
+  main.append(fk);
+  main.append(preiseCard());
+}
+
+/* ---------- 🎟️ Jahrespass ---------- */
+function renderPass(main){
+  const m = S.money || {};
+  const tiles = $("div","tiles6");
+  const tile = (k, v, sub, cls) => { const t = $("div","tile" + (cls ? " " + cls : "")); t.append($("div","k",k), $("div","v",v)); if (sub) t.append($("div","s",sub)); tiles.append(t); };
+  tile("💳 Bezahlen", m.pay_on ? "🟢 AN" : "⚪ AUS", m.pay_on ? "Ohne Pass = 💤 Basis" : "Alle haben gerade alles – einschalten: 📈 Verkäufe → 💳 Bezahlung");
+  tile("🎟️ Pass aktiv", nf(m.pass_active), "gekauft: " + nf(m.starts_total) + " · verlängert: " + nf(m.renewals_total));
+  tile("💤 Basis", nf(m.basis), "ohne Jahrespass", m.basis ? "bad" : "");
+  tile("⏰ Läuft in 30 Tagen ab", nf(m.expiring_30d), "Bot erinnert 14 + 3 Tage vorher");
+  tile("🎟️ Alt-Kunden", nf(m.legacy), "vor 0.48 bezahlt → für immer frei");
+  tile("🏅 Für immer frei", nf(m.free_forever), "Familie, Tester, Freunde, Team");
+  main.append(tiles);
+  const c = $("div","card wide"); c.style.marginTop = "12px";
+  c.append($("b",null,"⏰ Läuft bald ab / gerade abgelaufen (±30 Tage)"));
+  const list = m.expiring_list || [];
+  if (!list.length) c.append($("p","note","Niemand – alles ruhig. 😊"));
+  list.forEach(e => { const r = $("div"); r.style.cssText = "display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #1d2a5c";
+    const ab = new Date(e.until) < new Date(); r.append($("span",null,(ab ? "💤 " : "⏰ ") + e.name), $("b",null,(ab ? "abgelaufen " : "bis ") + fmtDate(e.until))); c.append(r); });
+  c.append($("p","note","Einzelnen Personen schenkst du einen Pass unter 👥 Nutzer → Person antippen → 🎟️ Jahrespass."));
+  main.append(c);
+  const r2 = $("div","card wide"); r2.style.marginTop = "12px";
+  r2.append($("b",null,"💤 Was geht in Basis?"));
+  r2.append($("p","note","✅ Chats lesen, alles empfangen, 20 Textnachrichten am Tag, Anrufe annehmen, Übersetzen (30/Tag), GIFs, 🆘 SOS immer. ❌ Fotos/Videos/Sprache senden, Anrufe starten, Gruppen/Status/Portale, KI-Assistent. Kosten für dich: ca. 0,2–0,5 Cent pro Basis-Nutzer im Monat."));
+  main.append(r2);
+}
+
+/* ---------- 🧮 Rechner ---------- */
+function renderCalc(main){
+  let C = { users:20000, aktiv:60, prem:5, vip:2, neu:1000, verl:80, anruf:30, video:30 };
+  try { C = Object.assign(C, JSON.parse(localStorage.getItem("wz_rechner") || "{}")); } catch(e){}
+  const c = $("div","card wide");
+  c.append($("b",null,"🧮 Was bleibt übrig?"), $("p","note","Zahlen ändern – das Ergebnis rechnet sich sofort neu. Preise: Pass 0,99 € / 1,99 €, Premium 3,99 €, VIP 6,99 €. Alles Schätzungen."));
+  const felder = [["users","👥 Nutzer gesamt",""],["aktiv","🟢 davon aktiv im Monat","%"],["prem","⭐ kaufen Premium","%"],["vip","👑 kaufen VIP","%"],
+    ["neu","🆕 neue Nutzer pro Monat",""],["verl","🔄 verlängern den Pass","%"],["anruf","📞 der Aktiven telefonieren","%"],["video","🎥 davon per Video","%"]];
+  const out = $("div"); out.style.marginTop = "10px";
+  const calc = () => {
+    try { localStorage.setItem("wz_rechner", JSON.stringify(C)); } catch(e){}
+    const n = (b) => b / 1.19 * 0.85;
+    const aktiv = C.users * C.aktiv / 100;
+    const premK = C.users * C.prem / 100, vipK = C.users * C.vip / 100;
+    const passZahler = Math.max(0, C.users - premK - vipK);
+    const ein = { neu: C.neu * n(0.99), verl: passZahler * C.verl / 100 * n(1.99) / 12, prem: premK * n(3.99) / 6, vip: vipK * n(6.99) / 6 };
+    const sumE = ein.neu + ein.verl + ein.prem + ein.vip;
+    const supa = 23 + (aktiv > 3000 ? 50 : aktiv > 500 ? 14 : 0) + aktiv * 0.007;
+    const min = aktiv * C.anruf / 100 * 60 * 2;
+    const lk = min <= 5000 ? 0 : 46 + Math.max(0, min - 150000) * 0.00046 + min * C.video / 100 * 0.011 * 0.11;
+    const ki = aktiv * 0.005, dg = aktiv * C.prem / 100 * 0.04, mail = aktiv > 8000 ? 9 : 0;
+    const aus = { "Supabase": supa, "LiveKit (Anrufe)": lk, "Claude-KI": ki, "Deepgram": dg, "Brevo": mail, "Domain": 1 };
+    const sumA = Object.values(aus).reduce((a, b) => a + b, 0);
+    out.innerHTML = "";
+    const t = $("div","tiles6");
+    const tile = (k, v, s2, cls) => { const x = $("div","tile" + (cls ? " " + cls : "")); x.append($("div","k",k), $("div","v",v)); if (s2) x.append($("div","s",s2)); t.append(x); };
+    tile("💰 Einnahmen / Monat", eur(sumE), "Neue " + eur(ein.neu) + " · Verlängern " + eur(ein.verl) + " · ⭐ " + eur(ein.prem) + " · 👑 " + eur(ein.vip));
+    tile("💸 Ausgaben / Monat", eur(sumA), Object.entries(aus).filter(([,v]) => v > 0.5).map(([k,v]) => k + " " + eur(v)).join(" · "));
+    tile("📈 Bleibt übrig / Monat", eur(sumE - sumA), "vor Steuern", sumE - sumA >= 0 ? "good" : "bad");
+    tile("📅 Pro Jahr", eur((sumE - sumA) * 12), "davon ca. 30 % Steuer zurücklegen");
+    tile("👤 Pro aktivem Nutzer", eur((sumE - sumA) / Math.max(1, aktiv)) , "Plus pro Monat");
+    out.append(t);
+  };
+  const grid2 = $("div"); grid2.style.cssText = "display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px";
+  felder.forEach(([k, t, unit]) => {
+    const l = $("label"); l.style.cssText = "display:flex;flex-direction:column;gap:4px;font-size:13px";
+    const i2 = document.createElement("input"); i2.type = "number"; i2.min = "0"; i2.value = C[k]; i2.style.cssText = IN_STYLE;
+    i2.oninput = () => { C[k] = Math.max(0, Number(i2.value) || 0); calc(); };
+    l.append($("span",null,t + (unit ? " (" + unit + ")" : "")), i2); grid2.append(l);
+  });
+  c.append(grid2, out); main.append(c); calc();
 }
 
 /* ---------- ⚙️ System ---------- */
@@ -1393,8 +1603,8 @@ function renderSystem(main){
     { id:"errors", t:"🐞 Fehler", n:h.errors_open },
     { id:"updates", t:"📲 Updates" },
     { id:"family", t:"🆘 Familie & SOS" },
-    { id:"ops", t:"🚦 Betrieb" },
-    { id:"broadcast", t:"📢 Nachricht an alle" },
+    { id:"ops", t:"🚦 Betrieb", need:"programmierer" },
+    { id:"broadcast", t:"📢 Nachricht an alle", need:"admin" },
   ]);
   const g = grid(main);
   if (sub === "today") legacyCards(g, ["sysday","usage"]);
@@ -1408,6 +1618,26 @@ function renderSystem(main){
 
 /* ---------- 🚦 Betrieb: Anmeldungen, Verkauf, Abschied (plus47.sql) ---------- */
 function renderOperation(g){
+  // 🐢 Spar-Modus + 🤖 KI-Bremse (plus48.sql, ab 0.48)
+  const sp = $("div","card"); sp.append($("b",null,"🐢 Spar-Modus & 🤖 KI-Bremse")); sp.append($("p","note","Lädt …")); g.append(sp);
+  rpc("admin_money_info").then(m => {
+    sp.querySelector(".note").remove();
+    const on = m.spar_mode === true;
+    const box = $("div"); box.style.cssText = "display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0;padding:10px;border-radius:10px;border:1px solid " + (on ? "var(--good)" : "var(--line)");
+    box.append($("b",null, on ? "🟢 Spar-Modus ist AN" : "⚪ Spar-Modus ist AUS"),
+      $("span","note","AN = Fotos werden etwas kleiner geschickt und Fotos/Videos/Sprache von 🙂 Normal und 💤 Basis nach 30 statt 90 Tagen vom Server gelöscht (auf dem Handy bleiben sie). Spart Speicher und Datenverkehr."));
+    const tb = $("button","btn" + (on ? " danger" : ""), on ? "Spar-Modus ausschalten" : "Spar-Modus einschalten");
+    tb.onclick = () => { if (!confirm(on ? "Spar-Modus ausschalten?" : "Spar-Modus einschalten?\n\nFotos von Normal/Basis werden dann nach 30 Tagen vom Server gelöscht (auf dem Handy bleiben sie).")) return;
+      act_(() => rpc("admin_set_setting", { p_key:"spar_mode", p_value: on ? "0" : "1" })); };
+    box.append(tb); sp.append(box);
+    const row = $("div"); row.style.cssText = "display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px";
+    const inp = document.createElement("input"); inp.type = "number"; inp.min = "0"; inp.step = "1"; inp.value = m.ai_budget_usd; inp.style.cssText = IN_STYLE + ";max-width:110px";
+    const sv = $("button","btn","Speichern");
+    sv.onclick = () => act_(() => rpc("admin_set_setting", { p_key:"ai_budget_usd", p_value:String(Math.max(0, Math.round(Number(inp.value) || 0))) }));
+    row.append($("span",null,"🤖 KI höchstens pro Monat (US-Dollar):"), inp, sv,
+      $("span","note","diesen Monat schon: " + Number(m.ai_usd_month || 0).toFixed(2).replace(".", ",") + " $ · ist es voll, macht die KI Pause bis zum 1."));
+    sp.append(row);
+  }).catch(() => { sp.querySelector(".note").textContent = "Noch nicht eingerichtet – plus48.sql ausführen."; });
   const c1 = $("div","card"), c2 = $("div","card"), c3 = $("div","card");
   c1.append($("b",null,"🚪 Neue Anmeldungen")); c2.append($("b",null,"🛒 Verkauf (Eintritt, Premium, VIP)")); c3.append($("b",null,"🌅 Wuzzo beenden (Abschied)"));
   [c1,c2,c3].forEach(c => { c.append($("p","note","Lädt …")); g.append(c); });
@@ -1497,7 +1727,8 @@ const DIENSTE_LISTE = [
     ["💳 Supabase – Rechnung & Paket", "https://supabase.com/dashboard/org/vnzuowikhrjobtyztfki/billing", "Pro einschalten, Ausgaben-Grenze (Spend Cap)", "", false],
     ["📊 Supabase – Verbrauch", "https://supabase.com/dashboard/org/vnzuowikhrjobtyztfki/usage", "Speicher, Verbindungen, Datenverkehr", "", false],
     ["📝 SQL Editor", "https://supabase.com/dashboard/project/hbusxiioorpsskzvjxza/sql/new", "Hier kommen die plus…sql-Dateien rein", "", false],
-    ["⚙️ Edge Functions", "https://supabase.com/dashboard/project/hbusxiioorpsskzvjxza/functions", "push, sms, sos, ai, cleanup …", "", false],
+    ["⚙️ Edge Functions", "https://supabase.com/dashboard/project/hbusxiioorpsskzvjxza/functions", "push, sms, sos, ai, cleanup, kauf …", "", false],
+    ["🛒 Google Play Android Developer API", "https://console.cloud.google.com/apis/library/androidpublisher.googleapis.com", "Muss AN sein – damit Wuzzo Käufe bei Google prüfen kann (Firebase-Projekt wählen)", "kostenlos", false],
     ["🔑 Secrets (Schlüssel)", "https://supabase.com/dashboard/project/hbusxiioorpsskzvjxza/functions/secrets", "API-Schlüssel der Dienste – nie weitergeben", "", false],
     ["👤 Nutzer-Konten (Anmeldung)", "https://supabase.com/dashboard/project/hbusxiioorpsskzvjxza/auth/users", "z. B. Prüfer-Konto für Google anlegen", "", false],
     ["📱 Anmelden mit Handynummer", "https://supabase.com/dashboard/project/hbusxiioorpsskzvjxza/auth/hooks", "Send-SMS-Hook → Function sms-hook (Brevo)", "ca. 7–10 Cent pro Anmelde-SMS", true],
@@ -1541,6 +1772,35 @@ const DIENSTE_LISTE = [
 ];
 function renderLinks(main){
   pageHead(main, "🔗 Dienste", "Alle Konten, die Wuzzo braucht – mit Kosten. Ein Klick öffnet die Seite.");
+  // 🔐 Sicherheits-Liste (Haken bleiben in diesem Browser gespeichert)
+  const SICHER = [
+    ["g2fa","Google-Konto: 2-Faktor an (schützt Play Console + Gmail)","https://myaccount.google.com/signinoptions/twosv"],
+    ["gh2fa","GitHub: 2-Faktor an (Webseite, Panel, Sicherungen)","https://github.com/settings/security"],
+    ["sb2fa","Supabase: 2-Faktor an (Datenbank)","https://supabase.com/dashboard/account/security"],
+    ["br2fa","Brevo: 2-Faktor an (E-Mails/SMS)","https://app.brevo.com/security/authorised-ips"],
+    ["dom2fa","Domain-Anbieter von wuzzo.de: 2-Faktor an",""],
+    ["codes","Notfall-Codes aller 2-Faktor-Konten auf Papier, Papier sicher weglegen",""],
+    ["kauf","💳 Kauf-Prüfung: Google-Play-API eingeschaltet + Dienstkonto in der Play Console eingeladen","https://play.google.com/console/u/0/developers/8787141740191790937/users-and-permissions"],
+    ["adv","Supabase Sicherheits-Check: keine roten Punkte","https://supabase.com/dashboard/project/hbusxiioorpsskzvjxza/advisors/security"],
+    ["pw","Anmelden: Passwort mind. 8 Zeichen, Bestätigungs-Mail an","https://supabase.com/dashboard/project/hbusxiioorpsskzvjxza/auth/providers"],
+    ["key","Upload-Schlüssel (.jks) + Passwort: in der Cloud-Sicherung UND auf USB im Schrank",""],
+    ["rest","Sicherung einmal testweise geöffnet (Passwort stimmt?)","https://github.com/henich80-alt/wuzzo-sicherung/releases"],
+    ["team","Team: nur Leute, denen du vertraust, und nur die kleinste nötige Rolle",""],
+  ];
+  let hk = {}; try { hk = JSON.parse(localStorage.getItem("wz_sicher") || "{}"); } catch(e){}
+  const sc = $("div","card"); sc.style.cssText = "margin:0 0 14px;width:100%;box-sizing:border-box;max-width:none;align-self:stretch;text-align:left";
+  const done = SICHER.filter(x => hk[x[0]]).length;
+  sc.append($("b",null,"🔐 Sicherheit – " + done + " von " + SICHER.length + " erledigt"), $("p","note","Einmal abhaken reicht. Kostet alles 0 €."));
+  SICHER.forEach(([id, t, url]) => {
+    const r = $("label"); r.style.cssText = "display:flex;flex-direction:row;gap:10px;align-items:center;justify-content:flex-start;text-align:left;padding:6px 0;margin:0;border-bottom:1px solid #1d2a5c;cursor:pointer;width:100%;box-sizing:border-box";
+    
+    const cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = !!hk[id]; cb.style.cssText = "width:18px;height:18px;flex:0 0 auto;margin:0";
+    cb.onchange = () => { hk[id] = cb.checked; try { localStorage.setItem("wz_sicher", JSON.stringify(hk)); } catch(e){} render(); };
+    r.append(cb, $("span",null,t));
+    if (url){ const a = $("a",null,"öffnen →"); a.href = url; a.target = "_blank"; a.rel = "noopener"; a.style.cssText = "margin-left:auto;color:var(--volt);font-size:13px;white-space:nowrap"; r.append(a); }
+    sc.append(r);
+  });
+  main.append(sc);
   DIENSTE_LISTE.forEach(([title, items]) => {
     main.append($("h2",null,title));
     const g = $("div","svc");
@@ -1943,5 +2203,26 @@ document.getElementById("logout").onclick = () => { if (S.mode === "demo"){ S.mo
 if (getCfg()) connect(); else render();
 </script>
 
+<!-- 🔒 Wuzzo-Schutz: kein Rechtsklick-Fenster, kein Kopieren, kein Drucken, keine Entwickler-Tasten -->
+<style id="wz-schutz">
+  html,body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  input,textarea,select,[contenteditable="true"]{-webkit-user-select:text;user-select:text}
+  img,a{-webkit-user-drag:none}
+</style>
+<script id="wz-schutz-js">
+(function(){
+  var frei = function(e){ var t = e.target; return t && t.closest && t.closest('input,textarea,select,[contenteditable="true"]'); };
+  ['contextmenu','dragstart'].forEach(function(n){ document.addEventListener(n, function(e){ e.preventDefault(); }, true); });
+  ['copy','cut','selectstart'].forEach(function(n){ document.addEventListener(n, function(e){ if (!frei(e)) e.preventDefault(); }, true); });
+  document.addEventListener('keydown', function(e){
+    var k = (e.key || '').toLowerCase(), c = e.ctrlKey || e.metaKey;
+    var weg = k === 'f12'
+      || (c && e.shiftKey && (k === 'i' || k === 'j' || k === 'c' || k === 'k'))
+      || (c && (k === 'u' || k === 's' || k === 'p'))
+      || (c && (k === 'c' || k === 'x' || k === 'a') && !frei(e));
+    if (weg){ e.preventDefault(); e.stopPropagation(); }
+  }, true);
+})();
+</script>
 </body>
 </html>
