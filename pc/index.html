@@ -1,0 +1,736 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wuzzo am PC</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="../icon.png">
+<!-- 💻 Wuzzo 0.49.8 – Wuzzo am PC (wie WhatsApp Web). Kosten: 0 €. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl/1.0.3/nacl.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{--abyss:#060a1f;--deep:#0c1433;--panel:#121d47;--line:#22306a;--text:#eaf1ff;--muted:#8d9cc9;--volt:#2ee6ff;--azure:#2a6bff;--rose:#ff5fa8}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--abyss);color:var(--text);font:15px/1.45 -apple-system,"Segoe UI",Roboto,Arial,sans-serif;overflow:hidden}
+button{font:inherit;cursor:pointer}
+a{color:var(--volt)}
+.hide{display:none!important}
+/* ---------- Anmelden ---------- */
+#login{height:100%;display:flex;align-items:center;justify-content:center;padding:16px;
+  background:radial-gradient(900px 500px at 50% -10%,rgba(42,107,255,.35),transparent 70%),var(--abyss)}
+.lcard{display:flex;gap:40px;align-items:center;background:var(--deep);border:1px solid var(--line);border-radius:24px;padding:36px;max-width:900px;width:100%;box-shadow:0 0 40px rgba(46,230,255,.12)}
+.lcard h1{margin:0 0 14px;font-size:28px}
+.lcard h1 span{color:var(--volt);text-shadow:0 0 14px var(--volt)}
+.lcard ol{padding-left:22px;margin:0;color:var(--muted);font-size:16px}
+.lcard ol li{margin:10px 0}
+.lcard ol b{color:var(--text)}
+#qrbox{flex:none;width:276px;height:276px;background:#fff;border-radius:18px;padding:14px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 30px rgba(46,230,255,.35);position:relative}
+#qrbox .msg{position:absolute;inset:0;background:rgba(255,255,255,.94);border-radius:18px;display:flex;align-items:center;justify-content:center;text-align:center;color:#0c1433;font-weight:700;padding:20px}
+.lnote{color:var(--muted);font-size:13px;margin-top:18px}
+@media(max-width:760px){.lcard{flex-direction:column;padding:22px}}
+/* ---------- App ---------- */
+#app{height:100%;display:flex}
+#side{width:370px;flex:none;border-right:1px solid var(--line);display:flex;flex-direction:column;background:var(--deep)}
+.shead{display:flex;align-items:center;gap:10px;padding:14px 14px 10px}
+.shead .logo{font-weight:800;font-size:22px;letter-spacing:1px}
+.shead .logo span{color:var(--volt);text-shadow:0 0 12px var(--volt)}
+.icon{background:none;border:0;color:var(--muted);font-size:18px;padding:6px 8px;border-radius:10px}
+.icon:hover{background:var(--panel);color:var(--text)}
+#search{margin:0 14px 10px;padding:9px 14px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--text);outline:none}
+#search:focus{border-color:var(--volt)}
+#chats{flex:1;overflow-y:auto}
+.chat{display:flex;gap:12px;padding:11px 14px;cursor:pointer;border-bottom:1px solid rgba(34,48,106,.5)}
+.chat:hover{background:rgba(18,29,71,.7)}
+.chat.on{background:var(--panel)}
+.av{width:46px;height:46px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:#060a1f;overflow:hidden;background:linear-gradient(135deg,var(--volt),#9b5cff)}
+.av img{width:100%;height:100%;object-fit:cover}
+.cmid{flex:1;min-width:0}
+.crow{display:flex;justify-content:space-between;gap:8px}
+.cname{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ctime{font-size:12px;color:var(--muted);flex:none}
+.cprev{color:var(--muted);font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge{background:var(--volt);color:#060a1f;font-weight:800;font-size:12px;border-radius:12px;padding:1px 8px;flex:none}
+.draft{color:var(--rose);font-weight:700}
+/* Chat */
+#main{flex:1;display:flex;flex-direction:column;min-width:0;background:radial-gradient(800px 400px at 70% 0%,rgba(42,107,255,.12),transparent 70%),var(--abyss)}
+#empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);text-align:center;padding:20px}
+#empty .big{font-size:64px}
+#chathead{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--deep);border-bottom:1px solid var(--line)}
+#chathead .t{font-weight:800;font-size:16px}
+#chathead .s{color:var(--muted);font-size:12.5px}
+#msgs{flex:1;overflow-y:auto;padding:16px 6%}
+.day{text-align:center;margin:14px 0 8px}
+.day span{background:var(--panel);color:var(--muted);font-size:12px;padding:3px 10px;border-radius:10px}
+.m{display:flex;margin:3px 0}
+.m.me{justify-content:flex-end}
+.bub{max-width:min(620px,72%);padding:8px 12px 6px;border-radius:16px;background:var(--panel);border:1px solid var(--line);word-wrap:break-word;white-space:pre-wrap;position:relative}
+.m.me .bub{background:linear-gradient(90deg,var(--volt),#62b4ff);color:#060a1f;border:0}
+.m.me .bub a{color:#1a3bd9}
+.bub .who{color:var(--volt);font-weight:700;font-size:12px;white-space:normal}
+.bub .tm{font-size:11px;opacity:.65;text-align:right;margin-top:2px;white-space:nowrap}
+.bub.bare{background:none!important;border:0!important;padding:0}
+.bub.bare .tm{color:var(--muted)}
+.bub img.photo{max-width:340px;max-height:380px;border-radius:12px;display:block;cursor:zoom-in}
+.bub video{max-width:360px;max-height:360px;border-radius:12px;display:block}
+.bub audio{width:280px;display:block}
+.clip{width:220px;height:220px;object-fit:cover;border-radius:50%}
+.clip.eckig{border-radius:20%}
+.clip.herz{border-radius:0;clip-path:path('M110 209C44 167 -4 121 4 70 13 22 66 -2 110 44 154 -2 207 22 216 70 224 121 176 167 110 209Z')}
+.clip.stern{border-radius:0;clip-path:polygon(50% 2%,63% 36%,99% 38%,71% 60%,81% 96%,50% 76%,19% 96%,29% 60%,1% 38%,37% 36%)}
+.file{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;white-space:normal}
+.file .fi{font-size:28px}
+.big-emoji{font-size:46px;line-height:1.1}
+.locked{opacity:.6;font-style:italic}
+#composer{display:flex;align-items:flex-end;gap:8px;padding:10px 14px;background:var(--deep);border-top:1px solid var(--line);position:relative}
+#text{flex:1;resize:none;max-height:160px;min-height:42px;padding:10px 14px;border-radius:20px;border:1px solid var(--line);background:var(--panel);color:var(--text);font:inherit;outline:none}
+#text:focus{border-color:var(--volt)}
+.send{width:44px;height:44px;border-radius:50%;border:0;background:var(--volt);color:#060a1f;font-size:20px;box-shadow:0 0 16px rgba(46,230,255,.6);flex:none}
+.send.rec{background:#ff2d55;color:#fff;box-shadow:0 0 16px #ff2d55}
+#emojis{position:absolute;bottom:64px;left:14px;background:var(--deep);border:1px solid var(--line);border-radius:16px;padding:10px;display:grid;grid-template-columns:repeat(10,32px);gap:4px;box-shadow:0 10px 40px #000a}
+#emojis button{background:none;border:0;font-size:22px;border-radius:8px}
+#emojis button:hover{background:var(--panel)}
+#drop{position:absolute;inset:0;background:rgba(6,10,31,.85);border:3px dashed var(--volt);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:var(--volt);z-index:5}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--volt);padding:10px 18px;border-radius:14px;z-index:20;box-shadow:0 0 20px rgba(46,230,255,.3)}
+#viewer{position:fixed;inset:0;background:rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center;z-index:30;cursor:zoom-out}
+#viewer img{max-width:94vw;max-height:94vh}
+.back{display:none}
+@media(max-width:760px){
+  #side{width:100%}
+  #app.open #side{display:none}
+  #app:not(.open) #main{display:none}
+  .back{display:inline-block}
+  #msgs{padding:12px 10px}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= Anmelden mit QR-Code ================= -->
+<div id="login" class="hide">
+  <div class="lcard">
+    <div>
+      <h1>Wuzzo <span>am PC</span></h1>
+      <ol>
+        <li>Öffne <b>Wuzzo</b> auf deinem Handy</li>
+        <li>Tippe auf <b>Profil → 🔒 Privatsphäre &amp; Sicherung → 💻 Wuzzo am PC</b></li>
+        <li>Tippe auf <b>„PC verbinden“</b> und halte das Handy vor diesen QR-Code</li>
+      </ol>
+      <p class="lnote">🔒 Deine Chats bleiben Ende-zu-Ende-verschlüsselt. Melde dich an fremden PCs nach der Benutzung ab.<br>
+      Noch kein Wuzzo? <a href="../">Hier gibt's die App</a></p>
+    </div>
+    <div id="qrbox"><div id="qr"></div><div id="qrmsg" class="msg hide"></div></div>
+  </div>
+</div>
+
+<!-- ================= Die App ================= -->
+<div id="app" class="hide">
+  <aside id="side">
+    <div class="shead">
+      <div class="logo">WUZ<span>ZO</span></div>
+      <div style="flex:1"></div>
+      <button class="icon" id="notifBtn" title="Benachrichtigungen einschalten">🔔</button>
+      <button class="icon" id="logoutBtn" title="Am PC abmelden">🚪</button>
+    </div>
+    <input id="search" placeholder="🔎 Chats suchen …">
+    <div id="chats"></div>
+  </aside>
+  <main id="main">
+    <div id="empty"><div class="big">💻</div><h2 style="color:var(--text);margin:8px 0">Wuzzo am PC</h2>
+      <p>Wähle links einen Chat aus.<br>Fotos und Dateien kannst du einfach ins Fenster ziehen oder mit Strg+V einfügen.</p></div>
+    <div id="chatview" class="hide" style="flex:1;display:flex;flex-direction:column;min-height:0;position:relative">
+      <div id="chathead">
+        <button class="icon back" id="backBtn">←</button>
+        <div class="av" id="chatav"></div>
+        <div style="min-width:0"><div class="t" id="chattitle"></div><div class="s" id="chatsub"></div></div>
+      </div>
+      <div id="msgs"></div>
+      <div id="composer">
+        <button class="icon" id="emojiBtn" title="Smileys">😊</button>
+        <button class="icon" id="fileBtn" title="Foto oder Datei senden">📎</button>
+        <input type="file" id="fileIn" multiple class="hide">
+        <textarea id="text" rows="1" placeholder="Nachricht …  (Enter = senden, Umschalt+Enter = neue Zeile)"></textarea>
+        <button class="send" id="sendBtn" title="Senden / gedrückt halten für Sprachnachricht">🎤</button>
+        <div id="emojis" class="hide"></div>
+      </div>
+      <div id="drop" class="hide">📎 Hier loslassen zum Senden</div>
+    </div>
+  </main>
+</div>
+<div id="toast" class="hide"></div>
+<div id="viewer" class="hide"><img alt=""></div>
+
+<script>
+"use strict";
+// ---------------------------------------------------------------------
+// Einstellungen (der Schlüssel wird beim Bauen von wuzzo-bauen.ps1 eingesetzt)
+// ---------------------------------------------------------------------
+const SB_URL = "https://hbusxiioorpsskzvjxza.supabase.co";
+const SB_KEY = "sb_publishable_ZUZ5BuGvwXJWtzaN9OrASQ_mzcCslb1";
+const BUCKET = "chat-media";
+const sb = supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, storageKey: "wz_pc_auth" } });
+
+const $ = id => document.getElementById(id);
+const enc = new TextEncoder(), dec = new TextDecoder();
+const store = {
+  get: k => { try { return localStorage.getItem(k); } catch { return null; } },
+  set: (k, v) => { try { localStorage.setItem(k, v); } catch {} },
+  del: k => { try { localStorage.removeItem(k); } catch {} },
+};
+
+function toast(t, ms = 3200) {
+  const el = $("toast"); el.textContent = t; el.classList.remove("hide");
+  clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.add("hide"), ms);
+}
+function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+
+// ---------------------------------------------------------------------
+// 🔒 Verschlüsselung – genau wie in der App (e2e.dart)
+// ---------------------------------------------------------------------
+function b64(bytes) { let s = ""; const b = new Uint8Array(bytes); for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); return btoa(s); }
+function unb64(s) { const bin = atob(s); const out = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i); return out; }
+function b64url(bytes) { return b64(bytes).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
+function unb64url(s) { s = s.replace(/-/g, "+").replace(/_/g, "/"); while (s.length % 4) s += "="; return unb64(s); }
+function cat(...parts) { const n = parts.reduce((a, p) => a + p.length, 0); const o = new Uint8Array(n); let i = 0; for (const p of parts) { o.set(p, i); i += p.length; } return o; }
+function same(a, b) { if (a.length !== b.length) return false; for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false; return true; }
+const rnd = n => crypto.getRandomValues(new Uint8Array(n));
+
+async function hkdf(shared, salt, info) {
+  const k = await crypto.subtle.importKey("raw", shared, "HKDF", false, ["deriveBits"]);
+  return new Uint8Array(await crypto.subtle.deriveBits({ name: "HKDF", hash: "SHA-256", salt, info: enc.encode(info) }, k, 256));
+}
+async function aesKey(raw) { return crypto.subtle.importKey("raw", raw, "AES-GCM", false, ["encrypt", "decrypt"]); }
+async function aesEnc(raw, nonce, plain, aad) {
+  const p = { name: "AES-GCM", iv: nonce }; if (aad) p.additionalData = aad;
+  return new Uint8Array(await crypto.subtle.encrypt(p, await aesKey(raw), plain)); // Geheimtext | MAC(16)
+}
+async function aesDec(raw, nonce, cipherMac, aad) {
+  const p = { name: "AES-GCM", iv: nonce }; if (aad) p.additionalData = aad;
+  return new Uint8Array(await crypto.subtle.decrypt(p, await aesKey(raw), cipherMac));
+}
+
+const E2E = {
+  seed: null, pub: null, keyCache: new Map(), pubCache: new Map(),
+  init(seedB64) { this.seed = unb64(seedB64); this.pub = nacl.scalarMult.base(this.seed); },
+  async chatKey(chatId, other) {
+    const ck = chatId + "|" + b64(other);
+    if (this.keyCache.has(ck)) return this.keyCache.get(ck);
+    const shared = nacl.scalarMult(this.seed, other);
+    const k = await hkdf(shared, enc.encode(chatId), "wuzzo-e2e-v1");
+    this.keyCache.set(ck, k); return k;
+  },
+  async pubOf(userId) {
+    if (this.pubCache.has(userId)) return this.pubCache.get(userId);
+    const { data, error } = await sb.rpc("user_key", { p_user: userId });
+    if (error) return null;
+    const k = data ? unb64(data) : null;
+    const v = k && k.length === 32 ? k : null; this.pubCache.set(userId, v); return v;
+  },
+  async decrypt(chatId, body) {
+    if (typeof body !== "string") return null;
+    if (body.startsWith("e2e2:")) { const c = await this.open(chatId, body); return c ? dec.decode(c) : null; }
+    if (!body.startsWith("e2e1:")) return body;
+    try {
+      const b = unb64(body.slice(5)); if (b.length < 92) return null;
+      const a = b.subarray(0, 32), c = b.subarray(32, 64);
+      const other = same(a, this.pub) ? c : same(c, this.pub) ? a : null; if (!other) return null;
+      const key = await this.chatKey(chatId, other);
+      return dec.decode(await aesDec(key, b.subarray(64, 76), b.subarray(76), enc.encode(chatId)));
+    } catch { return null; }
+  },
+  async open(chatId, body) {
+    try {
+      const b = unb64(body.slice(5)); if (b.length < 34) return null;
+      const sender = b.subarray(0, 32); const n = (b[32] << 8) | b[33];
+      let off = 34, w = null;
+      for (let i = 0; i < n; i++) {
+        if (off + 92 > b.length) return null;
+        if (same(b.subarray(off, off + 32), this.pub)) w = { nonce: b.subarray(off + 32, off + 44), cm: b.subarray(off + 44, off + 92) };
+        off += 92;
+      }
+      if (!w || off + 28 > b.length) return null;
+      const aad = enc.encode(chatId);
+      const ck = await aesDec(await this.chatKey(chatId, sender), w.nonce, w.cm, aad);
+      return await aesDec(ck, b.subarray(off, off + 12), b.subarray(off + 12), aad);
+    } catch { return null; }
+  },
+  async encryptFor(chatId, otherId, text) {
+    const other = await this.pubOf(otherId); if (!other) return null;
+    const key = await this.chatKey(chatId, other); const nonce = rnd(12);
+    const cm = await aesEnc(key, nonce, enc.encode(text), enc.encode(chatId));
+    return "e2e1:" + b64(cat(this.pub, other, nonce, cm));
+  },
+  async recipients(chatId, isGroup, otherId) {
+    if (!isGroup) { const o = otherId && await this.pubOf(otherId); return o ? [o, this.pub] : null; }
+    const { data, error } = await sb.rpc("chat_keys", { p_chat: chatId }); if (error || !Array.isArray(data)) return null;
+    const list = [this.pub];
+    for (const r of data) {
+      if (r.user_id === Me.id) continue;
+      if (!r.public_key) return null; const k = unb64(r.public_key); if (k.length !== 32) return null; list.push(k);
+    }
+    return list.length > 150 ? null : list;
+  },
+  async seal(chatId, recips, clear) {
+    const aad = enc.encode(chatId); const ck = rnd(32);
+    const parts = [this.pub, new Uint8Array([(recips.length >> 8) & 255, recips.length & 255])];
+    for (const r of recips) { const nonce = rnd(12); parts.push(r, nonce, await aesEnc(await this.chatKey(chatId, r), nonce, ck, aad)); }
+    const nonce = rnd(12); parts.push(nonce, await aesEnc(ck, nonce, clear, aad));
+    return "e2e2:" + b64(cat(...parts));
+  },
+  async encryptFile(bytes) { const key = rnd(32), nonce = rnd(12); return { data: cat(nonce, await aesEnc(key, nonce, bytes)), key: b64(key) }; },
+  async decryptFile(data, keyB64) { if (data.length < 28) return null; try { return await aesDec(unb64(keyB64), data.subarray(0, 12), data.subarray(12)); } catch { return null; } },
+};
+
+// ---------------------------------------------------------------------
+// 📱 Anmelden: QR-Code zeigen, Handy scannt, verschlüsselte Antwort abholen
+// ---------------------------------------------------------------------
+const Me = { id: null, device: null };
+let linkTimer = null, pollTimer = null;
+
+function browserName() {
+  const u = navigator.userAgent;
+  const b = /Edg\//.test(u) ? "Edge" : /OPR\//.test(u) ? "Opera" : /Firefox\//.test(u) ? "Firefox" : /Chrome\//.test(u) ? "Chrome" : /Safari\//.test(u) ? "Safari" : "Browser";
+  const os = /Windows/.test(u) ? "Windows" : /Mac OS/.test(u) ? "Mac" : /Android/.test(u) ? "Android" : /Linux/.test(u) ? "Linux" : "PC";
+  return b + " · " + os;
+}
+
+async function showLogin() {
+  $("app").classList.add("hide"); $("login").classList.remove("hide");
+  clearInterval(pollTimer); clearTimeout(linkTimer);
+  if (SB_KEY.startsWith("__")) { qrMsg("Diese Seite ist noch nicht fertig eingerichtet."); return; }
+  const id = b64url(rnd(18)), secret = rnd(16), kp = nacl.box.keyPair();
+  const { data, error } = await sb.rpc("web_link_start", { p_id: id });
+  if (error || data !== true) { qrMsg("Keine Verbindung zu Wuzzo. Bitte Seite neu laden."); return; }
+  $("qr").innerHTML = ""; $("qrmsg").classList.add("hide");
+  new QRCode($("qr"), { text: "wuzzo-pc:1:" + id + ":" + b64url(kp.publicKey) + ":" + b64url(secret), width: 248, height: 248, correctLevel: QRCode.CorrectLevel.M });
+  linkTimer = setTimeout(showLogin, 4 * 60 * 1000); // neuer Code alle 4 Minuten
+  let busy = false;
+  pollTimer = setInterval(async () => {
+    if (busy) return; busy = true;
+    try {
+      const { data: r } = await sb.rpc("web_link_poll", { p_id: id });
+      if (r && r.payload) { clearInterval(pollTimer); clearTimeout(linkTimer); await finishLogin(r, id, secret, kp.secretKey); }
+    } catch {} finally { busy = false; }
+  }, 2000);
+}
+function qrMsg(t) { $("qrmsg").textContent = t; $("qrmsg").classList.remove("hide"); }
+
+async function finishLogin(r, id, secret, sk) {
+  qrMsg("🔓 Anmelden …");
+  try {
+    const b = unb64url(r.payload);
+    const shared = nacl.scalarMult(sk, b.subarray(0, 32));
+    const key = await hkdf(shared, secret, "wuzzo-pc-v1");
+    const info = JSON.parse(dec.decode(await aesDec(key, b.subarray(32, 44), b.subarray(44), enc.encode(id))));
+    let res = await sb.auth.verifyOtp({ token_hash: info.t, type: "magiclink" });
+    if (res.error) res = await sb.auth.verifyOtp({ token_hash: info.t, type: "email" });
+    if (res.error) throw res.error;
+    store.set("wz_pc_seed", info.s); store.set("wz_pc_device", r.device);
+    await startApp();
+  } catch (e) {
+    console.warn(e); qrMsg("Das hat nicht geklappt. Bitte nochmal scannen.");
+    setTimeout(showLogin, 2500);
+  }
+}
+
+async function logout(silent) {
+  try { if (Me.device) await sb.from("web_devices").delete().eq("id", Me.device); } catch {}
+  try { await sb.auth.signOut({ scope: "local" }); } catch {}
+  store.del("wz_pc_seed"); store.del("wz_pc_device");
+  if (!silent) toast("Abgemeldet.");
+  location.reload();
+}
+
+// ---------------------------------------------------------------------
+// 💬 Chats
+// ---------------------------------------------------------------------
+let chats = [], current = null, msgs = [], names = {}, channel = null;
+const plainCache = new Map(), fileUrls = new Map();
+
+async function startApp() {
+  const { data: { session } } = await sb.auth.getSession();
+  const seed = store.get("wz_pc_seed"); Me.device = store.get("wz_pc_device");
+  if (!session || !seed || !Me.device) { await showLogin(); return; }
+  Me.id = session.user.id; E2E.init(seed);
+  const { data: ok } = await sb.rpc("web_device_ping", { p_device: Me.device, p_name: browserName() });
+  if (ok !== true) { await logout(true); return; }
+  $("login").classList.add("hide"); $("app").classList.remove("hide");
+  setInterval(async () => {
+    const { data: still, error } = await sb.rpc("web_device_ping", { p_device: Me.device, p_name: browserName() });
+    if (!error && still !== true) { alert("Wuzzo wurde auf deinem Handy für diesen PC abgemeldet."); logout(true); }
+  }, 60 * 1000);
+  await loadChats();
+  listen();
+  updateNotifBtn();
+}
+
+async function loadChats() {
+  const { data, error } = await sb.rpc("my_chats");
+  if (error) { toast("Chats konnten nicht geladen werden."); return; }
+  chats = (data || []).filter(c => c.archived !== true);
+  chats.sort((a, b) => (b.pinned === true) - (a.pinned === true) || String(b.last_message_at || "").localeCompare(String(a.last_message_at || "")));
+  renderChats();
+  for (const c of chats) {
+    const cipher = c.last_cipher || (typeof c.last_body === "string" && /^e2e[12]:/.test(c.last_body) ? c.last_body : null);
+    if (cipher && !plainCache.has(cipher)) {
+      plainCache.set(cipher, null);
+      E2E.decrypt(c.chat_id, cipher).then(t => { plainCache.set(cipher, t); renderChats(); });
+    }
+  }
+}
+let reloadT = null;
+function reloadChatsSoon() { clearTimeout(reloadT); reloadT = setTimeout(loadChats, 600); }
+
+function titleOf(c) { return c.is_self ? "📝 Notizen an mich" : (c.title || "Chat"); }
+function previewOf(c) {
+  const cipher = c.last_cipher || (typeof c.last_body === "string" && /^e2e[12]:/.test(c.last_body) ? c.last_body : null);
+  let t = cipher ? plainCache.get(cipher) : c.last_body;
+  if (cipher && t == null) t = "🔒 …";
+  if (typeof t === "string" && t.startsWith('{"k"')) t = "📎 Foto / Datei";
+  t = (t || "Noch keine Nachrichten").replace(/\n/g, " ").replace(/[*_~]/g, "");
+  return (c.last_mine ? "Du: " : "") + t;
+}
+function timeShort(iso) {
+  if (!iso) return ""; const t = new Date(iso), now = new Date();
+  const d0 = new Date(now.getFullYear(), now.getMonth(), now.getDate()), d1 = new Date(t.getFullYear(), t.getMonth(), t.getDate());
+  const diff = Math.round((d0 - d1) / 864e5);
+  if (diff === 0) return t.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  if (diff === 1) return "Gestern";
+  if (diff < 7) return t.toLocaleDateString("de-DE", { weekday: "long" });
+  return t.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "2-digit" });
+}
+function avatar(el, c) {
+  el.innerHTML = ""; const name = titleOf(c);
+  if (c.avatar_url) { const i = new Image(); i.src = c.avatar_url; i.onerror = () => { el.textContent = (name.replace(/[^\p{L}\p{N}]/gu, "")[0] || "?").toUpperCase(); }; el.append(i); }
+  else el.textContent = c.is_group ? "👥" : (name.replace(/[^\p{L}\p{N}]/gu, "")[0] || "?").toUpperCase();
+}
+const drafts = {};
+function renderChats() {
+  const q = $("search").value.trim().toLowerCase();
+  const box = $("chats"); box.innerHTML = "";
+  for (const c of chats) {
+    if (q && !titleOf(c).toLowerCase().includes(q)) continue;
+    const row = document.createElement("div"); row.className = "chat" + (current && current.chat_id === c.chat_id ? " on" : "");
+    const av = document.createElement("div"); av.className = "av"; avatar(av, c);
+    const mid = document.createElement("div"); mid.className = "cmid";
+    const unread = Number(c.unread || 0);
+    const d = drafts[c.chat_id];
+    mid.innerHTML = `<div class="crow"><div class="cname">${c.pinned ? "📌 " : ""}${esc(titleOf(c))}${c.muted ? " 🔕" : ""}</div><div class="ctime">${esc(timeShort(c.last_message_at))}</div></div>
+      <div class="crow"><div class="cprev">${d ? `<span class="draft">✏️ Entwurf:</span> ${esc(d)}` : esc(previewOf(c))}</div>${unread > 0 ? `<span class="badge">${unread}</span>` : ""}</div>`;
+    row.append(av, mid); row.onclick = () => openChat(c);
+    box.append(row);
+  }
+}
+$("search").oninput = renderChats;
+
+async function openChat(c) {
+  if (current) drafts[current.chat_id] = $("text").value.trim() ? $("text").value : undefined;
+  current = c; msgs = []; names = {};
+  $("app").classList.add("open"); $("empty").classList.add("hide"); $("chatview").classList.remove("hide");
+  $("chattitle").textContent = titleOf(c); $("chatsub").textContent = c.is_group ? "Gruppe" : "🔒 Ende-zu-Ende-verschlüsselt";
+  avatar($("chatav"), c);
+  $("text").value = drafts[c.chat_id] || ""; autosize();
+  $("msgs").innerHTML = '<p style="text-align:center;color:var(--muted)">Lade …</p>';
+  renderChats();
+  if (c.is_group) {
+    const { data } = await sb.from("chat_members").select("user_id, profiles(display_name)").eq("chat_id", c.chat_id);
+    for (const r of data || []) names[r.user_id] = (r.profiles && r.profiles.display_name) || "Wuzzo-Nutzer";
+    $("chatsub").textContent = "Gruppe · " + Object.keys(names).length + " Mitglieder";
+  }
+  const { data, error } = await sb.from("messages").select("*").eq("chat_id", c.chat_id).order("created_at", { ascending: false }).limit(150);
+  if (current !== c) return;
+  if (error) { $("msgs").innerHTML = '<p style="text-align:center;color:var(--muted)">Nachrichten konnten nicht geladen werden.</p>'; return; }
+  msgs = (data || []).reverse();
+  await renderMsgs(true);
+  markRead();
+  $("text").focus();
+}
+$("backBtn").onclick = () => { $("app").classList.remove("open"); current = null; renderChats(); };
+
+function markRead() {
+  if (!current || document.hidden) return;
+  sb.rpc("mark_read", { p_chat: current.chat_id }).then(() => { const c = chats.find(x => x.chat_id === current?.chat_id); if (c) { c.unread = 0; renderChats(); } });
+}
+document.addEventListener("visibilitychange", markRead);
+
+// --- eine Nachricht für die Anzeige vorbereiten (entschlüsseln) ---
+async function view(m) {
+  if (m.deleted) return { ...m, kind: "text", body: "🚫 Nachricht gelöscht", locked: true };
+  if (m.e2e !== true) return m;
+  const key = m.chat_id + "|" + m.body;
+  let plain = plainCache.get(key);
+  if (plain === undefined) { plain = await E2E.decrypt(m.chat_id, m.body); plainCache.set(key, plain); }
+  if (plain == null) return { ...m, kind: "text", body: "🔒 Auf diesem PC nicht lesbar (alter Schlüssel).", locked: true };
+  const kind = m.kind || "text";
+  if (kind === "text") return { ...m, body: plain };
+  try { const j = JSON.parse(plain); return { ...m, file_key: j.k, file_name: j.n, file_size: j.s }; }
+  catch { return { ...m, kind: "text", body: plain }; }
+}
+
+function fmt(text) {
+  let h = esc(text);
+  h = h.replace(/((https?:\/\/|www\.)[^\s<>"]+)/gi, u => `<a href="${u.startsWith("http") ? u : "https://" + u}" target="_blank" rel="noopener noreferrer">${u}</a>`);
+  h = h.replace(/```([\s\S]+?)```/g, "<code>$1</code>")
+       .replace(/(^|[^\w*])\*(?=\S)([^*\n]+?)(?<=\S)\*(?![\w*])/g, "$1<b>$2</b>")
+       .replace(/(^|[^\w_\/])_(?=\S)([^_\n]+?)(?<=\S)_(?![\w_])/g, "$1<i>$2</i>")
+       .replace(/(^|[^\w~])~(?=\S)([^~\n]+?)(?<=\S)~(?![\w~])/g, "$1<s>$2</s>");
+  return h;
+}
+const onlyEmoji = t => /^(\p{Extended_Pictographic}|\p{Emoji_Component}|‍|️|\s){1,12}$/u.test(t) && /\p{Extended_Pictographic}/u.test(t) && [...t.replace(/\s/g, "")].length <= 8;
+
+async function fileUrl(m, type) {
+  const ck = m.attachment_path;
+  if (fileUrls.has(ck)) return fileUrls.get(ck);
+  const p = (async () => {
+    const { data, error } = await sb.storage.from(BUCKET).download(m.attachment_path);
+    if (error) throw error;
+    let bytes = new Uint8Array(await data.arrayBuffer());
+    if (m.file_key) { bytes = await E2E.decryptFile(bytes, m.file_key); if (!bytes) throw new Error("key"); }
+    return URL.createObjectURL(new Blob([bytes], { type: type || "application/octet-stream" }));
+  })();
+  fileUrls.set(ck, p); p.catch(() => fileUrls.delete(ck));
+  return p;
+}
+
+function dayLabel(d) {
+  const now = new Date(); const d0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const d1 = new Date(d.getFullYear(), d.getMonth(), d.getDate()); const diff = Math.round((d0 - d1) / 864e5);
+  return diff === 0 ? "Heute" : diff === 1 ? "Gestern" : d.toLocaleDateString("de-DE", { weekday: "long", day: "2-digit", month: "long" });
+}
+
+async function renderMsgs(scrollEnd) {
+  const box = $("msgs");
+  const atEnd = box.scrollHeight - box.scrollTop - box.clientHeight < 120;
+  const c = current; const views = await Promise.all(msgs.map(view)); if (c !== current) return;
+  box.innerHTML = ""; let lastDay = "";
+  for (const m of views) {
+    const d = new Date(m.created_at); const dl = dayLabel(d);
+    if (dl !== lastDay) { lastDay = dl; const x = document.createElement("div"); x.className = "day"; x.innerHTML = `<span>${esc(dl)}</span>`; box.append(x); }
+    box.append(bubble(m));
+  }
+  if (scrollEnd || atEnd) box.scrollTop = box.scrollHeight;
+}
+
+function bubble(m) {
+  const mine = m.sender_id === Me.id;
+  const row = document.createElement("div"); row.className = "m" + (mine ? " me" : "");
+  const b = document.createElement("div"); b.className = "bub";
+  const tm = new Date(m.created_at).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) + (m.edited_at ? " · bearbeitet" : "") + (mine ? " ✓" : "");
+  let who = current && current.is_group && !mine ? `<div class="who">${esc(names[m.sender_id] || "Wuzzo-Nutzer")}</div>` : "";
+  const kind = m.kind || "text"; const path = m.attachment_path;
+  const eff = m.effect; const ed = m.effect_data || {};
+  const timeEl = `<div class="tm">${esc(tm)}</div>`;
+  if (kind === "image" && path && !m.view_once) {
+    b.innerHTML = who + `<div style="color:var(--muted)">📷 Lade Foto …</div>` + timeEl;
+    fileUrl(m, "image/jpeg").then(u => {
+      const img = new Image(); img.className = "photo"; img.src = u; img.onclick = () => { $("viewer").querySelector("img").src = u; $("viewer").classList.remove("hide"); };
+      b.innerHTML = who; b.append(img); b.insertAdjacentHTML("beforeend", timeEl);
+      if (b.closest("#msgs")) { const box = $("msgs"); if (box.scrollHeight - box.scrollTop - box.clientHeight < 500) box.scrollTop = box.scrollHeight; }
+    }).catch(() => { b.innerHTML = who + "📷 Foto konnte nicht geladen werden" + timeEl; });
+  } else if (m.view_once) {
+    b.innerHTML = who + "1️⃣ Einmal-Foto – nur auf dem Handy ansehen" + timeEl;
+  } else if (kind === "audio" && path) {
+    b.innerHTML = who + `<button class="icon" style="color:inherit">▶️ Sprachnachricht ${m.duration_ms ? "(" + Math.round(m.duration_ms / 1000) + " s)" : ""} anhören</button>` + timeEl;
+    b.querySelector("button").onclick = async ev => {
+      ev.target.textContent = "⏳ Lade …";
+      try { const u = await fileUrl(m, "audio/mp4"); const a = document.createElement("audio"); a.controls = true; a.src = u; ev.target.replaceWith(a); a.play(); }
+      catch { ev.target.textContent = "Konnte nicht geladen werden"; }
+    };
+  } else if (kind === "video" && path) {
+    const isClip = eff === "clip";
+    if (isClip) b.classList.add("bare");
+    b.innerHTML = who + `<button class="icon" style="color:inherit">${isClip ? "⭕ Video-Nachricht" : "🎬 Video"} ansehen</button>` + timeEl;
+    b.querySelector("button").onclick = async ev => {
+      ev.target.textContent = "⏳ Lade …";
+      try {
+        const u = await fileUrl(m, "video/mp4"); const v = document.createElement("video"); v.controls = !isClip; v.src = u;
+        if (isClip) { v.className = "clip " + (ed.shape || "kreis"); v.onclick = () => v.paused ? v.play() : v.pause(); }
+        ev.target.replaceWith(v); v.play();
+      } catch { ev.target.textContent = "Konnte nicht geladen werden"; }
+    };
+  } else if (kind === "file" && path) {
+    const name = m.file_name || (m.body || "Dokument").replace(/^📎\s*/, "");
+    b.innerHTML = who + `<a class="file" href="#"><span class="fi">📄</span><span><b>${esc(name)}</b><br><small>${m.file_size ? (m.file_size / 1048576).toFixed(1).replace(".", ",") + " MB · " : ""}herunterladen</small></span></a>` + timeEl;
+    b.querySelector("a").onclick = async ev => {
+      ev.preventDefault();
+      try { const u = await fileUrl(m); const a = document.createElement("a"); a.href = u; a.download = name; a.click(); } catch { toast("Datei konnte nicht geladen werden."); }
+    };
+  } else if (eff === "gif" && ed.url) {
+    b.innerHTML = who + `<img class="photo" src="${esc(ed.url)}" alt="GIF">` + timeEl;
+  } else {
+    const body = String(m.body ?? "");
+    if (!m.locked && !eff && onlyEmoji(body)) { b.classList.add("bare"); b.innerHTML = who + `<div class="big-emoji">${esc(body)}</div>` + timeEl; }
+    else {
+      if (eff === "sticker" || eff === "wemoji" || eff === "wsticker") b.classList.add("bare");
+      b.innerHTML = who + `<div class="${m.locked ? "locked" : ""}">${fmt(body)}</div>` + timeEl;
+    }
+  }
+  row.append(b); return row;
+}
+$("viewer").onclick = () => $("viewer").classList.add("hide");
+
+// ---------------------------------------------------------------------
+// ⚡ Neue Nachrichten in Echtzeit
+// ---------------------------------------------------------------------
+function listen() {
+  channel = sb.channel("wz-pc")
+    .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, async p => {
+      const m = p.new && p.new.id ? p.new : null; if (!m) return;
+      if (current && m.chat_id === current.chat_id) {
+        const i = msgs.findIndex(x => x.id === m.id);
+        if (i >= 0) msgs[i] = m; else msgs.push(m);
+        await renderMsgs(m.sender_id === Me.id);
+        if (p.eventType === "INSERT" && m.sender_id !== Me.id) { markRead(); if (document.hidden) notify(m); }
+      } else if (p.eventType === "INSERT" && m.sender_id !== Me.id) notify(m);
+      reloadChatsSoon();
+    })
+    .subscribe();
+}
+async function notify(m) {
+  if (!("Notification" in window) || Notification.permission !== "granted") return;
+  const c = chats.find(x => x.chat_id === m.chat_id); if (c && c.muted) return;
+  const v = await view(m);
+  const body = (v.kind || "text") === "text" ? String(v.body || "").slice(0, 120) : (v.kind === "image" ? "📷 Foto" : v.kind === "audio" ? "🎤 Sprachnachricht" : v.kind === "video" ? "🎬 Video" : "📎 Datei");
+  const n = new Notification(c ? titleOf(c) : "Wuzzo", { body, icon: "../icon.png", tag: m.chat_id });
+  n.onclick = () => { window.focus(); if (c) openChat(c); n.close(); };
+}
+function updateNotifBtn() {
+  const b = $("notifBtn");
+  if (!("Notification" in window)) { b.classList.add("hide"); return; }
+  b.textContent = Notification.permission === "granted" ? "🔔" : "🔕";
+  b.title = Notification.permission === "granted" ? "Benachrichtigungen sind an" : "Benachrichtigungen einschalten";
+}
+$("notifBtn").onclick = async () => {
+  if (!("Notification" in window)) return;
+  if (Notification.permission === "denied") { toast("Benachrichtigungen sind im Browser gesperrt – Schloss-Symbol links neben der Adresse → erlauben."); return; }
+  await Notification.requestPermission(); updateNotifBtn();
+  if (Notification.permission === "granted") toast("🔔 Benachrichtigungen sind an.");
+};
+$("logoutBtn").onclick = () => { if (confirm("Wuzzo an diesem PC abmelden?")) logout(); };
+
+// ---------------------------------------------------------------------
+// ✉️ Senden
+// ---------------------------------------------------------------------
+let sending = false;
+async function textFields(text) {
+  if (!current.is_group && current.other_id) { const e = await E2E.encryptFor(current.chat_id, current.other_id, text); if (e) return { body: e, e2e: true }; }
+  else if (current.is_group) { const r = await E2E.recipients(current.chat_id, true); if (r) return { body: await E2E.seal(current.chat_id, r, enc.encode(text)), e2e: true }; }
+  return { body: text, e2e: false };
+}
+async function insert(fields) {
+  const { error } = await sb.from("messages").insert({ chat_id: current.chat_id, sender_id: Me.id, ...fields });
+  if (error) throw error;
+}
+async function sendText() {
+  const text = $("text").value.trim(); if (!text || !current || sending) return;
+  sending = true;
+  try { await insert(await textFields(text)); $("text").value = ""; drafts[current.chat_id] = undefined; autosize(); updateSendBtn(); }
+  catch { toast("Nicht gesendet. Prüfe die Verbindung."); }
+  finally { sending = false; }
+}
+
+async function shrinkImage(file) {
+  try {
+    const bmp = await createImageBitmap(file); const max = 1600; const s = Math.min(1, max / Math.max(bmp.width, bmp.height));
+    const cv = document.createElement("canvas"); cv.width = Math.round(bmp.width * s); cv.height = Math.round(bmp.height * s);
+    cv.getContext("2d").drawImage(bmp, 0, 0, cv.width, cv.height);
+    const blob = await new Promise(r => cv.toBlob(r, "image/jpeg", .85));
+    return new Uint8Array(await blob.arrayBuffer());
+  } catch { return new Uint8Array(await file.arrayBuffer()); }
+}
+
+async function sendFile(file, kindOverride, durationMs) {
+  if (!current) return;
+  if (file.size > 24 * 1024 * 1024) { toast("Zu groß – höchstens 24 MB."); return; }
+  const type = file.type || "";
+  const kind = kindOverride || (type.startsWith("image/") && !type.includes("gif") ? "image" : type.startsWith("video/") ? "video" : type.startsWith("audio/") ? "audio" : "file");
+  toast("⏫ Sende " + (kind === "image" ? "Foto" : kind === "audio" ? "Sprachnachricht" : file.name || "Datei") + " …", 60000);
+  try {
+    const bytes = kind === "image" ? await shrinkImage(file) : new Uint8Array(await file.arrayBuffer());
+    const ext = kind === "image" ? "jpg" : ((file.name || "").split(".").pop() || "bin").toLowerCase().slice(0, 6);
+    const label = kind === "image" ? "📷 Foto" : kind === "video" ? "🎬 Video" : kind === "audio" ? "🎤 Sprachnachricht" : "📎 " + (file.name || "Dokument");
+    const extra = kind === "file" ? { n: file.name || "Dokument", s: bytes.length } : kind === "video" ? { s: bytes.length } : {};
+    const recips = await E2E.recipients(current.chat_id, current.is_group, current.other_id);
+    const path = current.chat_id + "/" + Date.now() + "-" + Me.id.slice(0, 8) + ".";
+    let fields;
+    if (recips) {
+      const ef = await E2E.encryptFile(bytes);
+      const sealed = await E2E.seal(current.chat_id, recips, enc.encode(JSON.stringify({ k: ef.key, ...extra })));
+      const { error } = await sb.storage.from(BUCKET).upload(path + "bin", ef.data, { contentType: "application/octet-stream", upsert: false });
+      if (error) throw error;
+      fields = { body: sealed, e2e: true, kind, attachment_path: path + "bin" };
+    } else {
+      const ct = kind === "image" ? "image/jpeg" : type || "application/octet-stream";
+      const { error } = await sb.storage.from(BUCKET).upload(path + ext, bytes, { contentType: ct, upsert: false });
+      if (error) throw error;
+      fields = { body: label, kind, attachment_path: path + ext };
+    }
+    if (durationMs) fields.duration_ms = Math.round(durationMs);
+    await insert(fields);
+    toast("✅ Gesendet");
+  } catch (e) { console.warn(e); toast("Nicht gesendet. Prüfe die Verbindung (oder ob dein Wuzzo-Pass Medien erlaubt)."); }
+}
+
+// Eingabe
+const tx = $("text");
+function autosize() { tx.style.height = "auto"; tx.style.height = Math.min(160, tx.scrollHeight) + "px"; }
+function updateSendBtn() { $("sendBtn").textContent = tx.value.trim() ? "➤" : "🎤"; $("sendBtn").title = tx.value.trim() ? "Senden" : "Gedrückt halten für Sprachnachricht"; }
+tx.addEventListener("input", () => { autosize(); updateSendBtn(); if (current) { drafts[current.chat_id] = tx.value.trim() ? tx.value : undefined; } });
+tx.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); sendText(); } });
+tx.addEventListener("paste", e => {
+  const files = [...(e.clipboardData?.files || [])]; if (!files.length) return;
+  e.preventDefault(); files.forEach(f => sendFile(f));
+});
+$("fileBtn").onclick = () => $("fileIn").click();
+$("fileIn").onchange = () => { [...$("fileIn").files].forEach(f => sendFile(f)); $("fileIn").value = ""; };
+
+// Ziehen & Ablegen
+let dragN = 0;
+$("chatview").addEventListener("dragenter", e => { if ([...e.dataTransfer.types].includes("Files")) { dragN++; $("drop").classList.remove("hide"); } });
+$("chatview").addEventListener("dragleave", () => { if (--dragN <= 0) { dragN = 0; $("drop").classList.add("hide"); } });
+$("chatview").addEventListener("dragover", e => e.preventDefault());
+$("chatview").addEventListener("drop", e => { e.preventDefault(); dragN = 0; $("drop").classList.add("hide"); [...e.dataTransfer.files].forEach(f => sendFile(f)); });
+
+// 🎤 Sprachnachricht: Knopf gedrückt halten, loslassen = senden
+let rec = null, recStart = 0, recChunks = [];
+async function recStartFn() {
+  if (tx.value.trim() || rec) return;
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const mime = MediaRecorder.isTypeSupported("audio/mp4") ? "audio/mp4" : "audio/webm;codecs=opus";
+    rec = new MediaRecorder(stream, { mimeType: mime, audioBitsPerSecond: 48000 }); recChunks = [];
+    rec.ondataavailable = e => e.data.size && recChunks.push(e.data);
+    rec.start(); recStart = Date.now(); $("sendBtn").classList.add("rec"); $("sendBtn").textContent = "⏺";
+    toast("🎙️ Aufnahme läuft – loslassen zum Senden", 300000);
+  } catch { toast("Mikrofon nicht erlaubt – im Browser beim Schloss-Symbol erlauben."); rec = null; }
+}
+function recStop() {
+  const r = rec; if (!r) return; rec = null;
+  const ms = Date.now() - recStart; $("sendBtn").classList.remove("rec"); updateSendBtn(); $("toast").classList.add("hide");
+  r.onstop = () => {
+    r.stream.getTracks().forEach(t => t.stop());
+    if (ms < 800) { toast("Zu kurz – Knopf gedrückt halten."); return; }
+    const blob = new Blob(recChunks, { type: r.mimeType });
+    sendFile(new File([blob], "sprache." + (r.mimeType.includes("mp4") ? "m4a" : "webm"), { type: r.mimeType.split(";")[0] }), "audio", ms);
+  };
+  r.stop();
+}
+$("sendBtn").addEventListener("mousedown", e => { if (!tx.value.trim()) { e.preventDefault(); recStartFn(); } });
+window.addEventListener("mouseup", () => { if (rec) recStop(); });
+$("sendBtn").onclick = () => { if (tx.value.trim()) sendText(); };
+
+// 😊 Smileys
+const EMO = "😀 😂 🤣 😊 😍 😘 🥰 😎 🤔 😅 😢 😭 😡 🥳 😴 🙄 😇 🤗 🤩 😬 👍 👎 👏 🙏 💪 👋 🤝 ✌️ 👌 🤞 ❤️ 🧡 💛 💚 💙 💜 🖤 💔 💕 🔥 🎉 🎂 🎁 🌹 🌸 ☀️ 🌙 ⭐ ⚡ ☕ 🍕 🍰 🍻 🥂 ⚽ 🚗 ✈️ 🏠 📞 💡".split(" ");
+for (const e of EMO) { const btn = document.createElement("button"); btn.textContent = e; btn.onclick = () => { const s = tx.selectionStart; tx.setRangeText(e, s, tx.selectionEnd, "end"); tx.focus(); autosize(); updateSendBtn(); }; $("emojis").append(btn); }
+$("emojiBtn").onclick = e => { e.stopPropagation(); $("emojis").classList.toggle("hide"); };
+document.addEventListener("click", e => { if (!$("emojis").contains(e.target)) $("emojis").classList.add("hide"); });
+
+// ---------------------------------------------------------------------
+// Los geht's
+// ---------------------------------------------------------------------
+startApp().catch(e => { console.warn(e); showLogin(); });
+</script>
+</body>
+</html>
