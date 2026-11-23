@@ -445,19 +445,22 @@ function broadcastCard(){
   const c = $("div","card"); c.style.marginTop = "18px";
   c.append($("h2",null,"📢 Nachricht an alle"),
     $("p","note","Der Wuzzo Bot schickt diesen Text an alle Nutzer – mit Push-Benachrichtigung. Zum Beispiel für Updates oder wichtige Hinweise."));
-  const ta = document.createElement("textarea"); ta.maxLength = 1000; ta.rows = 3; ta.placeholder = "z. B. Neue Version 0.5 ist da – öffne Wuzzo und tippe auf „Jetzt laden“.";
-  ta.style.cssText = "width:100%;box-sizing:border-box;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--deep);color:var(--text);font:inherit;resize:vertical";
+  const ta = document.createElement("textarea"); ta.maxLength = 3500; ta.rows = 14; ta.placeholder = "z. B. Neue Version 0.5 ist da – öffne Wuzzo und tippe auf „Jetzt laden“.";
+  ta.style.cssText = "width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--deep);color:var(--text);font:inherit;line-height:1.5;min-height:320px;resize:vertical";
+  const zahl = $("p","note","0 / 3500 Zeichen"); zahl.style.textAlign = "right"; zahl.style.margin = "4px 0 0";
+  const wachsen = () => { ta.style.height = "auto"; ta.style.height = Math.max(320, ta.scrollHeight + 4) + "px"; zahl.textContent = nf(ta.value.length) + " / 3500 Zeichen"; };
+  ta.addEventListener("input", wachsen);
   const go = $("button","primary","An alle senden"); go.type = "button"; go.style.marginTop = "10px";
   const out = $("p","note");
   go.onclick = async () => {
     const t = ta.value.trim(); if (!t){ out.textContent = "Bitte zuerst einen Text eingeben."; return; }
     if (!confirm("Wirklich an ALLE Nutzer senden?\n\n" + t)) return;
     go.disabled = true; out.textContent = "Wird gesendet …";
-    try { const n = await rpc("admin_broadcast", { p_text: t }); out.textContent = "✅ Gesendet an " + nf(n) + " Nutzer."; ta.value = ""; }
+    try { const n = await rpc("admin_broadcast", { p_text: t }); out.textContent = "✅ Gesendet an " + nf(n) + " Nutzer."; ta.value = ""; wachsen(); }
     catch(e){ out.textContent = "Fehler: " + e.message; }
     go.disabled = false;
   };
-  c.append(ta, go, out);
+  c.append(ta, zahl, go, out);
   return c;
 }
 
