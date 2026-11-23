@@ -1,0 +1,47 @@
+{
+ "v": 1,
+ "packs": [
+  {
+   "id": "wuzzo-freunde",
+   "name": "Wuzzo-Freunde",
+   "by": "Wuzzo",
+   "files": [
+    "01-hallo.png",
+    "02-verliebt.png",
+    "03-lachen.png",
+    "04-cool.png",
+    "05-wow.png",
+    "06-traurig.png",
+    "07-wuetend.png",
+    "08-muede.png",
+    "09-kuss.png",
+    "10-party.png",
+    "11-daumen.png",
+    "12-danke.png",
+    "13-kaffee.png",
+    "14-krank.png",
+    "15-zwinker.png",
+    "16-gute-nacht.png"
+   ]
+  },
+  {
+   "id": "liebe-familie",
+   "name": "Liebe & Familie",
+   "by": "Wuzzo",
+   "files": [
+    "01-herz.png",
+    "02-herz-liebe.png",
+    "03-umarmung.png",
+    "04-ballon.png",
+    "05-geburtstag.png",
+    "06-geschenk.png",
+    "07-sonne.png",
+    "08-mond.png",
+    "09-familie.png",
+    "10-zuhause.png",
+    "11-glueck.png",
+    "12-rose.png"
+   ]
+  }
+ ]
+}

@@ -1196,6 +1196,7 @@ function wegweiser(){
     ["programmierer","💶 Geld → 🧮 Rechner","Was bleibt bei 1.000 / 20.000 Nutzern übrig?", () => go("money","calc")],
     ["programmierer","💶 Geld → 🔋 Guthaben · 🧾 EÜR","Kosten der Dienste, Buchhaltung fürs Finanzamt", () => go("money","credit")],
     ["programmierer","⚙️ System → 🚦 Betrieb","Anmeldungen offen/zu, Verkauf an/aus, 🐢 Spar-Modus, 🤖 KI-Bremse, 🌅 Abschied", () => go("system","ops")],
+    ["admin","⚙️ System → 📍🎨 Standort & Sticker","Standort finden (Zahlen), Hintergrund-Standort-Schalter, Sticker, Ereignisse, Listen (ab 0.49)", () => go("system","neu49")],
     ["admin","⚙️ System → 🛠️ Heute","Server-Zustand, SMS an/aus, SMS pro Tag", () => go("system","today")],
     ["admin","⚙️ System → 🐞 Fehler · 📲 Updates · 📢 Nachricht an alle","", () => go("system","errors")],
     ["admin","👥 Nutzer → Person antippen","Paket schenken, 🎟️ Jahrespass +1 Jahr, 🏅 Familie, Rolle, sperren, löschen", () => go("users")],
@@ -1606,6 +1607,7 @@ function renderSystem(main){
     { id:"updates", t:"📲 Updates" },
     { id:"family", t:"🆘 Familie & SOS" },
     { id:"ops", t:"🚦 Betrieb", need:"programmierer" },
+    { id:"neu49", t:"📍🎨 Standort & Sticker", need:"admin" },
     { id:"broadcast", t:"📢 Nachricht an alle", need:"admin" },
   ]);
   const g = grid(main);
@@ -1614,9 +1616,64 @@ function renderSystem(main){
   else if (sub === "updates") legacyCards(g, ["versions","force","rules"]);
   else if (sub === "family") legacyCards(g, ["sos","care"]);
   else if (sub === "ops") renderOperation(g);
+  else if (sub === "neu49") renderFeatures49(g);
   else { const c = broadcastCard(); c.style.marginTop = "0"; g.append(c); }
 }
 
+
+/* ---------- 📍🎨 Neu in 0.49: Standort finden, Sticker, Ereignisse, Listen (plus49-jetzt.sql) ---------- */
+function renderFeatures49(g){
+  const lk = (t, h) => { const a = $("a",null,"→ " + t); a.href = h; a.target = "_blank"; a.rel = "noopener"; a.style.cssText = "display:block;margin-top:6px;color:var(--volt);font-size:14px"; return a; };
+  const num = (v) => Number(v || 0).toLocaleString("de-DE");
+  const line = (t, v) => { const r = $("div"); r.style.cssText = "display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px solid var(--line)"; r.append($("span",null,t), $("b",null,v)); return r; };
+  const c1 = $("div","card"), c2 = $("div","card"), c3 = $("div","card"), c4 = $("div","card"), c5 = $("div","card");
+  c1.append($("b",null,"📍 Standort finden („Wo ist Opa?“)"));
+  c2.append($("b",null,"🛰️ Hintergrund-Standort"));
+  c3.append($("b",null,"🎨 Sticker, 💚 Wuzzo-Emojis, 🤝 Duett"));
+  c4.append($("b",null,"📅 Ereignisse & 📋 Listen"));
+  c5.append($("b",null,"🔗 Schnell-Links (0.49) · Kosten: 0 €"));
+  [c1,c2,c3,c4].forEach(c => { c.append($("p","note","Lädt …")); g.append(c); });
+  g.append(c5);
+  c5.append($("p","note","Alles ohne laufende Kosten: Standorte und Sticker laufen über Handy, Firebase (kostenlos) und deine Webseite."),
+    lk("Server-Funktion „finden“ (Supabase)", "https://supabase.com/dashboard/project/hbusxiioorpsskzvjxza/functions"),
+    lk("Speicher „family-stickers“ (Supabase)", "https://supabase.com/dashboard/project/hbusxiioorpsskzvjxza/storage/buckets/family-stickers"),
+    lk("Sticker-Laden – Liste der Pakete (wuzzo.de)", "https://wuzzo.de/sticker/index.json"),
+    lk("Google Play → App-Inhalte (Standort-Erklärung)", "https://play.google.com/console/u/0/developers/8787141740191790937/app/4974409909997434422/app-content/summary"));
+  rpc("admin_features49").then(d => {
+    [c1,c2,c3,c4].forEach(c => c.querySelector(".note").remove());
+    c1.append($("p","note","Nur Zahlen – keine Namen, keine Orte. Die Standorte sind verschlüsselt, auch wir können sie nicht lesen."),
+      line("✅ Freigaben aktiv", num(d.finder_ok)),
+      line("⏳ Fragen ohne Antwort", num(d.finder_asked)),
+      line("🔎 Heute nachgesehen", num(d.finder_lookups_today)),
+      line("📶 Letzte 24 Std.: Handy hat geantwortet", num(d.finder_live_answers_24h) + " von " + num(d.finder_requests_24h)),
+      $("p","note","⭐ Premium: 1 Person · 👑 VIP: bis 5 · Opa bekommt alle 30 Tage eine stille Erinnerung (Pflicht bei Google)."));
+    const on = d.bg_location === true;
+    const box = $("div"); box.style.cssText = "display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0;padding:10px;border-radius:10px;border:1px solid " + (on ? "var(--good)" : "var(--line)");
+    box.append($("b",null, on ? "🟢 Hintergrund-Standort ist AN" : "⚪ Hintergrund-Standort ist AUS"),
+      $("span","note", "AUS = Opa wird gefunden, wenn Wuzzo bei ihm offen ist – sonst kommt der letzte bekannte Standort. " +
+        "AN = auch wenn Wuzzo zu ist. Dafür muss Google das ERST erlauben (Formular + kurzes Video, 1–2 Wochen) und Claude ein Paket mit „Immer erlauben“ bauen."));
+    if (darf("programmierer")) {
+      const tb = $("button","btn" + (on ? " danger" : ""), on ? "Ausschalten" : "Einschalten");
+      tb.onclick = () => { if (!confirm(on ? "Hintergrund-Standort ausschalten?" : "Hat Google den Hintergrund-Standort schon ERLAUBT und ist das passende Wuzzo-Update draußen?\n\nNur dann einschalten.")) return;
+        act_(() => rpc("admin_set_setting", { p_key:"bg_location", p_value: on ? "0" : "1" })); };
+      box.append(tb);
+    }
+    c2.append(box);
+    c3.append($("p","note","Letzte 30 Tage"),
+      line("🎨 Sticker geschickt", num(d.stickers_30d)),
+      line("🎙️ davon mit Stimme (⭐)", num(d.voice_stickers_30d)),
+      line("💚 Wuzzo-Emojis", num(d.wemoji_30d)),
+      line("🌍 Wort-Sticker (⭐)", num(d.wsticker_30d)),
+      line("🤝 Duett geschickt / angenommen", num(d.duett_30d) + " / " + num(d.duett_answered_30d)),
+      line("📦 Pakete geteilt", num(d.packs_30d)),
+      line("👨‍👩‍👧 Familien-Sticker gesamt (👑)", num(d.family_stickers)));
+    c4.append(
+      line("📅 Ereignisse (30 Tage)", num(d.events_30d)),
+      line("✅ Zusagen (30 Tage)", num(d.event_answers_30d)),
+      line("📋 Listen gesamt", num(d.lists)),
+      line("👤 Personen mit Listen", num(d.lists_users)));
+  }).catch(() => { [c1,c2,c3,c4].forEach(c => { const n = c.querySelector(".note"); if (n) n.textContent = "Noch nicht eingerichtet – plus49-jetzt.sql ausführen."; }); });
+}
 
 /* ---------- 🚦 Betrieb: Anmeldungen, Verkauf, Abschied (plus47.sql) ---------- */
 function renderOperation(g){
