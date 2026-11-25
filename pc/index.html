@@ -170,6 +170,7 @@ a{color:var(--volt)}
 const SB_URL = "https://hbusxiioorpsskzvjxza.supabase.co";
 const SB_KEY = "sb_publishable_ZUZ5BuGvwXJWtzaN9OrASQ_mzcCslb1";
 const BUCKET = "chat-media";
+const BOT_ID = "00000000-0000-0000-0000-00000000b0b0";
 const sb = supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, storageKey: "wz_pc_auth" } });
 
 const $ = id => document.getElementById(id);
@@ -429,7 +430,11 @@ async function openChat(c) {
   if (current) drafts[current.chat_id] = $("text").value.trim() ? $("text").value : undefined;
   current = c; msgs = []; names = {};
   $("app").classList.add("open"); $("empty").classList.add("hide"); $("chatview").classList.remove("hide");
-  $("chattitle").textContent = titleOf(c); $("chatsub").textContent = c.is_group ? "Gruppe" : "🔒 Ende-zu-Ende-verschlüsselt";
+  $("chattitle").textContent = titleOf(c);
+  $("chatsub").textContent = c.is_group ? "Gruppe" : c.other_id === BOT_ID ? "🤖 Wuzzo-Bot" : c.is_self ? "📝 Nur für dich" : "";
+  if (!c.is_group && c.other_id && c.other_id !== BOT_ID) {
+    E2E.pubOf(c.other_id).then(k => { if (current === c) $("chatsub").textContent = k ? "🔒 Ende-zu-Ende-verschlüsselt" : "Noch nicht verschlüsselt (der andere hat ein altes Wuzzo)"; });
+  }
   avatar($("chatav"), c);
   $("text").value = drafts[c.chat_id] || ""; autosize();
   $("msgs").innerHTML = '<p style="text-align:center;color:var(--muted)">Lade …</p>';
@@ -615,7 +620,8 @@ $("logoutBtn").onclick = () => { if (confirm("Wuzzo an diesem PC abmelden?")) lo
 // ---------------------------------------------------------------------
 let sending = false;
 async function textFields(text) {
-  if (!current.is_group && current.other_id) { const e = await E2E.encryptFor(current.chat_id, current.other_id, text); if (e) return { body: e, e2e: true }; }
+  const other = current.other_id || (current.is_self ? Me.id : null);
+  if (!current.is_group && other) { const e = await E2E.encryptFor(current.chat_id, other, text); if (e) return { body: e, e2e: true }; }
   else if (current.is_group) { const r = await E2E.recipients(current.chat_id, true); if (r) return { body: await E2E.seal(current.chat_id, r, enc.encode(text)), e2e: true }; }
   return { body: text, e2e: false };
 }
@@ -652,7 +658,7 @@ async function sendFile(file, kindOverride, durationMs) {
     const ext = kind === "image" ? "jpg" : ((file.name || "").split(".").pop() || "bin").toLowerCase().slice(0, 6);
     const label = kind === "image" ? "📷 Foto" : kind === "video" ? "🎬 Video" : kind === "audio" ? "🎤 Sprachnachricht" : "📎 " + (file.name || "Dokument");
     const extra = kind === "file" ? { n: file.name || "Dokument", s: bytes.length } : kind === "video" ? { s: bytes.length } : {};
-    const recips = await E2E.recipients(current.chat_id, current.is_group, current.other_id);
+    const recips = await E2E.recipients(current.chat_id, current.is_group, current.other_id || (current.is_self ? Me.id : null));
     const path = current.chat_id + "/" + Date.now() + "-" + Me.id.slice(0, 8) + ".";
     let fields;
     if (recips) {

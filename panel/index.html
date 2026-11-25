@@ -278,6 +278,13 @@ function setCfg(c){ try { c ? localStorage.setItem("wuzzo-admin-cfg", JSON.strin
 /* ---------- Beispieldaten für den Demo-Modus ---------- */
 function demoData(){
   const today = new Date(); today.setHours(12,0,0,0);
+  // ab 0.49.9: Beispiele für Preise, Hinweise und Wachstum
+  S.prices = { wuzzo_start:99, wuzzo_jahr:199, wuzzo_premium_6m:399, wuzzo_vip_6m:699 }; S.plan = {};
+  S.alerts = [ { id:2, level:"info", kind:"kauf", text:"💰 Beispiel: Ana hat ⭐ Premium gekauft (3,99 €).", created_at:new Date(Date.now()-36e5).toISOString() },
+               { id:1, level:"gelb", kind:"ansturm", text:"📈 Viele neue Nutzer: 107 in den letzten 7 Tagen (sonst ca. 30 pro Woche). Kosten im Blick behalten!", created_at:new Date(Date.now()-9e6).toISOString() } ];
+  S.growth = { today:19, week:107, week_prev:31, month:148, month_prev:0, year:148, year_prev:0, total:148,
+    weeks:[{w:"2026-10-05",n:4},{w:"2026-10-12",n:9},{w:"2026-10-19",n:7},{w:"2026-10-26",n:12},{w:"2026-11-02",n:18},{w:"2026-11-09",n:31},{w:"2026-11-16",n:107}],
+    pkg:{ vip:3, premium:11, pass:96, basis:24, free:14 } };
   const users = [3,5,4,8,6,9,12,10,14,11,17,15,21,19], msgs = [40,62,55,98,120,140,175,160,230,210,290,320,380,410];
   S.stats = { users_total:148, users_today:19, users_week:107, users_banned:2, chats_total:96, groups_total:14, messages_today:410, reports_open:3, ai_today:236, ai_cost_month:1.84,
     daily: users.map((u,i) => ({ day:new Date(today - (13-i)*864e5).toISOString().slice(0,10), users:u, messages:msgs[i] })) };
@@ -320,6 +327,17 @@ async function rpc(name, params){
   return data;
 }
 function demoRpc(name, p){
+  if (name === "admin_recurring_list") return S.demoRec || (S.demoRec = [
+    { id:1, kind:"ausgabe", category:"Apple Entwicklerkonto", counterparty:"Apple", amount:99, currency:"USD", every:"jahr", day:1, month:1, active:true },
+    { id:2, kind:"ausgabe", category:"Domain wuzzo.de", counterparty:"Domain-Anbieter", amount:12, currency:"EUR", every:"jahr", day:1, month:3, active:true }]);
+  if (name === "admin_recurring_save"){ S.demoRec = S.demoRec || [];
+    const x = S.demoRec.find(r => r.id === p.p_id);
+    const v = { id:p.p_id || Date.now(), kind:p.p_kind, category:p.p_category, counterparty:p.p_counterparty, amount:p.p_amount, currency:p.p_currency, every:p.p_every, day:p.p_day, month:p.p_month, active:p.p_active };
+    if (x) Object.assign(x, v); else S.demoRec.push(v); return v.id; }
+  if (name === "admin_recurring_delete"){ S.demoRec = (S.demoRec || []).filter(r => r.id !== p.p_id); return null; }
+  if (name === "admin_store_reports") return { bucket:"pubsite_prod_1234567890", last_run:"Demo", last_error:"", refunds:1,
+    reports:[{ month:"2026-11-01", gross:182.40, fees:-27.36, taxes:-34.66, refunds:-7.55, net:112.83 }, { month:"2026-10-01", gross:96.10, fees:-14.42, taxes:-18.26, refunds:0, net:63.42 }] };
+  if (name === "admin_finance_settings") return { auto_book:"1", fee_google_pct:"15", fee_apple_pct:"15", usd_eur:"0.92", usd_auto:"1" };
   if (name === "admin_resolve_report"){
     const r = S.reports.find(x => x.report_id === p.p_report); if (r){ r.status = p.p_ban ? "gesperrt" : "erledigt"; if (p.p_ban){ const u = S.users.find(x => x.user_id === r.reported_id); if (u) u.banned = true; S.reports.forEach(x => { if (x.reported_id === r.reported_id) x.reported_banned = true; }); } }
     S.stats.reports_open = S.reports.filter(x => x.status === "offen").length;
@@ -351,7 +369,12 @@ async function loadAll(){
     if (!reqs.error) S.authReqs = reqs.data || [];
     try { S.costs = await rpc("admin_costs"); } catch(e){ S.costs = null; }
     try { S.money = await rpc("admin_money_info"); } catch(e){ S.money = null; }
-  } else { S.fin = []; S.authReqs = []; S.costs = null; S.money = null; }
+    // 💶 ab 0.49.9 (plus49g-geld.sql): Preise, Planung, Hinweise
+    try { S.prices = await rpc("app_prices"); } catch(e){ S.prices = null; }
+    try { S.plan = await rpc("admin_plan") || {}; } catch(e){ S.plan = null; }
+    try { S.alerts = await rpc("admin_alerts_list") || []; } catch(e){ S.alerts = null; }
+  } else { S.fin = []; S.authReqs = []; S.costs = null; S.money = null; S.prices = null; S.plan = null; S.alerts = null; }
+  if (darf("admin")){ try { S.growth = await rpc("admin_growth"); } catch(e){ S.growth = null; } }
 }
 
 /* ---------- Anzeige ---------- */
@@ -1099,8 +1122,35 @@ function grid(main){ const g = $("div","cgrid"); main.append(g); return g; }
 function go(tab, sub){ S.tab = tab; if (sub){ S.sub = S.sub || {}; S.sub[tab] = sub; } S.armed = null; render(); window.scrollTo(0,0); }
 function euro(c){ return (Number(c || 0) / 100).toLocaleString("de-DE", { style:"currency", currency:"EUR" }); }
 function fixKosten(){
-  let f = {}; try { f = JSON.parse(localStorage.getItem("wz_fixkosten") || "{}"); } catch(e){}
+  // ab 0.49.9: auf dem Server gespeichert (damit der Geld-Wächter rechnen kann) – sonst wie früher aus dem Browser
+  let f = (S.plan && S.plan.fixed) || null;
+  if (!f){ f = {}; try { f = JSON.parse(localStorage.getItem("wz_fixkosten") || "{}"); } catch(e){} }
   return { supabase: f.supabase ?? 23, livekit: f.livekit ?? 0, domain: f.domain ?? 1 };
+}
+/* ---------- 🏷️ Preise (ab 0.49.9 im Panel einstellbar) ---------- */
+const PREIS_STD = { wuzzo_start:99, wuzzo_jahr:199, wuzzo_premium_6m:399, wuzzo_vip_6m:699 };
+function preis(id){ return Number(((S.prices || {})[id] ?? PREIS_STD[id])) / 100; }
+function pe(id){ return eur(preis(id)); }
+function netto(brutto){ return brutto / 1.19 * 0.85; }
+async function savePlan(patch){
+  const p = Object.assign({}, S.plan || {}, patch);
+  await rpc("admin_set_plan", { p_plan: p }); S.plan = p;
+}
+const PLAN_STD = {
+  limits: {
+    // ab 0.50.0: gleiche Standardwerte wie in der App (plus50.sql) · audio_min 0 = unbegrenzt
+    normal:  { media_mb:500,  storage_mb:250,  video_min:0,   audio_min:0, ki:20,  flow_min:0,  dolm_min:0,  trans:300 },
+    premium: { media_mb:2048, storage_mb:2048, video_min:120, audio_min:0, ki:50,  flow_min:30, dolm_min:10, trans:1500 },
+    vip:     { media_mb:8192, storage_mb:5120, video_min:300, audio_min:0, ki:125, flow_min:75, dolm_min:25, trans:4000 },
+  },
+  unit: { gb_traffic:0.085, gb_storage:0.02, video_min:0.004, audio_min:0.001, audio_est:200, ki:0.004, flow_min:0.004, dolm_min:0.01, trans:0.0006, base:0.02 },
+  usage_pct: 30,
+};
+function planVal(){
+  const p = S.plan || {};
+  const L = JSON.parse(JSON.stringify(PLAN_STD.limits));
+  for (const k of Object.keys(L)) Object.assign(L[k], (p.limits || {})[k] || {});
+  return { limits: L, unit: Object.assign({}, PLAN_STD.unit, p.unit || {}), usage_pct: p.usage_pct ?? PLAN_STD.usage_pct };
 }
 function updateBadges(){
   const h = S.home || {};
@@ -1115,6 +1165,10 @@ function renderStart(main){
   const std = new Date().getHours();
   const gruss = std < 11 ? "Guten Morgen" : std < 18 ? "Hallo" : "Guten Abend";
   pageHead(main, gruss + ", Valentin 👋", new Date().toLocaleDateString("de-DE", { weekday:"long", day:"numeric", month:"long", year:"numeric" }) + " · alles Wichtige auf einen Blick");
+
+  // 🔔 ab 0.49.9: Hinweise (Käufe, Geld-Wächter, Ansturm) + 📈 neue Nutzer
+  if (darf("programmierer")){ const ac = alertsCard(); if (ac) main.append(ac); }
+  if (darf("admin")){ const gc = growthCard(); if (gc) main.append(gc); }
 
   // Was ist zu tun?
   main.append($("h2",null,"📋 Was ist zu tun?"));
@@ -1460,16 +1514,21 @@ function renderMoney(main){
   pageHead(main, "💶 Geld", "Einnahmen, Kosten, Jahrespass, Rücklage – bis zum letzten Cent");
   const sub = subnav(main, "money", [
     { id:"cockpit", t:"🚦 Cockpit" },
+    { id:"flow", t:"📊 Einnahmen & Ausgaben", need:"programmierer" },
     { id:"pass", t:"🎟️ Jahrespass", n:(S.money || {}).expiring_30d },
+    { id:"prices", t:"🏷️ Preise & Grenzen", need:"programmierer" },
     { id:"calc", t:"🧮 Rechner" },
     { id:"overview", t:"📈 Verkäufe" },
     { id:"credit", t:"🔋 Guthaben & Verbrauch", need:"programmierer" },
     { id:"books", t:"🧾 Buchhaltung (EÜR)", need:"programmierer" },
   ]);
   if (sub === "cockpit") renderCockpit(main);
+  else if (sub === "flow") renderFlow(main);
   else if (sub === "pass") renderPass(main);
   else if (sub === "calc") renderCalc(main);
+  else if (sub === "prices") renderPrices(main);
   else if (sub === "overview"){
+    if (darf("programmierer")) main.append(salesCard());
     const g = grid(main); legacyCards(g, ["econ","premium","vip","payment"]);
     g.append(preiseCard());
   }
@@ -1478,14 +1537,423 @@ function renderMoney(main){
   main.querySelectorAll(":scope > h2:first-of-type").forEach(e => { if (/^(Kosten & Guthaben|Finanzen)$/.test(e.textContent)) e.remove(); });
 }
 function preiseCard(){
-  const info = $("div","card wide"); info.append($("b",null,"🏷️ Preise in Wuzzo (ab 0.48)"));
-  [["🎟️ Jahrespass – erstes Jahr","0,99 € · wuzzo_start (+1 Monat Premium)"],["🔄 Jahrespass – jedes weitere Jahr","1,99 € · wuzzo_jahr"],
-   ["⭐ Premium (Pass inklusive)","3,99 € für 6 Monate · wuzzo_premium_6m"],["👑 VIP-Familie (Pass inklusive)","6,99 € für 6 Monate · wuzzo_vip_6m"],
+  const info = $("div","card wide"); info.append($("b",null,"🏷️ Preise in Wuzzo (ändern: 💶 Geld → 🏷️ Preise & Grenzen)"));
+  [["🎟️ Jahrespass – erstes Jahr", pe("wuzzo_start") + " · wuzzo_start (+1 Monat Premium)"],["🔄 Jahrespass – jedes weitere Jahr", pe("wuzzo_jahr") + " · wuzzo_jahr"],
+   ["⭐ Premium (Pass inklusive)", pe("wuzzo_premium_6m") + " für 6 Monate · wuzzo_premium_6m"],["👑 VIP-Familie (Pass inklusive)", pe("wuzzo_vip_6m") + " für 6 Monate · wuzzo_vip_6m"],
    ["🎟️ Alt-Kunden (vor 0.48 bezahlt)","für immer frei"],["Davon kommt bei dir an","Preis ÷ 1,19 (MwSt) × 0,85 (Google)"]]
     .forEach(([k,v]) => { const r = $("div"); r.style.cssText = "display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px solid #1d2a5c"; r.append($("span",null,k), $("b",null,v)); info.append(r); });
   const a = $("a",null,"→ Produkte & Preise in der Play Console"); a.href = "https://play.google.com/console/u/0/developers/8787141740191790937/app/4974409909997434422/monetization/products"; a.target = "_blank"; a.rel = "noopener"; a.style.cssText = "color:var(--volt);font-size:13px;margin-top:6px";
   info.append(a); return info;
 }
+
+
+/* ---------- 🏷️ Preise & Grenzen (ab 0.49.9) ---------- */
+function renderPrices(main){
+  if (!S.prices){ main.append($("p","note","Noch nicht eingerichtet – bitte plus49g-geld.sql in Supabase ausführen.")); return; }
+  // 1) Preise
+  const c = $("div","card wide");
+  c.append($("b",null,"🏷️ Deine Preise"),
+    $("p","note","Hier trägst du die Preise ein. Wuzzo rechnet überall damit (Rechner, Cockpit, Geld-Wächter, Danke-Nachricht nach dem Kauf). " +
+      "⚠️ Was der Kunde WIRKLICH zahlt, stellst du in der Play Console ein – dort den gleichen Preis eintragen!"));
+  const felder = [["wuzzo_start","🎟️ Jahrespass – erstes Jahr"],["wuzzo_jahr","🔄 Jahrespass – Verlängerung (pro Jahr)"],
+                  ["wuzzo_premium_6m","⭐ Premium – 6 Monate"],["wuzzo_vip_6m","👑 VIP-Familie – 6 Monate (bis 5 Personen)"]];
+  const inp = {};
+  const box = $("div"); box.style.cssText = "display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:8px 0";
+  felder.forEach(([id, t]) => {
+    const l = $("label"); l.style.cssText = "display:flex;flex-direction:column;gap:4px;font-size:13px";
+    const i = document.createElement("input"); i.type = "number"; i.min = "0"; i.step = "0.01"; i.value = preis(id).toFixed(2); i.style.cssText = IN_STYLE;
+    const hint = $("span","note","");
+    const upd = () => { const v = Math.max(0, Number(i.value) || 0); hint.textContent = "Bei dir kommen an: " + eur(netto(v)) + " (nach 19 % MwSt + 15 % Google)"; };
+    i.oninput = upd; upd(); inp[id] = i;
+    l.append($("span",null,t), i, hint); box.append(l);
+  });
+  c.append(box);
+  const sv = $("button","btn","💾 Preise speichern");
+  sv.onclick = () => {
+    const ct = id => Math.round(Math.max(0, Number(inp[id].value) || 0) * 100);
+    if (!confirm("Preise speichern?\n\nDenk daran: Den GLEICHEN Preis musst du auch in der Play Console eintragen – sonst zahlt der Kunde den alten Preis.")) return;
+    act_(() => rpc("admin_set_prices", { p_start: ct("wuzzo_start"), p_jahr: ct("wuzzo_jahr"), p_premium: ct("wuzzo_premium_6m"), p_vip: ct("wuzzo_vip_6m") }));
+  };
+  const pl = $("a","btn","▶️ Preise in der Play Console ändern"); pl.href = "https://play.google.com/console/u/1/developers/8787141740191790937/app/4974409909997434422/monetization/products"; pl.target = "_blank"; pl.rel = "noopener"; pl.style.textDecoration = "none";
+  const row = $("div"); row.style.cssText = "display:flex;gap:8px;flex-wrap:wrap"; row.append(sv, pl); c.append(row);
+  main.append(c);
+
+  // 2) Grenzen + Kosten pro Einheit → Schlimmster Fall pro Paket
+  const P = planVal();
+  const g = $("div","card wide"); g.style.marginTop = "12px";
+  g.append($("b",null,"🚧 Grenzen pro Paket und Monat – bleibt jedes Paket im Plus?"),
+    $("p","note","Trag ein, wie viel jedes Paket im Monat höchstens nutzen darf. Darunter steht, was dich das im SCHLIMMSTEN Fall kostet (jemand nutzt alles voll aus) – und ob das Paket trotzdem im Plus bleibt. Kosten pro Einheit sind Schätzwerte, du kannst sie anpassen."));
+  const zeilen = [["media_mb","📤 Fotos/Videos/Dateien senden (MB)"],["storage_mb","💾 Speicher auf dem Server (MB) – nur Planung"],["video_min","🎥 Videoanrufe starten (Minuten)"],
+                  ["audio_min","📞 Sprachanrufe starten (Minuten, 0 = unbegrenzt)"],
+                  ["ki","🤖 KI-Assistent (Anfragen)"],["flow_min","🎙️ FlowTalk (Minuten)"],["dolm_min","🗣️ Dolmetscher (Minuten)"],
+                  ["trans","🌍 KI-Übersetzungen (nur alte App-Versionen; neu: auf dem Handy = 0 €)"]];
+  const tbl = document.createElement("table"); tbl.style.cssText = "width:100%;border-collapse:collapse;font-size:13px;margin:8px 0";
+  const th = (t) => { const x = document.createElement("th"); x.textContent = t; x.style.cssText = "text-align:left;padding:6px;border-bottom:1px solid var(--line);color:var(--muted)"; return x; };
+  const hr = document.createElement("tr"); [ "Leistung", "🙂 Normal", "⭐ Premium", "👑 VIP (ganze Familie)" ].forEach(t => hr.append(th(t))); tbl.append(hr);
+  zeilen.forEach(([k, t]) => {
+    const tr = document.createElement("tr");
+    const td0 = document.createElement("td"); td0.textContent = t; td0.style.cssText = "padding:6px;border-bottom:1px solid var(--line)"; tr.append(td0);
+    ["normal","premium","vip"].forEach(pk => {
+      const td = document.createElement("td"); td.style.cssText = "padding:4px;border-bottom:1px solid var(--line)";
+      const i = document.createElement("input"); i.type = "number"; i.min = "0"; i.value = P.limits[pk][k]; i.style.cssText = IN_STYLE + ";max-width:120px";
+      i.oninput = () => { P.limits[pk][k] = Math.max(0, Number(i.value) || 0); rechne(); };
+      td.append(i); tr.append(td);
+    });
+    tbl.append(tr);
+  });
+  g.append(tbl);
+  const units = [["gb_traffic","€ pro GB gesendet"],["gb_storage","€ pro GB Speicher/Monat"],["video_min","€ pro Video-Minute"],["audio_min","€ pro Sprach-Minute"],
+                 ["audio_est","Sprach-Minuten pro Nutzer (wenn unbegrenzt)"],["ki","€ pro KI-Anfrage"],
+                 ["flow_min","€ pro FlowTalk-Minute"],["dolm_min","€ pro Dolmetscher-Minute"],["trans","€ pro KI-Übersetzung"],["base","€ Grundkosten pro Nutzer/Monat"]];
+  const ub = $("div"); ub.style.cssText = "display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin:6px 0";
+  units.forEach(([k, t]) => {
+    const l = $("label"); l.style.cssText = "display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)";
+    const i = document.createElement("input"); i.type = "number"; i.min = "0"; i.step = "0.001"; i.value = P.unit[k]; i.style.cssText = IN_STYLE;
+    i.oninput = () => { P.unit[k] = Math.max(0, Number(i.value) || 0); rechne(); };
+    l.append($("span",null,t), i); ub.append(l);
+  });
+  g.append($("b",null,"🧾 Kosten pro Einheit (Schätzung)"), ub);
+  const ul = $("div"); ul.style.cssText = "display:flex;gap:8px;align-items:center;justify-content:flex-start;flex-wrap:wrap;font-size:13px;margin:10px 0";
+  const ui = document.createElement("input"); ui.type = "number"; ui.min = "1"; ui.max = "100"; ui.value = P.usage_pct; ui.style.cssText = IN_STYLE + ";max-width:90px";
+  ui.oninput = () => { P.usage_pct = Math.min(100, Math.max(1, Number(ui.value) || 30)); rechne(); };
+  ul.append($("span",null,"📊 Normale Nutzung: Leute brauchen im Schnitt"), ui, $("span",null,"% ihrer Grenze"));
+  g.append(ul);
+  const out = $("div"); g.append(out);
+  const kostenVon = (L, f) => (L.media_mb / 1024 * P.unit.gb_traffic + L.storage_mb / 1024 * P.unit.gb_storage + L.video_min * P.unit.video_min +
+                              (L.audio_min > 0 ? L.audio_min : P.unit.audio_est) * P.unit.audio_min + L.trans * P.unit.trans * 0.1 +
+                              L.ki * P.unit.ki + L.flow_min * P.unit.flow_min + L.dolm_min * P.unit.dolm_min) * f + P.unit.base;
+  function rechne(){
+    out.replaceChildren();
+    const t = $("div","tiles6");
+    const pakete = [
+      ["🙂 Normal (1. Jahr)", netto(preis("wuzzo_start")) / 12, P.limits.normal],
+      ["🙂 Normal (Verlängerung)", netto(preis("wuzzo_jahr")) / 12, P.limits.normal],
+      ["⭐ Premium", netto(preis("wuzzo_premium_6m")) / 6, P.limits.premium],
+      ["👑 VIP-Familie", netto(preis("wuzzo_vip_6m")) / 6, P.limits.vip],
+    ];
+    let alleOk = true;
+    pakete.forEach(([name, ein, L]) => {
+      const schlimm = kostenVon(L, 1), normal = kostenVon(L, P.usage_pct / 100);
+      const ok = ein >= schlimm, okN = ein >= normal; if (!okN) alleOk = false;
+      const x = $("div","tile " + (ok ? "good" : okN ? "" : "bad"));
+      x.append($("div","k",name), $("div","v",(ok ? "✅ " : okN ? "🟡 " : "🔴 ") + eur(ein - normal)),
+        $("div","s","Einnahme " + eur(ein) + "/Monat · normal " + eur(normal) + " · schlimmster Fall " + eur(schlimm) +
+          (ok ? " → immer im Plus" : okN ? " → nur wenn jemand alles voll ausnutzt: Minus" : " → MINUS! Grenze senken oder Preis erhöhen")));
+      t.append(x);
+    });
+    out.append(t);
+    out.append($("p","note", alleOk ? "✅ Alle Pakete bleiben bei normaler Nutzung im Plus." : "🔴 Mindestens ein Paket macht schon bei normaler Nutzung Minus – Preis erhöhen oder Grenze senken."));
+  }
+  rechne();
+  const sp = $("button","btn","💾 Grenzen & Kosten speichern");
+  sp.onclick = () => act_(() => savePlan({ limits: P.limits, unit: P.unit, usage_pct: P.usage_pct }));
+  g.append(sp, $("p","note","✅ Ab Wuzzo 0.50.0 setzt die App diese Grenzen selbst durch (freundlich, mit Hinweis bei 80 %). 🏅 Familie, Tester und Team haben keine Grenzen. Speicher ist nur Planung. KI-Übersetzungen zählen kaum, weil die App jetzt auf dem Handy übersetzt (deshalb hier nur 10 % gerechnet)."));
+  main.append(g);
+
+  // 3) Wer stößt an seine Grenzen? (ab 0.50.0)
+  const tq = $("div","card wide"); tq.style.marginTop = "12px";
+  tq.append($("b",null,"📊 Wer stößt an seine Grenzen? (diesen Monat, ab 50 %)"));
+  const tn = $("p","note","Lädt …"); tq.append(tn);
+  const NAMEN = { media_mb:"📤 Medien", video_min:"🎥 Video", audio_min:"📞 Sprache", ki:"🤖 KI", flow_min:"🎙️ FlowTalk", dolm_min:"🗣️ Dolmetscher", trans:"🌍 Übersetzen" };
+  const TIER = { normal:"🙂 Normal", premium:"⭐ Premium", vip:"👑 VIP", basis:"💤 Basis" };
+  rpc("admin_quota_top").then(list => {
+    tn.remove(); list = list || [];
+    if (!list.length) tq.append($("p","note","Niemand über 50 % – alles ruhig. 😊"));
+    list.forEach(x => {
+      const teile = Object.keys(x.limits || {}).filter(k => Number(x.limits[k]) > 0 && Number((x.used || {})[k] || 0) / Number(x.limits[k]) >= 0.5)
+        .map(k => (NAMEN[k] || k) + " " + Math.round(Number(x.used[k]) / Number(x.limits[k]) * 100) + " %");
+      const r = $("div"); r.style.cssText = "display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:5px 0;border-bottom:1px solid var(--line)";
+      r.append($("span",null,(x.pct >= 100 ? "🔴 " : x.pct >= 80 ? "🟡 " : "🔵 ") + x.name + " · " + (TIER[x.tier] || x.tier)), $("span","note",teile.join(" · ")));
+      tq.append(r);
+    });
+    tq.append($("p","note","Wer oft an die Grenze stößt, ist ein guter Kandidat für ⭐ Premium oder 👑 VIP."));
+  }).catch(() => { tn.textContent = "Noch nicht eingerichtet – bitte plus50.sql ausführen."; });
+  main.append(tq);
+}
+
+/* ---------- 🧾 Letzte Käufe (ab 0.49.9) ---------- */
+function salesCard(){
+  const c = $("div","card wide"); c.style.marginBottom = "12px";
+  c.append($("b",null,"🧾 Wer hat was gekauft? (letzte 90 Tage)"));
+  const note = $("p","note","Lädt …"); c.append(note);
+  const NAME = { wuzzo_start:"🎟️ Jahrespass", wuzzo_jahr:"🔄 Pass verlängert", wuzzo_premium_6m:"⭐ Premium", wuzzo_vip_6m:"👑 VIP-Familie" };
+  rpc("admin_sales", { p_days: 90 }).then(list => {
+    note.remove(); list = list || [];
+    const echt = list.filter(x => !x.test);
+    const sum = echt.reduce((a, x) => a + Number(x.cents || 0), 0);
+    c.append($("p","note", nf(echt.length) + " Käufe · " + euro(sum) + " brutto · bei dir ca. " + eur(netto(sum / 100)) + (list.length > echt.length ? " · dazu " + (list.length - echt.length) + " Test-Käufe" : "")));
+    if (!list.length) c.append($("p","note","Noch keine Käufe. Sobald jemand kauft, steht er hier – sofort, automatisch freigeschaltet."));
+    list.slice(0, 200).forEach(x => {
+      const r = $("div"); r.style.cssText = "display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:5px 0;border-bottom:1px solid var(--line)";
+      const bis = x.product === "wuzzo_vip_6m" ? x.vip_until : x.product === "wuzzo_premium_6m" ? x.premium_until : x.pass_until;
+      r.append($("span",null,new Date(x.at).toLocaleString("de-DE",{ day:"2-digit", month:"2-digit", year:"2-digit", hour:"2-digit", minute:"2-digit" }) + " · " + x.name),
+        $("span",null,(NAME[x.product] || x.product) + (x.test ? " 🧪 Test" : "") + " · " + euro(x.cents) + (bis ? " · aktiv bis " + fmtDate(bis) : "")));
+      c.append(r);
+    });
+  }).catch(() => { note.textContent = "Noch nicht eingerichtet – bitte plus49g-geld.sql ausführen."; });
+  return c;
+}
+
+/* ---------- 🔔 Hinweise + 📈 Wachstum für die Startseite (ab 0.49.9) ---------- */
+function alertsCard(){
+  const list = (S.alerts || []);
+  if (!list.length) return null;
+  const c = $("div","card wide"); c.style.cssText = "margin-bottom:12px;border:2px solid " + (list.some(a => a.level === "rot") ? "#ff5c7a" : list.some(a => a.level === "gelb") ? "#FFC94D" : "var(--line)");
+  const top = $("div"); top.style.cssText = "display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap";
+  const all = $("button","btn","✔️ Alle gelesen"); all.onclick = () => act_(() => rpc("admin_alert_done", { p_id: null }));
+  top.append($("b",null,"🔔 Hinweise (" + list.length + ")"), all); c.append(top);
+  list.slice(0, 15).forEach(a => {
+    const r = $("div"); r.style.cssText = "display:flex;justify-content:space-between;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)";
+    const ic = a.level === "rot" ? "🔴" : a.level === "gelb" ? "🟡" : "🔵";
+    const ok = $("button","btn","OK"); ok.onclick = () => act_(() => rpc("admin_alert_done", { p_id: a.id }));
+    r.append($("span",null, ic + " " + a.text + "  · " + new Date(a.created_at).toLocaleString("de-DE",{ day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" })), ok);
+    c.append(r);
+  });
+  return c;
+}
+function growthCard(){
+  const g = S.growth; if (!g) return null;
+  const c = $("div","card wide"); c.style.marginBottom = "12px";
+  c.append($("b",null,"📈 Neue Nutzer"));
+  const t = $("div","tiles6");
+  const pfeil = (a, b) => a > b ? "▲ mehr als davor (" + nf(b) + ")" : a < b ? "▼ weniger als davor (" + nf(b) + ")" : "= wie davor";
+  const tile = (k, v, s2, cls) => { const x = $("div","tile" + (cls ? " " + cls : "")); x.append($("div","k",k), $("div","v",v)); if (s2) x.append($("div","s",s2)); t.append(x); };
+  tile("🆕 Heute", nf(g.today), "");
+  tile("📅 Letzte 7 Tage", nf(g.week), pfeil(g.week, g.week_prev), g.week >= Math.max(20, g.week_prev * 2) ? "bad" : "");
+  tile("🗓️ Letzte 30 Tage", nf(g.month), pfeil(g.month, g.month_prev));
+  tile("📆 Letztes Jahr", nf(g.year), pfeil(g.year, g.year_prev));
+  tile("👥 Gesamt", nf(g.total), "");
+  c.append(t);
+  // kleine Balken: Woche für Woche
+  const w = g.weeks || []; const max = Math.max(1, ...w.map(x => x.n));
+  if (w.length){
+    const bars = $("div"); bars.style.cssText = "display:flex;align-items:flex-end;gap:4px;height:70px;margin:10px 0 2px";
+    w.forEach(x => { const b = $("div"); b.title = "Woche ab " + fmtDate(x.w) + ": " + x.n; b.style.cssText = "flex:1;min-width:8px;border-radius:4px 4px 0 0;background:var(--volt);height:" + Math.max(4, x.n / max * 100) + "%"; bars.append(b); });
+    c.append(bars, $("p","note","Neue Nutzer pro Woche (letzte 12 Wochen) – Maus auf einen Balken = genaue Zahl"));
+  }
+  const p = g.pkg || {};
+  c.append($("b",null,"📦 Wer hat welches Paket?"));
+  const t2 = $("div","tiles6");
+  const tile2 = (k, v, s2) => { const x = $("div","tile"); x.append($("div","k",k), $("div","v",v)); if (s2) x.append($("div","s",s2)); t2.append(x); };
+  tile2("👑 VIP", nf(p.vip), "");
+  tile2("⭐ Premium", nf(p.premium), "");
+  tile2("🎟️ Normal mit Pass", nf(p.pass), "");
+  tile2("💤 Basis (ohne Pass)", nf(p.basis), "");
+  tile2("🏅 Für immer kostenlos", nf(p.free), "Familie, Tester, Team");
+  c.append(t2);
+  const lk = $("button","btn","👥 Namen ansehen (Nutzer-Liste)"); lk.onclick = () => go("users"); c.append(lk);
+  return c;
+}
+
+
+/* ---------- 📊 Einnahmen & Ausgaben: Tag / Woche / Monat / Jahr (ab 0.50.0, plus50b-finanzen.sql) ---------- */
+function renderFlow(main){
+  const U = { day:["Tag",30], week:["Woche",12], month:["Monat",12], year:["Jahr",5] };
+  S.flowUnit = S.flowUnit || "month";
+  const head = $("div","card wide");
+  head.append($("b",null,"📊 Einnahmen & Ausgaben"),
+    $("p","note","Alles automatisch: Käufe aus Google Play (und später Apple App Store), KI, SMS und deine festen Kosten – dazu alles, was du selbst in der Buchhaltung einträgst. Netto = nach Mehrwertsteuer und Store-Gebühr."));
+  const bar = $("div"); bar.style.cssText = "display:flex;gap:8px;flex-wrap:wrap;margin:6px 0";
+  Object.entries(U).forEach(([k, [t]]) => { const b = $("button","btn" + (S.flowUnit === k ? "" : " ghost"), t === "Tag" ? "📅 Täglich" : t === "Woche" ? "🗓️ Wöchentlich" : t === "Monat" ? "📆 Monatlich" : "🗃️ Jährlich");
+    if (S.flowUnit === k) b.style.cssText = "background:var(--volt);color:#060a1f"; b.onclick = () => { S.flowUnit = k; render(); }; bar.append(b); });
+  head.append(bar); main.append(head);
+  const box = $("div"); box.append($("p","note","Lädt …")); main.append(box);
+  const [, cnt] = U[S.flowUnit];
+  rpc("admin_finance_series", { p_unit: S.flowUnit, p_count: cnt }).then(rows => {
+    box.replaceChildren(); rows = rows || [];
+    const num = v => Number(v || 0);
+    const ein = r => num(r.einnahmen_netto) + num(r.sonstige_einnahmen);
+    const aus = r => num(r.ki) + num(r.sms) + num(r.feste_kosten) + num(r.sonstige_ausgaben);
+    const sum = f => rows.reduce((a, r) => a + f(r), 0);
+    const E = sum(ein), A = sum(aus), R = E - A;
+    const t = $("div","tiles6"); t.style.marginTop = "12px";
+    const tile = (k, v, s2, cls) => { const x = $("div","tile" + (cls ? " " + cls : "")); x.append($("div","k",k), $("div","v",v)); if (s2) x.append($("div","s",s2)); t.append(x); };
+    const zeitraum = rows.length ? fmtDate(rows[0].start) + " – " + fmtDate(rows[rows.length - 1].ende) : "";
+    tile("💰 Einnahmen (netto)", eur(E), "Verkäufe brutto " + eur(sum(r => num(r.google_brutto) + num(r.apple_brutto))) + " · " + nf(sum(r => num(r.kaeufe))) + " Käufe");
+    tile("💸 Ausgaben", eur(A), "fest " + eur(sum(r => num(r.feste_kosten))) + " · KI " + eur(sum(r => num(r.ki))) + " · SMS " + eur(sum(r => num(r.sms))) + " · sonst " + eur(sum(r => num(r.sonstige_ausgaben))));
+    tile("📈 Ergebnis", eur(R), zeitraum, R >= 0 ? "good" : "bad");
+    tile("🏪 Store-Gebühren", eur(sum(r => num(r.store_gebuehr))), "Google " + eur(sum(r => num(r.google_brutto))) + " · Apple " + eur(sum(r => num(r.apple_brutto))) + " (brutto)");
+    tile("🧾 Mehrwertsteuer", eur(sum(r => num(r.mwst))), "führen Google/Apple für dich ab");
+    box.append(t);
+    // Balken: Einnahmen (grün) und Ausgaben (rot) je Zeitraum
+    const c = $("div","card wide"); c.style.marginTop = "12px";
+    const max = Math.max(1, ...rows.map(r => Math.max(ein(r), aus(r))));
+    const lbl = r => S.flowUnit === "day" ? new Date(r.start).toLocaleDateString("de-DE",{ day:"2-digit", month:"2-digit" })
+      : S.flowUnit === "week" ? "KW " + kw(new Date(r.start)) : S.flowUnit === "month" ? new Date(r.start).toLocaleDateString("de-DE",{ month:"short", year:"2-digit" }) : String(new Date(r.start).getFullYear());
+    const chart = $("div"); chart.style.cssText = "display:flex;align-items:flex-end;gap:6px;height:180px;margin:10px 0 4px;overflow-x:auto;padding-bottom:2px";
+    rows.forEach(r => {
+      const col = $("div"); col.style.cssText = "flex:1;min-width:26px;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;justify-content:flex-end";
+      const pair = $("div"); pair.style.cssText = "display:flex;gap:2px;align-items:flex-end;height:150px;width:100%;justify-content:center";
+      const b1 = $("div"); b1.title = lbl(r) + " · Einnahmen " + eur(ein(r)); b1.style.cssText = "width:45%;border-radius:4px 4px 0 0;background:#34d399;height:" + Math.max(1, ein(r) / max * 100) + "%";
+      const b2 = $("div"); b2.title = lbl(r) + " · Ausgaben " + eur(aus(r)); b2.style.cssText = "width:45%;border-radius:4px 4px 0 0;background:#ff5c7a;height:" + Math.max(1, aus(r) / max * 100) + "%";
+      pair.append(b1, b2);
+      const l = $("div","note",lbl(r)); l.style.cssText = "font-size:10.5px;white-space:nowrap";
+      col.append(pair, l); chart.append(col);
+    });
+    c.append($("b",null,"🟩 Einnahmen · 🟥 Ausgaben"), chart, $("p","note","Maus auf einen Balken = genaue Zahl."));
+    box.append(c);
+    // Tabelle (neueste zuerst)
+    const tb = $("div","card wide"); tb.style.cssText = "margin-top:12px;overflow-x:auto";
+    const tbl = document.createElement("table"); tbl.style.cssText = "width:100%;border-collapse:collapse;font-size:12.5px;white-space:nowrap";
+    const H = ["Zeitraum","Käufe","Google brutto","Apple brutto","MwSt","Store-Gebühr","Netto","sonst. Einn.","Feste Kosten","KI","SMS","sonst. Ausg.","Ergebnis"];
+    const tr0 = document.createElement("tr"); H.forEach(h => { const x = document.createElement("th"); x.textContent = h; x.style.cssText = "text-align:right;padding:6px;border-bottom:1px solid var(--line);color:var(--muted)"; tr0.append(x); }); tr0.firstChild.style.textAlign = "left"; tbl.append(tr0);
+    [...rows].reverse().forEach(r => {
+      const tr = document.createElement("tr");
+      const res = ein(r) - aus(r);
+      [lbl(r), nf(r.kaeufe), eur(r.google_brutto), eur(r.apple_brutto), eur(r.mwst), eur(r.store_gebuehr), eur(r.einnahmen_netto), eur(r.sonstige_einnahmen),
+       eur(r.feste_kosten), eur(r.ki), eur(r.sms), eur(r.sonstige_ausgaben), eur(res)].forEach((v, i) => {
+        const td = document.createElement("td"); td.textContent = v; td.style.cssText = "padding:5px 6px;border-bottom:1px solid var(--line);text-align:" + (i ? "right" : "left") + (i === 12 ? ";font-weight:700;color:" + (res >= 0 ? "#34d399" : "#ff5c7a") : ""); tr.append(td); });
+      tbl.append(tr);
+    });
+    tb.append(tbl);
+    const csv = $("button","btn","⬇️ Als Tabelle (CSV) für Steuerberater/Excel");
+    csv.onclick = () => {
+      const lines = [H.join(";")].concat([...rows].reverse().map(r => [lbl(r), r.kaeufe, r.google_brutto, r.apple_brutto, r.mwst, r.store_gebuehr, r.einnahmen_netto, r.sonstige_einnahmen, r.feste_kosten, r.ki, r.sms, r.sonstige_ausgaben, (ein(r) - aus(r)).toFixed(2)]
+        .map(v => String(v).replace(".", ",")).join(";")));
+      const blob = new Blob(["﻿" + lines.join("\n")], { type:"text/csv;charset=utf-8" });
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "wuzzo-einnahmen-ausgaben-" + S.flowUnit + ".csv"; a.click();
+    };
+    tb.append(csv); box.append(tb);
+  }).catch(() => { box.replaceChildren($("p","note","Noch nicht eingerichtet – bitte plus50b-finanzen.sql in Supabase ausführen.")); });
+
+  // ⚙️ Automatik – du behältst die volle Kontrolle
+  const st = $("div","card wide"); st.style.marginTop = "12px";
+  st.append($("b",null,"🤖 Automatik (du behältst die volle Kontrolle)"));
+  rpc("admin_finance_settings").then(d => {
+    const on = d.auto_book !== "0";
+    const r1 = $("div"); r1.style.cssText = "display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0";
+    const tb = $("button","btn" + (on ? "" : " ghost"), on ? "🟢 Auto-Buchhaltung AN" : "⚪ Auto-Buchhaltung AUS");
+    tb.onclick = () => act_(() => rpc("admin_set_setting", { p_key:"auto_book", p_value: on ? "0" : "1" }));
+    const nb = $("button","btn ghost","🧾 Vormonat jetzt buchen");
+    nb.onclick = () => act_(async () => { const n = await rpc("admin_finance_auto_book", { p_month: null }); alert(n ? n + " Einträge angelegt – siehe 🧾 Buchhaltung (EÜR)." : "Nichts Neues – der Vormonat ist schon gebucht."); });
+    r1.append(tb, nb, $("span","note","AN = am 2. jedes Monats trägt Wuzzo den Vormonat als Entwurf in die Buchhaltung ein (feste Kosten, KI, SMS, erwartete Auszahlung von Google/Apple). Markiert mit 🤖 – du kannst jeden Eintrag ändern, Beleg anhängen oder löschen."));
+    st.append(r1);
+    const r2 = $("div"); r2.style.cssText = "display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px";
+    [["fee_google_pct","Google-Gebühr in %"],["fee_apple_pct","Apple-Gebühr in %"],["usd_eur","1 US-Dollar = … Euro"]].forEach(([k, t]) => {
+      const l = $("label"); l.style.cssText = "display:flex;flex-direction:column;gap:4px;font-size:13px";
+      const i = document.createElement("input"); i.type = "number"; i.step = k === "usd_eur" ? "0.01" : "1"; i.value = d[k]; i.style.cssText = IN_STYLE;
+      i.onchange = () => act_(async () => {
+        await rpc("admin_set_setting", { p_key:k, p_value:String(Number(i.value)) });
+        if (k === "usd_eur") await rpc("admin_set_setting", { p_key:"usd_auto", p_value:"0" }); // selbst eingetragen = Automatik aus
+      });
+      l.append($("span",null,t + (k === "usd_eur" ? (d.usd_auto !== "0" ? " (🤖 täglich automatisch)" : " (✋ von dir fest)") : "")), i); r2.append(l);
+    });
+    st.append(r2);
+    if (d.usd_auto === "0"){
+      const ub = $("button","btn ghost","🤖 Dollar-Kurs wieder automatisch holen"); ub.style.marginTop = "8px";
+      ub.onclick = () => act_(() => rpc("admin_set_setting", { p_key:"usd_auto", p_value:"1" }));
+      st.append(ub);
+    }
+    st.append($("p","note","Google und Apple nehmen 15 % (für kleine Entwickler unter 1 Mio. $ im Jahr). Der Dollar-Kurs kommt jeden Morgen von der Europäischen Zentralbank. Die festen Kosten stellst du im 🚦 Cockpit ein."));
+  }).catch(() => st.append($("p","note","Noch nicht eingerichtet – bitte plus50b-finanzen.sql ausführen.")));
+  main.append(st);
+  main.append(recurringCard(), reportsCard());
+}
+
+/* ---------- 🔁 Daueraufträge: einmal eintragen, Wuzzo bucht selbst ---------- */
+const MONATE = ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+const REC_VORSCHLAG = [
+  { kind:"ausgabe", category:"Apple Entwicklerkonto", counterparty:"Apple", amount:99, currency:"USD", every:"jahr", day:1, month:1, t:"🍎 Apple 99 $ / Jahr" },
+  { kind:"ausgabe", category:"Domain wuzzo.de", counterparty:"Domain-Anbieter", amount:12, currency:"EUR", every:"jahr", day:1, month:1, t:"🌐 Domain ca. 12 € / Jahr" },
+  { kind:"ausgabe", category:"Handyvertrag (Anteil)", counterparty:"Mobilfunk", amount:10, currency:"EUR", every:"monat", day:1, month:null, t:"📱 Handy-Anteil / Monat" },
+  { kind:"ausgabe", category:"Steuerberater", counterparty:"Steuerbüro", amount:300, currency:"EUR", every:"jahr", day:15, month:5, t:"🧮 Steuerberater / Jahr" }
+];
+function recurringCard(){
+  const c = $("div","card wide"); c.style.marginTop = "12px";
+  c.append($("b",null,"🔁 Daueraufträge – einmal eintragen, Wuzzo bucht für immer selbst"),
+           $("p","note","Für Kosten oder Einnahmen, die regelmäßig kommen und die Wuzzo nicht selbst messen kann (Apple-Konto, Domain, Steuerberater …). Am Fälligkeitstag steht der Eintrag automatisch in der 🧾 Buchhaltung (mit 🤖) – du hängst nur noch den Beleg an. Dollar-Beträge rechnet Wuzzo mit dem Tageskurs in Euro um."));
+  const box = $("div"); c.append(box);
+  const load = () => rpc("admin_recurring_list").then(list => {
+    list = list || [];
+    box.replaceChildren();
+    if (!list.length) box.append($("p","note","Noch keine Daueraufträge. Tipp: unten einen Vorschlag antippen."));
+    list.forEach(r => {
+      const row = $("div"); row.style.cssText = "display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid var(--line)" + (r.active ? "" : ";opacity:.5");
+      const wann = r.every === "monat" ? "jeden Monat am " + r.day + "." : "jedes Jahr am " + r.day + ". " + MONATE[(r.month || 1) - 1];
+      row.append($("span",null,(r.kind === "einnahme" ? "➕ " : "➖ ") + r.category + (r.counterparty ? " · " + r.counterparty : "")),
+                 $("b",null,(r.currency === "USD" ? Number(r.amount).toFixed(2).replace(".", ",") + " $" : Number(r.amount).toFixed(2).replace(".", ",") + " €")),
+                 $("span","note",wann));
+      const t = $("button","btn ghost", r.active ? "⏸️ Pause" : "▶️ Wieder an");
+      t.onclick = () => act_(() => rpc("admin_recurring_save", { p_id:r.id, p_kind:r.kind, p_category:r.category, p_counterparty:r.counterparty, p_amount:r.amount,
+        p_currency:r.currency, p_every:r.every, p_day:r.day, p_month:r.month, p_active:!r.active }));
+      const del = $("button","btn ghost","🗑️");
+      del.onclick = () => { if (confirm("Dauerauftrag „" + r.category + "“ löschen? (Schon gebuchte Einträge bleiben in der Buchhaltung.)")) act_(() => rpc("admin_recurring_delete", { p_id:r.id })); };
+      row.append(t, del); box.append(row);
+    });
+  }).catch(() => box.replaceChildren($("p","note","Noch nicht eingerichtet – bitte plus50b-finanzen.sql ausführen.")));
+  load();
+
+  // ➕ Neu
+  const f = $("div"); f.style.cssText = "display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center";
+  const mk = (tag, ph, type) => { const i = document.createElement(tag); if (ph) i.placeholder = ph; if (type) i.type = type; i.style.cssText = IN_STYLE; return i; };
+  const sel = (opts) => { const x = mk("select"); opts.forEach(([v, t]) => { const o = document.createElement("option"); o.value = v; o.textContent = t; x.append(o); }); x.style.flex = "0 1 130px"; return x; };
+  const kind = sel([["ausgabe","➖ Ausgabe"],["einnahme","➕ Einnahme"]]);
+  const cat = mk("input","Wofür? (z. B. Domain)");
+  const who = mk("input","An wen? (z. B. Strato)");
+  const amt = mk("input","Betrag","number"); amt.step = "0.01"; amt.style.flex = "0 1 110px";
+  const cur = sel([["EUR","€"],["USD","$"]]); cur.style.flex = "0 1 70px";
+  const every = sel([["monat","jeden Monat"],["jahr","jedes Jahr"]]);
+  const day = mk("input","Tag","number"); day.min = 1; day.max = 28; day.value = 1; day.style.flex = "0 1 80px";
+  const mon = sel(MONATE.map((m, i) => [String(i + 1), m]));
+  every.onchange = () => { mon.style.display = every.value === "jahr" ? "" : "none"; };
+  every.value = "jahr";
+  const add = $("button","btn","➕ Dauerauftrag speichern");
+  const save = (v) => act_(() => rpc("admin_recurring_save", { p_id:null, p_kind:v.kind, p_category:v.category, p_counterparty:v.counterparty, p_amount:Number(v.amount),
+    p_currency:v.currency, p_every:v.every, p_day:Number(v.day), p_month:v.every === "jahr" ? Number(v.month) : null, p_active:true }));
+  add.onclick = () => {
+    if (!cat.value.trim() || !(Number(amt.value) > 0)){ alert("Bitte „Wofür?“ und einen Betrag eintragen."); return; }
+    save({ kind:kind.value, category:cat.value.trim(), counterparty:who.value.trim(), amount:amt.value, currency:cur.value, every:every.value, day:day.value, month:mon.value });
+  };
+  f.append(kind, cat, who, amt, cur, every, $("span","note","am"), day, mon, add);
+  const tips = $("div"); tips.style.cssText = "display:flex;gap:6px;flex-wrap:wrap;margin-top:8px";
+  tips.append($("span","note","Vorschläge (Betrag kannst du danach anpassen):"));
+  REC_VORSCHLAG.forEach(v => { const b = $("button","btn ghost",v.t); b.onclick = () => {
+    kind.value = v.kind; cat.value = v.category; who.value = v.counterparty; amt.value = v.amount; cur.value = v.currency; every.value = v.every; day.value = v.day;
+    if (v.month) mon.value = String(v.month); every.onchange(); amt.focus(); }; tips.append(b); });
+  c.append(f, tips);
+  return c;
+}
+
+/* ---------- 📥 Echte Berichte von Google Play (und später Apple) ---------- */
+function reportsCard(){
+  const c = $("div","card wide"); c.style.marginTop = "12px";
+  c.append($("b",null,"📥 Echte Abrechnungen von Google Play – holt Wuzzo jeden Morgen selbst"));
+  const box = $("div"); c.append(box);
+  rpc("admin_store_reports").then(d => {
+    d = d || {};
+    const eur = v => Number(v || 0).toFixed(2).replace(".", ",") + " €";
+    const st = $("p","note");
+    st.textContent = (d.last_run ? "Zuletzt geprüft: " + d.last_run + " · " : "Noch nie gelaufen · ") + "Rückerstattungen bisher: " + (d.refunds || 0);
+    box.append(st);
+    if (d.last_error) { const e = $("p","err","⚠️ " + d.last_error); box.append(e); }
+    // Bucket
+    const r = $("div"); r.style.cssText = "display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0";
+    const i = document.createElement("input"); i.placeholder = "gs://pubsite_prod_…"; i.value = d.bucket ? "gs://" + d.bucket.replace(/^gs:\/\//, "") : ""; i.style.cssText = IN_STYLE;
+    const sb = $("button","btn" + (d.bucket ? " ghost" : ""),"💾 Speichern");
+    sb.onclick = () => {
+      const m = i.value.trim().match(/pubsite_prod_[a-z_]*[0-9]+/);
+      if (!m){ alert("Das sieht nicht richtig aus. Es muss so anfangen: gs://pubsite_prod_…"); return; }
+      act_(() => rpc("admin_set_setting", { p_key:"play_bucket", p_value:m[0] }));
+    };
+    const go = $("button","btn ghost","🔄 Jetzt holen");
+    go.onclick = () => act_(async () => { await rpc("admin_finance_run"); await new Promise(res => setTimeout(res, 8000)); });
+    r.append($("span",null,"Google-Berichte-Adresse:"), i, sb, go);
+    box.append(r);
+    if (!d.bucket) box.append($("p","note","Einmal einrichten: Play Console öffnen → links „Berichte herunterladen“ → „Finanzberichte“ → oben „Cloud Storage-URI kopieren“ → hier einfügen → Speichern. 👉 https://play.google.com/console/u/1/developers/8787141740191790937/download-reports/financial"));
+    const reps = d.reports || [];
+    if (reps.length){
+      const t = document.createElement("table"); t.style.cssText = "width:100%;border-collapse:collapse;font-size:13px;margin-top:6px";
+      t.innerHTML = "<tr><th align=left>Monat</th><th align=right>Käufe</th><th align=right>Google-Gebühr</th><th align=right>Steuer</th><th align=right>Erstattungen</th><th align=right>Für dich</th></tr>" +
+        reps.map(x => "<tr><td>" + esc(String(x.month).slice(5, 7) + "/" + String(x.month).slice(0, 4)) + "</td><td align=right>" + eur(x.gross) + "</td><td align=right>" + eur(x.fees) +
+          "</td><td align=right>" + eur(x.taxes) + "</td><td align=right>" + eur(x.refunds) + "</td><td align=right><b>" + eur(x.net) + "</b></td></tr>").join("");
+      box.append(t);
+    } else box.append($("p","note","Noch keine Berichte – Google legt sie Anfang des Folgemonats ab, sobald es Verkäufe gibt."));
+    box.append($("p","note","Was passiert automatisch: Die echte Zahl von Google ersetzt die 🤖-Schätzung in der Buchhaltung (✅ Laut Google-Bericht). Rückerstattungen werden erkannt, aus den Einnahmen genommen und das Paket des Käufers wird gekürzt – du bekommst eine Meldung. 🍎 Apple kommt dazu, sobald es die iPhone-App gibt."));
+  }).catch(() => box.replaceChildren($("p","note","Noch nicht eingerichtet – bitte plus50b-finanzen.sql ausführen und die Server-Funktion „finanzen“ anlegen.")));
+  return c;
+}
+function kw(d){ const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const n = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - n);
+  const y = new Date(Date.UTC(t.getUTCFullYear(),0,1)); return Math.ceil(((t - y) / 864e5 + 1) / 7); }
 
 /* ---------- 🚦 Cockpit: Finanz-Ampel, Rücklage, Steuer ---------- */
 function renderCockpit(main){
@@ -1520,11 +1988,12 @@ function renderCockpit(main){
   main.append(pr);
   // Feste Kosten (im Browser gemerkt)
   const fk = $("div","card wide"); fk.style.marginTop = "12px"; const F = fixKosten();
-  fk.append($("b",null,"🧾 Feste Kosten pro Monat (für die Ampel)"), $("p","note","Trag hier ein, was du jeden Monat zahlst. Wird in diesem Browser gemerkt."));
+  fk.append($("b",null,"🧾 Feste Kosten pro Monat (für die Ampel)"), $("p","note","Trag hier ein, was du jeden Monat zahlst. Wird auf dem Server gespeichert – der 🚨 Geld-Wächter rechnet jeden Morgen damit."));
   [["supabase","Supabase (Pro 25 $ ≈ 23 €)"],["livekit","LiveKit (Anrufe)"],["domain","Domain wuzzo.de"]].forEach(([k,t]) => {
     const r = $("div"); r.style.cssText = "display:flex;gap:8px;align-items:center;margin:4px 0";
     const i2 = document.createElement("input"); i2.type = "number"; i2.step = "0.5"; i2.value = F[k]; i2.style.cssText = IN_STYLE + ";max-width:110px";
-    i2.onchange = () => { const f = fixKosten(); f[k] = Number(i2.value) || 0; try { localStorage.setItem("wz_fixkosten", JSON.stringify(f)); } catch(e){} render(); };
+    i2.onchange = () => { const f = fixKosten(); f[k] = Number(i2.value) || 0; try { localStorage.setItem("wz_fixkosten", JSON.stringify(f)); } catch(e){}
+      act_(() => savePlan({ fixed: f })); };
     r.append($("span",null,t + ":"), i2, $("span","note","€")); fk.append(r);
   });
   main.append(fk);
@@ -1562,7 +2031,7 @@ function renderCalc(main){
   let C = { users:20000, aktiv:60, prem:5, vip:2, neu:1000, verl:80, anruf:30, video:30 };
   try { C = Object.assign(C, JSON.parse(localStorage.getItem("wz_rechner") || "{}")); } catch(e){}
   const c = $("div","card wide");
-  c.append($("b",null,"🧮 Was bleibt übrig?"), $("p","note","Zahlen ändern – das Ergebnis rechnet sich sofort neu. Preise: Pass 0,99 € / 1,99 €, Premium 3,99 €, VIP 6,99 €. Alles Schätzungen."));
+  c.append($("b",null,"🧮 Was bleibt übrig?"), $("p","note","Zahlen ändern – das Ergebnis rechnet sich sofort neu. Preise: Pass " + pe("wuzzo_start") + " / " + pe("wuzzo_jahr") + ", Premium " + pe("wuzzo_premium_6m") + ", VIP " + pe("wuzzo_vip_6m") + " (ändern unter 🏷️ Preise & Grenzen). Alles Schätzungen."));
   const felder = [["users","👥 Nutzer gesamt",""],["aktiv","🟢 davon aktiv im Monat","%"],["prem","⭐ kaufen Premium","%"],["vip","👑 kaufen VIP","%"],
     ["neu","🆕 neue Nutzer pro Monat",""],["verl","🔄 verlängern den Pass","%"],["anruf","📞 der Aktiven telefonieren","%"],["video","🎥 davon per Video","%"]];
   const out = $("div"); out.style.marginTop = "10px";
@@ -1572,9 +2041,9 @@ function renderCalc(main){
     const aktiv = C.users * C.aktiv / 100;
     const premK = C.users * C.prem / 100, vipK = C.users * C.vip / 100;
     const passZahler = Math.max(0, C.users - premK - vipK);
-    const ein = { neu: C.neu * n(0.99), verl: passZahler * C.verl / 100 * n(1.99) / 12, prem: premK * n(3.99) / 6, vip: vipK * n(6.99) / 6 };
+    const ein = { neu: C.neu * n(preis("wuzzo_start")), verl: passZahler * C.verl / 100 * n(preis("wuzzo_jahr")) / 12, prem: premK * n(preis("wuzzo_premium_6m")) / 6, vip: vipK * n(preis("wuzzo_vip_6m")) / 6 };
     const sumE = ein.neu + ein.verl + ein.prem + ein.vip;
-    const supa = 23 + (aktiv > 3000 ? 50 : aktiv > 500 ? 14 : 0) + aktiv * 0.007;
+    const supa = fixKosten().supabase + (aktiv > 3000 ? 50 : aktiv > 500 ? 14 : 0) + aktiv * 0.007;
     const min = aktiv * C.anruf / 100 * 60 * 2;
     const lk = min <= 5000 ? 0 : 46 + Math.max(0, min - 150000) * 0.00046 + min * C.video / 100 * 0.011 * 0.11;
     const ki = aktiv * 0.005, dg = aktiv * C.prem / 100 * 0.04, mail = aktiv > 8000 ? 9 : 0;
@@ -2044,7 +2513,7 @@ function renderFinance(main){
   if (!sorted.length){ const tr = $("tr"); const td = $("td","empty","Noch keine Buchungen."); td.colSpan = 7; tr.append(td); tb.append(tr); }
   sorted.forEach((e, i) => {
     const tr = $("tr");
-    tr.append($("td",null,String(i + 1)), $("td",null,fmtDate(e.booked_on)), $("td",null,e.category), $("td",null,(e.description || "") + (e.counterparty ? " · " + e.counterparty : "")));
+    tr.append($("td",null,String(i + 1)), $("td",null,fmtDate(e.booked_on)), $("td",null,(e.auto ? "🤖 " : "") + e.category), $("td",null,(e.description || "") + (e.counterparty ? " · " + e.counterparty : "")));
     tr.append($("td","amt " + (e.kind === "einnahme" ? "in" : "out"), (e.kind === "einnahme" ? "+ " : "− ") + eur(e.amount)));
     const bt = $("td");
     if (e.receipt_path){ const b = $("button","linkbtn","ansehen"); b.onclick = () => openReceipt(e); bt.append(b); } else bt.append($("span","pill ban","fehlt"));
