@@ -240,6 +240,7 @@ tr:last-child td{border-bottom:none}
       <button class="tab" data-tab="start"><i>🏠</i><span>Start</span></button>
       <button class="tab" data-tab="users"><i>👥</i><span>Nutzer</span></button>
       <button class="tab" data-tab="pay"><i>💳</i><span>Bezahlen</span><b class="badge" id="b-pay"></b></button>
+      <button class="tab" data-tab="launch"><i>🚀</i><span>Start 17.12.</span><b class="badge" id="b-launch"></b></button>
       <button class="tab" data-tab="inbox"><i>📥</i><span>Meldungen</span><b class="badge" id="b-inbox"></b></button>
       <button class="tab" data-tab="money"><i>💶</i><span>Geld</span></button>
       <button class="tab" data-tab="system"><i>⚙️</i><span>System</span><b class="badge" id="b-system"></b></button>
@@ -386,9 +387,9 @@ function render(){
   side.hidden = !inside;                                 // 🔒 vor der Anmeldung keine Menüs
   document.getElementById("top").style.display = inside ? "none" : "flex";
   document.getElementById("logout").style.display = inside ? "" : "none";
-  if (!["start","users","pay","inbox","money","system","links","authority"].includes(S.tab)) S.tab = "start";
+  if (!["start","users","pay","launch","inbox","money","system","links","authority"].includes(S.tab)) S.tab = "start";
   // 🔐 Wer sieht was? 👮 Moderator: Start, Nutzer, Meldungen · 🛡️ Admin: + System · 👑 Programmierer: alles
-  const NEED = { start:"moderator", users:"moderator", inbox:"moderator", system:"admin", money:"programmierer", links:"programmierer", authority:"programmierer", pay:"programmierer" };
+  const NEED = { start:"moderator", users:"moderator", inbox:"moderator", system:"admin", money:"programmierer", links:"programmierer", authority:"programmierer", pay:"programmierer", launch:"programmierer" };
   if (!darf(NEED[S.tab] || "programmierer")) S.tab = "start";
   tabs.querySelectorAll(".tab").forEach(b => {
     b.setAttribute("aria-selected", String(b.dataset.tab === S.tab));
@@ -409,6 +410,7 @@ function render(){
   else if (S.tab === "system") renderSystem(main);
   else if (S.tab === "links") renderLinks(main);
   else if (S.tab === "pay") renderPay(main);
+  else if (S.tab === "launch") renderLaunch(main);
   else renderAuthority(main);
 }
 /* 📦 Kompakt: Alle Karten als zugeklappte Kacheln nebeneinander – ein Klick klappt sie auf. */
@@ -1144,9 +1146,9 @@ async function savePlan(patch){
 const PLAN_STD = {
   limits: {
     // ab 0.50.0: gleiche Standardwerte wie in der App (plus50.sql) · audio_min 0 = unbegrenzt
-    normal:  { media_mb:500,  storage_mb:250,  video_min:0,   audio_min:0, ki:20,  flow_min:0,  dolm_min:0,  trans:300 },
-    premium: { media_mb:2048, storage_mb:2048, video_min:120, audio_min:0, ki:50,  flow_min:30, dolm_min:10, trans:1500 },
-    vip:     { media_mb:8192, storage_mb:5120, video_min:300, audio_min:0, ki:125, flow_min:75, dolm_min:25, trans:4000 },
+    normal:  { media_mb:500,  storage_mb:250,  video_min:0,   audio_min:0, ki:20,  flow_min:0,  dolm_min:0,  trans:300,  call_video:4 },
+    premium: { media_mb:2048, storage_mb:2048, video_min:120, audio_min:0, ki:50,  flow_min:30, dolm_min:10, trans:1500, call_video:8 },
+    vip:     { media_mb:8192, storage_mb:5120, video_min:300, audio_min:0, ki:125, flow_min:75, dolm_min:25, trans:4000, call_video:12 },
   },
   unit: { gb_traffic:0.085, gb_storage:0.02, video_min:0.004, audio_min:0.001, audio_est:200, ki:0.004, flow_min:0.004, dolm_min:0.01, trans:0.0006, base:0.02 },
   usage_pct: 30,
@@ -1163,6 +1165,7 @@ function updateBadges(){
   set("b-inbox", (h.reports_open || 0) + (h.ai_reports_open || 0) + (h.feedback_open || 0));
   set("b-system", h.errors_open || 0);
   set("b-pay", darf("programmierer") ? payOffen() : 0);
+  set("b-launch", darf("programmierer") ? launchAmpel().n.rot : 0);
 }
 
 /* ---------- 🏠 Start ---------- */
@@ -1596,7 +1599,8 @@ function renderPrices(main){
   const zeilen = [["media_mb","📤 Fotos/Videos/Dateien senden (MB)"],["storage_mb","💾 Speicher auf dem Server (MB) – nur Planung"],["video_min","🎥 Videoanrufe starten (Minuten)"],
                   ["audio_min","📞 Sprachanrufe starten (Minuten, 0 = unbegrenzt)"],
                   ["ki","🤖 KI-Assistent (Anfragen)"],["flow_min","🎙️ FlowTalk (Minuten)"],["dolm_min","🗣️ Dolmetscher (Minuten)"],
-                  ["trans","🌍 KI-Übersetzungen (nur alte App-Versionen; neu: auf dem Handy = 0 €)"]];
+                  ["trans","🌍 KI-Übersetzungen (nur alte App-Versionen; neu: auf dem Handy = 0 €)"],
+                  ["call_video","👥 Personen im Gruppen-Videoanruf (Sprache = doppelt, höchstens 32) – zählt das Paket des Anrufers"]];
   const tbl = document.createElement("table"); tbl.style.cssText = "width:100%;border-collapse:collapse;font-size:13px;margin:8px 0";
   const th = (t) => { const x = document.createElement("th"); x.textContent = t; x.style.cssText = "text-align:left;padding:6px;border-bottom:1px solid var(--line);color:var(--muted)"; return x; };
   const hr = document.createElement("tr"); [ "Leistung", "🙂 Normal", "⭐ Premium", "👑 VIP (ganze Familie)" ].forEach(t => hr.append(th(t))); tbl.append(hr);
@@ -2303,7 +2307,7 @@ const DIENSTE_LISTE = [
   ]],
   ["🌐 Webseite & Recht", [
     ["🐙 GitHub – wuzzo.de hochladen", "https://github.com/henich80-alt/wuzzo-web/upload/main", "Webseite und Panel aktualisieren", "kostenlos", false],
-    ["🌐 IONOS – Domain wuzzo.de", "https://mein.ionos.de/domain/details/wuzzo.de", "Domain verlängern", "laut IONOS-Rechnung (ca. 1 € im Monat)", true],
+    ["🌐 IONOS – Domain wuzzo.de", "https://mein.ionos.de/domain/details/wuzzo.de", "Domain verlängern · ⚠️ „SSL-Zertifikat“ und „Domain Guard“ bei IONOS NICHT kaufen – das Schloss 🔒 gibt GitHub kostenlos, Schutz = 2-Faktor bei IONOS", "laut IONOS-Rechnung (ca. 1 € im Monat)", true],
     ["🌐 wuzzo.de", "https://wuzzo.de/", "Startseite", "", false],
     ["🔒 Datenschutz", "https://wuzzo.de/datenschutz.html", "", "", false],
     ["⚖️ Nutzungsbedingungen", "https://wuzzo.de/nutzungsbedingungen.html", "", "", false],
@@ -2435,8 +2439,120 @@ function renderPay(main){
   });
   main.append($("p","note","🚦 Ampel: 🔴 jetzt bezahlen · 🟡 bald fällig oder prüfen · 🟢 erledigt · ⚪ gerade nicht nötig. Guthaben (SMS, KI, Deepgram) schaltet von selbst auf 🟡/🔴, wenn Wuzzo meldet, dass es knapp wird. „✔️ Bezahlt“ merkt sich dieser Browser; monatliche Zahlungen springen am 1. wieder auf 🟡. Die Zahl am Menüpunkt = rote + gelbe Punkte."));
 }
+/* ---------- 🚀 Start-Checkliste für den 17.12.2026 (mit Ampel) ---------- */
+const START_TAG = "2026-12-17";
+// [id, Was, Wer, Link (http… oder "#pay"/"#links"), bis (JJJJ-MM-TT), Hinweis]
+const START_LISTE = [
+  ["supa",   "🗄️ Supabase Pro bezahlt (sonst ab 15.12. eingeschränkt)", "du", "#pay", "2026-12-14", "Hakt sich von selbst ab, wenn du in 💳 Bezahlen „✔️ Bezahlt“ klickst"],
+  ["sql50d", "🗄️ SQL plus50d-gruppenlimit.sql in Supabase ausgeführt", "du", "https://supabase.com/dashboard/project/hbusxiioorpsskzvjxza/sql/new", "2026-12-05", "Datei aus wuzzo-paket-50-2.zip → einfügen → Run"],
+  ["app",    "📲 App 0.50.2 gebaut und in den Internen Test hochgeladen", "du", "https://play.google.com/console/u/1/developers/8787141740191790937/app/4974409909997434422/tracks/internal-testing", "2026-12-05", "wuzzo-paket-50-2.zip entpacken → wuzzo-bauen.ps1"],
+  ["test",   "👨‍👩‍👧 Mit der Familie getestet: Anruf, Gruppen-Video, Sprachnachricht, Video senden", "du", "", "2026-12-10", "Fehler? Foto an Claude schicken"],
+  ["gewerbe","🏢 Gewerbe angemeldet (Mail an Stadt Bünde mit PDF + Ausweis)", "du", "", "2026-12-10", "Gebühr 26 € kommt per Bescheid → 💳 Bezahlen"],
+  ["store",  "🛍️ Store-Eintrag: Texte (unten zum Kopieren), Screenshots, Symbol", "du", "https://play.google.com/console/u/1/developers/8787141740191790937/app/4974409909997434422/app-dashboard", "2026-12-12", "Texte unten mit „📋 Kopieren“"],
+  ["inhalt", "📋 Google Play: Datensicherheit & App-Inhalte vollständig (keine roten Punkte)", "du", "https://play.google.com/console/u/1/developers/8787141740191790937/app/4974409909997434422/app-dashboard", "2026-12-12", ""],
+  ["haendler","💳 Google-Zahlungsprofil / Händlerkonto eingerichtet (nach dem Gewerbe)", "du", "https://pay.google.com/", "2026-12-14", "Erst wenn das Gewerbe angemeldet ist"],
+  ["produkte","🏷️ In-App-Produkte aktiv: Jahrespass, Premium, VIP – gleiche Preise wie im Panel", "du", "https://play.google.com/console/u/1/developers/8787141740191790937/app/4974409909997434422/monetization/products", "2026-12-15", "Preise im Panel: 💶 Geld → 🏷️ Preise & Grenzen"],
+  ["sms",    "📱 Brevo-SMS-Guthaben aufgeladen (z. B. 20 €)", "du", "#pay", "2026-12-15", "Ohne Guthaben kommen keine SMS-Codes an"],
+  ["sicher", "🔐 Sicherheits-Liste erledigt (2-Faktor überall, Notfall-Codes auf Papier)", "du", "#links", "2026-12-15", "Hakt sich von selbst ab, wenn in 🔗 Dienste alles erledigt ist"],
+  ["prod",   "🚀 Produktion: Zugriff von Google erhalten und Version für alle freigegeben", "du", "https://play.google.com/console/u/1/developers/8787141740191790937/app/4974409909997434422/app-dashboard", "2026-12-16", "Dashboard → „Auf Produktion zugreifen“ / Release in „Produktion“"],
+  ["web",    "🌐 Webseite fertig: Startseite mit Preisen & Fragen (10 Sprachen), Datenschutz, Hilfe", "claude", "https://wuzzo.de/", "2026-12-16", "Von Claude erledigt ✅ – ab 17.12. steht dort automatisch „Jetzt für alle“"],
+  ["panel",  "🧭 Panel: 💳 Bezahlen mit Ampel, 🚀 diese Checkliste", "claude", "", "2026-12-16", "Von Claude erledigt ✅"],
+];
+function launchState(){ try { return JSON.parse(localStorage.getItem("wz_start") || "{}"); } catch(e){ return {}; } }
+function launchSave(st){ try { localStorage.setItem("wz_start", JSON.stringify(st)); } catch(e){} }
+function launchDone(id, st){
+  if (id === "supa"){ const pz = payState().supa; if (pz) return true; }
+  if (id === "sicher"){ try { const h = JSON.parse(localStorage.getItem("wz_sicher") || "{}"); if (Object.values(h).filter(Boolean).length >= 12) return true; } catch(e){} }
+  if (id === "web" || id === "panel") return true;
+  return !!st[id];
+}
+function launchStatus(z, st){
+  const [id,,,, bis] = z;
+  if (launchDone(id, st)) return { lvl:"gruen", txt:"erledigt" };
+  const t = Math.ceil((new Date(bis + "T23:59:59") - new Date()) / 864e5);
+  if (t < 0) return { lvl:"rot", txt:"überfällig seit " + new Date(bis).toLocaleDateString("de-DE") + "!" };
+  if (t <= 3) return { lvl:"rot", txt:"nur noch " + t + " Tag" + (t === 1 ? "" : "e") + " – bis " + new Date(bis).toLocaleDateString("de-DE") };
+  if (t <= 10) return { lvl:"gelb", txt:"noch " + t + " Tage – bis " + new Date(bis).toLocaleDateString("de-DE") };
+  return { lvl:"grau", txt:"noch Zeit – bis " + new Date(bis).toLocaleDateString("de-DE") };
+}
+function launchAmpel(){
+  const st = launchState(); const n = { rot:0, gelb:0, gruen:0, grau:0 };
+  START_LISTE.forEach(z => n[launchStatus(z, st).lvl]++);
+  return { n, lvl: n.rot ? "rot" : n.gelb ? "gelb" : (n.grau ? "grau" : "gruen") };
+}
+const STORE_TEXTE = {"de": {"kurz": "Messenger mit Übersetzer, Video- & Gruppenanrufen – verschlüsselt für Familien", "lang": "Wuzzo – Chatten ohne Sprachgrenzen 🌍\n\nWuzzo ist der Messenger für dich und deine Familie – egal, welche Sprache ihr sprecht.\n\n🌍 ÜBERSETZEN DIREKT AUF DEM HANDY\nNachrichten werden automatisch in deine Sprache übersetzt – kostenlos, unbegrenzt und sogar ohne Internet. Mit Premium gibt es zusätzlich die Profi-Übersetzung mit KI.\n\n🔒 SICHER\nChats zu zweit sind Ende-zu-Ende-verschlüsselt. Nur ihr beide könnt sie lesen.\n\n📞 ANRUFE & VIDEO\n• Sprach- und Videoanrufe in bester Qualität\n• Gruppenanrufe – wer später kommt, tritt einfach bei\n• Anrufe annehmen auch bei gesperrtem Handy\n• Bildschirm teilen (Premium)\n\n💬 ALLES, WAS DU BRAUCHST\n• Fotos, Videos, Dateien und Sprachnachrichten\n• Video-Nachrichten als Kreis, Herz oder Stern\n• Sticker und Emojis\n• Wuzzo am PC unter wuzzo.de/pc\n\n💚 FÜRSORGE & NOTFALL\nSOS-Knopf für den Notfall – damit deine Liebsten wissen, dass du Hilfe brauchst.\n\n🤖 KI-HELFER\nFormulierungshilfe, Zusammenfassungen, „Was habe ich verpasst?“ und Antwort-Vorschläge – nur wenn du sie selbst antippst.\n\n📦 PAKETE\n• Jahrespass: alle Grundfunktionen für ein ganzes Jahr\n• ⭐ Premium: Videoanrufe starten, Gruppen-Video bis 8 Personen, Bildschirm teilen, mehr Platz\n• 👑 VIP-Familie: alles aus Premium für bis zu 5 Personen, Gruppen-Video bis 12 Personen\n\nTexte, Sticker, Übersetzen auf dem Handy und SOS sind immer dabei.\n\nHilfe: wuzzo.de/hilfe.html · Datenschutz: wuzzo.de/datenschutz.html", "neu": "Neu in Wuzzo 0.50.2:\n🗜️ Videos werden vor dem Senden verkleinert – kommen schneller an und brauchen viel weniger Daten\n🎬 Längere Videos (bis 3 Minuten) passen in eine Nachricht\n👥 Gruppenanrufe: Video bis 4 Personen, mit Premium bis 8, mit VIP bis 12\n📞 Anruf-Knöpfe wie beim Telefon, Annehmen bei gesperrtem Handy\n🎧 Kopfhörer funktionieren jetzt immer"}, "en": {"kurz": "Messenger with translator, video & group calls – encrypted, made for families", "lang": "Wuzzo – chat without language barriers 🌍\n\nWuzzo is the messenger for you and your family – whatever language you speak.\n\n🌍 TRANSLATION RIGHT ON YOUR PHONE\nMessages are translated into your language automatically – free, unlimited and even offline. Premium adds pro translation with AI.\n\n🔒 SECURE\nOne-to-one chats are end-to-end encrypted. Only the two of you can read them.\n\n📞 CALLS & VIDEO\n• Voice and video calls in great quality\n• Group calls – anyone who comes later can simply join\n• Answer calls even when your phone is locked\n• Screen sharing (Premium)\n\n💬 EVERYTHING YOU NEED\n• Photos, videos, files and voice messages\n• Video messages as a circle, heart or star\n• Stickers and emojis\n• Wuzzo on your PC at wuzzo.de/pc\n\n💚 CARE & EMERGENCY\nAn SOS button for emergencies – so your loved ones know you need help.\n\n🤖 AI HELPER\nWriting help, summaries, \"What did I miss?\" and reply suggestions – only when you tap them yourself.\n\n📦 PLANS\n• Annual pass: all basic features for a whole year\n• ⭐ Premium: start video calls, group video up to 8 people, screen sharing, more space\n• 👑 VIP Family: everything in Premium for up to 5 people, group video up to 12 people\n\nTexts, stickers, on-phone translation and SOS are always included.\n\nHelp: wuzzo.de/en/hilfe.html · Privacy: wuzzo.de/datenschutz.html", "neu": "New in Wuzzo 0.50.2:\n🗜️ Videos are compressed before sending – they arrive faster and use much less data\n🎬 Longer videos (up to 3 minutes) fit into one message\n👥 Group calls: video up to 4 people, with Premium up to 8, with VIP up to 12\n📞 Call buttons like on your phone, answer even when locked\n🎧 Headphones now always work"}, "ru": {"kurz": "Мессенджер с переводчиком, видео- и групповыми звонками – с шифрованием", "lang": "Wuzzo – общение без языковых границ 🌍\n\nWuzzo – мессенджер для тебя и твоей семьи, на каком бы языке вы ни говорили.\n\n🌍 ПЕРЕВОД ПРЯМО НА ТЕЛЕФОНЕ\nСообщения автоматически переводятся на твой язык – бесплатно, без ограничений и даже без интернета. В Premium есть ещё профессиональный перевод с ИИ.\n\n🔒 БЕЗОПАСНО\nЧаты на двоих защищены сквозным шифрованием. Прочитать их можете только вы двое.\n\n📞 ЗВОНКИ И ВИДЕО\n• Голосовые и видеозвонки в отличном качестве\n• Групповые звонки – кто пришёл позже, просто присоединяется\n• Принимать звонки даже на заблокированном телефоне\n• Показ экрана (Premium)\n\n💬 ВСЁ, ЧТО НУЖНО\n• Фото, видео, файлы и голосовые сообщения\n• Видеосообщения в форме круга, сердца или звезды\n• Стикеры и эмодзи\n• Wuzzo на компьютере: wuzzo.de/pc\n\n💚 ЗАБОТА И SOS\nКнопка SOS для экстренных случаев – чтобы близкие знали, что тебе нужна помощь.\n\n🤖 ИИ-ПОМОЩНИК\nПомощь с текстом, краткие пересказы, «Что я пропустил?» и варианты ответа – только когда ты сам нажмёшь.\n\n📦 ПАКЕТЫ\n• Годовой пропуск: все основные функции на целый год\n• ⭐ Premium: начинать видеозвонки, групповое видео до 8 человек, показ экрана, больше места\n• 👑 VIP-семья: всё из Premium для 5 человек, групповое видео до 12 человек\n\nТексты, стикеры, перевод на телефоне и SOS – всегда включены.\n\nПомощь: wuzzo.de/ru/hilfe.html · Конфиденциальность: wuzzo.de/datenschutz.html", "neu": "Новое в Wuzzo 0.50.2:\n🗜️ Видео сжимаются перед отправкой – приходят быстрее и тратят гораздо меньше трафика\n🎬 Длинные видео (до 3 минут) помещаются в одно сообщение\n👥 Групповые звонки: видео до 4 человек, с Premium до 8, с VIP до 12\n📞 Кнопки звонка как в телефоне, ответ даже на заблокированном экране\n🎧 Наушники теперь работают всегда"}, "uk": {"kurz": "Месенджер з перекладачем, відео- та груповими дзвінками – з шифруванням", "lang": "Wuzzo – спілкування без мовних кордонів 🌍\n\nWuzzo – месенджер для тебе й твоєї родини, хоч якою мовою ви говорите.\n\n🌍 ПЕРЕКЛАД ПРЯМО НА ТЕЛЕФОНІ\nПовідомлення автоматично перекладаються твоєю мовою – безкоштовно, без обмежень і навіть без інтернету. У Premium є ще професійний переклад зі ШІ.\n\n🔒 БЕЗПЕЧНО\nЧати на двох мають наскрізне шифрування. Прочитати їх можете лише ви двоє.\n\n📞 ДЗВІНКИ Й ВІДЕО\n• Голосові та відеодзвінки у чудовій якості\n• Групові дзвінки – хто прийшов пізніше, просто приєднується\n• Приймати дзвінки навіть на заблокованому телефоні\n• Показ екрана (Premium)\n\n💬 УСЕ, ЩО ПОТРІБНО\n• Фото, відео, файли й голосові повідомлення\n• Відеоповідомлення у формі кола, серця чи зірки\n• Стікери та емодзі\n• Wuzzo на комп'ютері: wuzzo.de/pc\n\n💚 ТУРБОТА Й SOS\nКнопка SOS для надзвичайних випадків – щоб рідні знали, що тобі потрібна допомога.\n\n🤖 ШІ-ПОМІЧНИК\nДопомога з текстом, короткі підсумки, «Що я пропустив?» і варіанти відповіді – лише коли ти сам натиснеш.\n\n📦 ПАКЕТИ\n• Річний пропуск: усі основні функції на цілий рік\n• ⭐ Premium: починати відеодзвінки, групове відео до 8 осіб, показ екрана, більше місця\n• 👑 VIP-сім'я: усе з Premium для 5 осіб, групове відео до 12 осіб\n\nТексти, стікери, переклад на телефоні та SOS – завжди включено.\n\nДопомога: wuzzo.de/uk/hilfe.html · Конфіденційність: wuzzo.de/datenschutz.html", "neu": "Нове у Wuzzo 0.50.2:\n🗜️ Відео стискаються перед надсиланням – приходять швидше й витрачають набагато менше трафіку\n🎬 Довгі відео (до 3 хвилин) вміщуються в одне повідомлення\n👥 Групові дзвінки: відео до 4 осіб, з Premium до 8, з VIP до 12\n📞 Кнопки дзвінка як у телефоні, відповідь навіть на заблокованому екрані\n🎧 Навушники тепер працюють завжди"}};
+function copyText(t, btn){
+  const ok = () => { const o = btn.textContent; btn.textContent = "✅ Kopiert"; setTimeout(() => btn.textContent = o, 1500); };
+  try { navigator.clipboard.writeText(t).then(ok, () => fallback()); } catch(e){ fallback(); }
+  function fallback(){ const ta = document.createElement("textarea"); ta.value = t; document.body.append(ta); ta.select(); try { document.execCommand("copy"); ok(); } catch(e){} ta.remove(); }
+}
+function renderLaunch(main){
+  const tage = Math.ceil((new Date(START_TAG + "T00:00:00") - new Date()) / 864e5);
+  pageHead(main, "🚀 Start am 17.12.2026", tage > 0 ? "Noch " + tage + " Tag" + (tage === 1 ? "" : "e") + " bis zum Start. Alles, was bis dahin fertig sein muss – mit Ampel." : "🎉 Wuzzo ist gestartet!");
+  const st = launchState(); const A = launchAmpel();
+  const amp = $("div","card wide"); amp.style.cssText = "margin-bottom:12px;border:2px solid " + AMPEL_FARBE[A.lvl];
+  amp.append($("b",null, A.lvl === "rot" ? "🔴 " + A.n.rot + " Punkt" + (A.n.rot > 1 ? "e" : "") + " dringend" : A.lvl === "gelb" ? "🟡 " + A.n.gelb + " Punkt" + (A.n.gelb > 1 ? "e" : "") + " bald fällig" : A.lvl === "grau" ? "⚪ Alles im Plan – noch Zeit" : "🟢 Alles fertig – bereit für den Start! 🚀"),
+    $("p","note","🔴 " + A.n.rot + " dringend · 🟡 " + A.n.gelb + " bald · ⚪ " + A.n.grau + " noch Zeit · 🟢 " + A.n.gruen + " von " + START_LISTE.length + " erledigt"));
+  const bar = $("div"); bar.style.cssText = "height:10px;border-radius:6px;background:var(--line);overflow:hidden;margin-top:6px";
+  const fill = $("div"); fill.style.cssText = "height:100%;background:#34d399;width:" + Math.round(A.n.gruen / START_LISTE.length * 100) + "%"; bar.append(fill); amp.append(bar);
+  main.append(amp);
+  const RANG = { rot:0, gelb:1, grau:2, gruen:3 };
+  const c = $("div","card wide"); c.style.marginBottom = "12px";
+  c.append($("b",null,"✅ Checkliste (dringendste oben)"));
+  [...START_LISTE].sort((x, y) => RANG[launchStatus(x, st).lvl] - RANG[launchStatus(y, st).lvl] || x[4].localeCompare(y[4])).forEach(z => {
+    const [id, t, wer, link, , hint] = z; const P = launchStatus(z, st);
+    const r = $("div"); r.style.cssText = "display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:10px 0 10px 10px;border-bottom:1px solid var(--line);border-left:4px solid " + AMPEL_FARBE[P.lvl];
+    const info = $("div"); info.style.cssText = "flex:1;min-width:240px";
+    const tt = $("div",null,t); tt.style.fontWeight = "700"; if (P.lvl === "gruen") tt.style.textDecoration = "line-through";
+    const am = $("div",null, AMPEL_ICON[P.lvl] + " " + P.txt + " · " + (wer === "claude" ? "🤖 Claude" : "👤 du")); am.style.cssText = "font-size:13px;font-weight:700;color:" + AMPEL_FARBE[P.lvl];
+    info.append(tt, am); if (hint) info.append($("div","note",hint));
+    const k = $("div"); k.style.cssText = "display:flex;gap:6px;flex-wrap:wrap";
+    if (link){
+      if (link[0] === "#"){ const b = $("button","btn","➡️ Öffnen"); b.onclick = () => go(link.slice(1)); k.append(b); }
+      else { const a = $("a","btn","➡️ Öffnen"); a.href = link.replace(/^PC\//, "https://play.google.com/console/u/1/developers/8787141740191790937/app/4974409909997434422/"); a.target = "_blank"; a.rel = "noopener"; a.style.textDecoration = "none"; k.append(a); }
+    }
+    if (wer !== "claude" && id !== "supa" && id !== "sicher"){
+      const ok = $("button","btn ghost", st[id] ? "↩️ Zurück" : "✔️ Erledigt");
+      ok.onclick = () => { const s2 = launchState(); if (s2[id]) delete s2[id]; else s2[id] = new Date().toISOString(); launchSave(s2); render(); };
+      k.append(ok);
+    }
+    r.append(info, k); c.append(r);
+  });
+  main.append(c);
+  // 🛍️ Texte für den Play Store – fertig zum Kopieren
+  const s = $("div","card wide"); s.style.marginBottom = "12px";
+  s.append($("b",null,"🛍️ Texte für den Play Store – fertig zum Kopieren"),
+    $("p","note","Play Console → Store-Präsenz → Hauptversion des Store-Eintrags (Deutsch). Weitere Sprachen: dort „Übersetzungen verwalten“ → Sprache hinzufügen → Text einfügen. „Neu in dieser Version“ kommt beim Hochladen der Version ins Feld „Versionshinweise“."));
+  const lk = $("a","btn","➡️ Store-Eintrag öffnen"); lk.href = "https://play.google.com/console/u/1/developers/8787141740191790937/app/4974409909997434422/main-store-listing"; lk.target = "_blank"; lk.rel = "noopener"; lk.style.cssText = "text-decoration:none;display:inline-block;margin:4px 0 8px"; s.append(lk);
+  const SPR = { de:"🇩🇪 Deutsch", en:"🇬🇧 Englisch", ru:"🇷🇺 Russisch", uk:"🇺🇦 Ukrainisch" };
+  const FELD = [["kurz","Kurzbeschreibung (max. 80 Zeichen)"],["lang","Vollständige Beschreibung (max. 4000 Zeichen)"],["neu","Neu in 0.50.2 – Versionshinweise (max. 500 Zeichen)"]];
+  Object.keys(SPR).forEach(L => {
+    const d = document.createElement("details"); d.style.cssText = "border:1px solid var(--line);border-radius:10px;padding:6px 10px;margin:6px 0";
+    const sm = document.createElement("summary"); sm.textContent = SPR[L]; sm.style.cssText = "cursor:pointer;font-weight:700"; d.append(sm);
+    FELD.forEach(([f, t]) => {
+      const txt = STORE_TEXTE[L][f];
+      const h = $("div"); h.style.cssText = "display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px";
+      const cp = $("button","btn ghost","📋 Kopieren"); cp.onclick = () => copyText(txt, cp);
+      h.append($("span","note", t + " · " + [...txt].length + " Zeichen"), cp);
+      const pre = $("div"); pre.textContent = txt; pre.style.cssText = "white-space:pre-wrap;background:var(--deep, #0c1433);border:1px solid var(--line);border-radius:8px;padding:8px;font-size:13px;max-height:220px;overflow:auto;user-select:text";
+      d.append(h, pre);
+    });
+    s.append(d);
+  });
+  main.append(s);
+}
 function renderLinks(main){
   pageHead(main, "🔗 Dienste", "Alle Konten, die Wuzzo braucht – mit Kosten. Ein Klick öffnet die Seite.");
+  const warn = $("div","card wide"); warn.style.cssText = "margin:0 0 14px;border:2px solid #FFC94D";
+  warn.append($("b",null,"⚠️ Nicht kaufen – brauchst du nicht (Anbieter zeigen es trotzdem rot an)"));
+  [["IONOS „SSL-Zertifikat aktivieren“","Deine Webseite liegt bei GitHub – das Schloss 🔒 (https) ist dort kostenlos und erneuert sich selbst."],
+   ["IONOS „Domain Guard / Domain-Sicherheit“","Den Schutz bekommst du kostenlos: 2-Faktor-Anmeldung bei IONOS einschalten (siehe Sicherheits-Liste)."],
+   ["IONOS „Website-Baukasten“, „E-Mail-Postfach“ u. ä.","Webseite macht Claude über GitHub, Mails laufen über Brevo und Gmail."],
+   ["Supabase „Team“ (599 $)","Für Wuzzo reicht „Pro“ (25 $). Nur „Upgrade to Pro“ klicken."]].forEach(([t, w]) => {
+    const r = $("div"); r.style.cssText = "padding:6px 0;border-bottom:1px solid var(--line)";
+    const tt = $("div",null,"❌ " + t); tt.style.fontWeight = "700"; r.append(tt, $("div","note",w)); warn.append(r);
+  });
+  main.append(warn);
   // 🔐 Sicherheits-Liste (Haken bleiben in diesem Browser gespeichert)
   const SICHER = [
     ["g2fa","Google-Konto: 2-Faktor an (schützt Play Console + Gmail)","https://myaccount.google.com/signinoptions/twosv"],

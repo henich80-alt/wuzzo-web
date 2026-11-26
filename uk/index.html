@@ -30,6 +30,24 @@
 })();
 function wzLang(c,u){ try{ localStorage.setItem("wz_lang",c); }catch(e){} location.href=u; }
 </script>
+
+
+<style id="wz-pakete-css">
+.pk h2,.wzfaq h2{font-size:22px;margin:26px 0 4px}
+.pk .sub{color:var(--muted);margin:0 0 12px}
+.pk .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media (max-width:720px){.pk .cards{grid-template-columns:1fr}}
+.pk .c{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
+.pk .c.top{border-color:var(--volt);box-shadow:0 0 22px rgba(46,230,255,.18)}
+.pk .c h3{margin:0 0 4px;font-size:18px}
+.pk .c .pr{color:var(--volt);font-weight:700;font-size:15px;margin-bottom:8px}
+.pk .c ul{margin:0;padding-left:18px;color:#d3dcf5;font-size:14.5px}
+.pk .c li{margin:3px 0}
+.pk .pay{color:var(--muted);font-size:13px;margin:10px 0 0;text-align:center}
+.wzfaq details{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin:8px 0;padding:0 14px}
+.wzfaq summary{cursor:pointer;font-weight:700;padding:12px 0}
+.wzfaq p{margin:0 0 12px;color:#d3dcf5}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -43,7 +61,7 @@ function wzLang(c,u){ try{ localStorage.setItem("wz_lang",c); }catch(e){} locati
       <h1>Спілкування без мовних кордонів</h1>
       <p>Месенджер для тебе й твоєї родини – зашифрований, з перекладачем, голосовими й відеодзвінками.</p>
       <a class="btn" href="https://wuzzo.de/app/">▶️ Завантажити Wuzzo з Google Play</a>
-      <div class="note">Зараз лише для запрошених тестувальників · iPhone згодом</div>
+      <div class="note" id="wz-start-note" data-after="🚀 Тепер для всіх у Google Play · iPhone згодом">Зараз лише для запрошених тестувальників · 🚀 Старт для всіх 17 грудня 2026 · iPhone згодом</div>
     </div>
     <div class="qr"><img src="../qr-installieren.png" alt="QR-код: встановити Wuzzo"><small>Скануй камерою телефону</small></div>
   </section>
@@ -54,6 +72,12 @@ function wzLang(c,u){ try{ localStorage.setItem("wz_lang",c); }catch(e){} locati
     <div><b>📞</b>Відео й дзвінки</div>
     <div><b>💚</b>Турбота й SOS</div>
   </section>
+
+  
+  <!-- wz-pakete -->
+  <section class="pk"><h2>Пакети й ціни</h2><p class="sub">Тексти, стікери, переклад на телефоні та SOS – завжди включено.</p><div class="cards"><div class="c"><h3>🎟️ Річний пропуск</h3><div class="pr"><b data-p="wuzzo_start"></b> у 1-й рік, далі <b data-p="wuzzo_jahr"></b> на рік</div><ul><li>Чати, фото, відео й голосові</li><li>Голосові та групові дзвінки</li><li>Участь у відеодзвінках</li><li>🤖 ШІ-помічник: 20 запитань на місяць</li></ul></div><div class="c top"><h3>⭐ Premium</h3><div class="pr"><b data-p="wuzzo_premium_6m"></b> на 6 місяців · річний пропуск включено</div><ul><li>🎥 Починати відеодзвінки – у групах до 8 осіб</li><li>🖥️ Показ екрана</li><li>✨ Професійний переклад зі ШІ</li><li>Більше місця для фото й відео</li></ul></div><div class="c"><h3>👑 VIP-сім&#x27;я</h3><div class="pr"><b data-p="wuzzo_vip_6m"></b> на 6 місяців · до 5 осіб</div><ul><li>Усе з Premium для всієї родини</li><li>🎥 Групові відеодзвінки до 12 осіб</li><li>Найбільше місця й хвилин відео</li></ul></div></div><p class="pay">Оплата безпечно через Google Play. Ціни з ПДВ.</p></section>
+  <section class="wzfaq"><h2>Часті запитання</h2><details><summary>Чи захищені мої повідомлення?</summary><p>Так. Чати на двох мають наскрізне шифрування – прочитати їх можете лише ви двоє.</p></details><details><summary>Як працює переклад?</summary><p>Повідомлення перекладаються прямо на телефоні – безкоштовно, без обмежень і навіть без інтернету.</p></details><details><summary>Як оплатити?</summary><p>Безпечно через Google Play – так, як налаштовано у вашому Google. Wuzzo ніколи не бачить ваших платіжних даних.</p></details><details><summary>Чи є Wuzzo для iPhone або ПК?</summary><p>Версія для iPhone буде згодом. На ПК Wuzzo вже працює на wuzzo.de/pc.</p></details></section>
+<!-- /wz-pakete -->
 
   <div class="tip">❓ Проблеми зі встановленням, оновленням чи після видалення? → <a href="hilfe.html">До допомоги</a></div>
   <footer>
@@ -81,6 +105,21 @@ function wzLang(c,u){ try{ localStorage.setItem("wz_lang",c); }catch(e){} locati
       || (c && (k === 'c' || k === 'x' || k === 'a') && !frei(e));
     if (weg){ e.preventDefault(); e.stopPropagation(); }
   }, true);
+})();
+</script>
+<script id="wz-pakete-js">
+(function(){
+  var STD = {"wuzzo_start": 99, "wuzzo_jahr": 199, "wuzzo_premium_6m": 399, "wuzzo_vip_6m": 699}, loc = "uk-UA";
+  function show(p){ document.querySelectorAll("[data-p]").forEach(function(el){ var c = Number((p||{})[el.dataset.p] || STD[el.dataset.p]);
+    try { el.textContent = new Intl.NumberFormat(loc,{style:"currency",currency:"EUR"}).format(c/100); } catch(e){ el.textContent = (c/100).toFixed(2).replace(".",",") + " €"; } }); }
+  show(null);
+  // Preise kommen live vom Wuzzo-Server (gleiche Zahlen wie im Panel und in der App)
+  try { fetch("https://hbusxiioorpsskzvjxza.supabase.co/rest/v1/rpc/app_prices", { method:"POST",
+    headers:{ "apikey":"sb_publishable_ZUZ5BuGvwXJWtzaN9OrASQ_mzcCslb1", "Content-Type":"application/json" }, body:"{}" })
+    .then(function(r){ return r.ok ? r.json() : null; }).then(function(p){ if (p) show(p); }).catch(function(){}); } catch(e){}
+  // 🚀 Start-Datum: ab 17.12.2026 automatisch „Jetzt für alle“
+  var n = document.getElementById("wz-start-note");
+  if (n && new Date() >= new Date("2026-12-17T00:00:00+01:00")) n.textContent = n.dataset.after;
 })();
 </script>
 </body>
