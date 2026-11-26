@@ -32,6 +32,7 @@ function wzLang(c,u){ try{ localStorage.setItem("wz_lang",c); }catch(e){} locati
 </script>
 
 
+
 <style id="wz-pakete-css">
 .pk h2,.wzfaq h2{font-size:22px;margin:26px 0 4px}
 .pk .sub{color:var(--muted);margin:0 0 12px}
@@ -74,8 +75,9 @@ function wzLang(c,u){ try{ localStorage.setItem("wz_lang",c); }catch(e){} locati
   </section>
 
   
+  
   <!-- wz-pakete -->
-  <section class="pk"><h2>Paketler ve fiyatlar</h2><p class="sub">Yazılar, çıkartmalar, telefonda çeviri ve SOS her zaman dahil.</p><div class="cards"><div class="c"><h3>🎟️ Yıllık geçiş</h3><div class="pr">1. yıl <b data-p="wuzzo_start"></b>, sonra yılda <b data-p="wuzzo_jahr"></b></div><ul><li>Sohbetler, fotoğraflar, videolar ve sesli mesajlar</li><li>Sesli ve grup aramaları</li><li>Görüntülü aramalara katılma</li><li>🤖 Yapay zekâ yardımcısı: ayda 20 soru</li></ul></div><div class="c top"><h3>⭐ Premium</h3><div class="pr">6 ay için <b data-p="wuzzo_premium_6m"></b> · yıllık geçiş dahil</div><ul><li>🎥 Görüntülü arama başlatma – gruplarda 8 kişiye kadar</li><li>🖥️ Ekran paylaşımı</li><li>✨ Yapay zekâ ile profesyonel çeviri</li><li>Fotoğraf ve videolar için daha fazla alan</li></ul></div><div class="c"><h3>👑 VIP Aile</h3><div class="pr">6 ay için <b data-p="wuzzo_vip_6m"></b> · 5 kişiye kadar</div><ul><li>Premium&#x27;daki her şey tüm aile için</li><li>🎥 12 kişiye kadar grup görüntülü aramaları</li><li>En fazla alan ve video dakikası</li></ul></div></div><p class="pay">Ödeme Google Play üzerinden güvenle yapılır. Fiyatlara KDV dahildir.</p></section>
+  <section class="pk"><h2>Paketler ve fiyatlar</h2><p class="sub">Yazılar, çıkartmalar, telefonda çeviri ve SOS her zaman dahil.</p><div class="cards"><div class="c"><h3>🎟️ Yıllık geçiş</h3><div class="pr"><span class="pr-two">1. yıl <b data-p="wuzzo_start"></b>, sonra yılda <b data-p="wuzzo_jahr"></b></span><span class="pr-one" hidden>yılda <b data-p="wuzzo_jahr"></b></span></div><ul><li>Sohbetler, fotoğraflar, videolar ve sesli mesajlar</li><li>Sesli ve grup aramaları</li><li>Görüntülü aramalara katılma</li><li>🤖 Yapay zekâ yardımcısı: ayda 20 soru</li></ul></div><div class="c top"><h3>⭐ Premium</h3><div class="pr">6 ay için <b data-p="wuzzo_premium_6m"></b> · yıllık geçiş dahil</div><ul><li>🎥 Görüntülü arama başlatma – gruplarda 8 kişiye kadar</li><li>🖥️ Ekran paylaşımı</li><li>✨ Yapay zekâ ile profesyonel çeviri</li><li>Fotoğraf ve videolar için daha fazla alan</li></ul></div><div class="c"><h3>👑 VIP Aile</h3><div class="pr">6 ay için <b data-p="wuzzo_vip_6m"></b> · 5 kişiye kadar</div><ul><li>Premium&#x27;daki her şey tüm aile için</li><li>🎥 12 kişiye kadar grup görüntülü aramaları</li><li>En fazla alan ve video dakikası</li></ul></div></div><p class="pay">Ödeme Google Play üzerinden güvenle yapılır. Fiyatlara KDV dahildir.</p></section>
   <section class="wzfaq"><h2>Sık sorulan sorular</h2><details><summary>Mesajlarım güvende mi?</summary><p>Evet. İki kişilik sohbetler uçtan uca şifrelidir – onları yalnızca siz ikiniz okuyabilirsiniz.</p></details><details><summary>Çeviri nasıl çalışır?</summary><p>Mesajlar doğrudan telefonunda çevrilir – ücretsiz, sınırsız ve internetsiz bile.</p></details><details><summary>Nasıl ödeme yaparım?</summary><p>Google Play üzerinden güvenle – Google&#x27;da nasıl ayarladıysan öyle. Wuzzo ödeme bilgilerini asla görmez.</p></details><details><summary>Wuzzo iPhone veya bilgisayar için var mı?</summary><p>iPhone sürümü yakında geliyor. Bilgisayarda Wuzzo şimdiden wuzzo.de/pc adresinde çalışıyor.</p></details></section>
 <!-- /wz-pakete -->
 
@@ -109,9 +111,13 @@ function wzLang(c,u){ try{ localStorage.setItem("wz_lang",c); }catch(e){} locati
 </script>
 <script id="wz-pakete-js">
 (function(){
-  var STD = {"wuzzo_start": 99, "wuzzo_jahr": 199, "wuzzo_premium_6m": 399, "wuzzo_vip_6m": 699}, loc = "tr-TR";
-  function show(p){ document.querySelectorAll("[data-p]").forEach(function(el){ var c = Number((p||{})[el.dataset.p] || STD[el.dataset.p]);
-    try { el.textContent = new Intl.NumberFormat(loc,{style:"currency",currency:"EUR"}).format(c/100); } catch(e){ el.textContent = (c/100).toFixed(2).replace(".",",") + " €"; } }); }
+  var STD = {"wuzzo_start": 899, "wuzzo_jahr": 899, "wuzzo_premium_6m": 899, "wuzzo_vip_6m": 2499}, loc = "tr-TR";
+  function show(p){ var g = function(k){ return Number((p||{})[k] || STD[k]); };
+    document.querySelectorAll("[data-p]").forEach(function(el){ var c = g(el.dataset.p);
+    try { el.textContent = new Intl.NumberFormat(loc,{style:"currency",currency:"EUR"}).format(c/100); } catch(e){ el.textContent = (c/100).toFixed(2).replace(".",",") + " €"; } });
+    var one = g("wuzzo_start") === g("wuzzo_jahr");
+    document.querySelectorAll(".pr-one").forEach(function(el){ el.hidden = !one; });
+    document.querySelectorAll(".pr-two").forEach(function(el){ el.hidden = one; }); }
   show(null);
   // Preise kommen live vom Wuzzo-Server (gleiche Zahlen wie im Panel und in der App)
   try { fetch("https://hbusxiioorpsskzvjxza.supabase.co/rest/v1/rpc/app_prices", { method:"POST",

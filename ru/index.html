@@ -32,6 +32,7 @@ function wzLang(c,u){ try{ localStorage.setItem("wz_lang",c); }catch(e){} locati
 </script>
 
 
+
 <style id="wz-pakete-css">
 .pk h2,.wzfaq h2{font-size:22px;margin:26px 0 4px}
 .pk .sub{color:var(--muted);margin:0 0 12px}
@@ -74,8 +75,9 @@ function wzLang(c,u){ try{ localStorage.setItem("wz_lang",c); }catch(e){} locati
   </section>
 
   
+  
   <!-- wz-pakete -->
-  <section class="pk"><h2>Пакеты и цены</h2><p class="sub">Тексты, стикеры, перевод на телефоне и SOS – всегда включены.</p><div class="cards"><div class="c"><h3>🎟️ Годовой пропуск</h3><div class="pr"><b data-p="wuzzo_start"></b> в 1-й год, затем <b data-p="wuzzo_jahr"></b> в год</div><ul><li>Чаты, фото, видео и голосовые</li><li>Голосовые и групповые звонки</li><li>Участие в видеозвонках</li><li>🤖 ИИ-помощник: 20 вопросов в месяц</li></ul></div><div class="c top"><h3>⭐ Premium</h3><div class="pr"><b data-p="wuzzo_premium_6m"></b> на 6 месяцев · годовой пропуск включён</div><ul><li>🎥 Начинать видеозвонки – в группах до 8 человек</li><li>🖥️ Показ экрана</li><li>✨ Профессиональный перевод с ИИ</li><li>Больше места для фото и видео</li></ul></div><div class="c"><h3>👑 VIP-семья</h3><div class="pr"><b data-p="wuzzo_vip_6m"></b> на 6 месяцев · до 5 человек</div><ul><li>Всё из Premium для всей семьи</li><li>🎥 Групповые видеозвонки до 12 человек</li><li>Больше всего места и минут видео</li></ul></div></div><p class="pay">Оплата безопасно через Google Play. Цены с НДС.</p></section>
+  <section class="pk"><h2>Пакеты и цены</h2><p class="sub">Тексты, стикеры, перевод на телефоне и SOS – всегда включены.</p><div class="cards"><div class="c"><h3>🎟️ Годовой пропуск</h3><div class="pr"><span class="pr-two"><b data-p="wuzzo_start"></b> в 1-й год, затем <b data-p="wuzzo_jahr"></b> в год</span><span class="pr-one" hidden><b data-p="wuzzo_jahr"></b> в год</span></div><ul><li>Чаты, фото, видео и голосовые</li><li>Голосовые и групповые звонки</li><li>Участие в видеозвонках</li><li>🤖 ИИ-помощник: 20 вопросов в месяц</li></ul></div><div class="c top"><h3>⭐ Premium</h3><div class="pr"><b data-p="wuzzo_premium_6m"></b> на 6 месяцев · годовой пропуск включён</div><ul><li>🎥 Начинать видеозвонки – в группах до 8 человек</li><li>🖥️ Показ экрана</li><li>✨ Профессиональный перевод с ИИ</li><li>Больше места для фото и видео</li></ul></div><div class="c"><h3>👑 VIP-семья</h3><div class="pr"><b data-p="wuzzo_vip_6m"></b> на 6 месяцев · до 5 человек</div><ul><li>Всё из Premium для всей семьи</li><li>🎥 Групповые видеозвонки до 12 человек</li><li>Больше всего места и минут видео</li></ul></div></div><p class="pay">Оплата безопасно через Google Play. Цены с НДС.</p></section>
   <section class="wzfaq"><h2>Частые вопросы</h2><details><summary>Защищены ли мои сообщения?</summary><p>Да. Чаты на двоих защищены сквозным шифрованием – прочитать их можете только вы двое.</p></details><details><summary>Как работает перевод?</summary><p>Сообщения переводятся прямо на телефоне – бесплатно, без ограничений и даже без интернета.</p></details><details><summary>Как оплатить?</summary><p>Безопасно через Google Play – так, как настроено в вашем Google. Wuzzo никогда не видит ваших платёжных данных.</p></details><details><summary>Есть ли Wuzzo для iPhone или ПК?</summary><p>Версия для iPhone появится позже. На ПК Wuzzo уже работает на wuzzo.de/pc.</p></details></section>
 <!-- /wz-pakete -->
 
@@ -109,9 +111,13 @@ function wzLang(c,u){ try{ localStorage.setItem("wz_lang",c); }catch(e){} locati
 </script>
 <script id="wz-pakete-js">
 (function(){
-  var STD = {"wuzzo_start": 99, "wuzzo_jahr": 199, "wuzzo_premium_6m": 399, "wuzzo_vip_6m": 699}, loc = "ru-RU";
-  function show(p){ document.querySelectorAll("[data-p]").forEach(function(el){ var c = Number((p||{})[el.dataset.p] || STD[el.dataset.p]);
-    try { el.textContent = new Intl.NumberFormat(loc,{style:"currency",currency:"EUR"}).format(c/100); } catch(e){ el.textContent = (c/100).toFixed(2).replace(".",",") + " €"; } }); }
+  var STD = {"wuzzo_start": 899, "wuzzo_jahr": 899, "wuzzo_premium_6m": 899, "wuzzo_vip_6m": 2499}, loc = "ru-RU";
+  function show(p){ var g = function(k){ return Number((p||{})[k] || STD[k]); };
+    document.querySelectorAll("[data-p]").forEach(function(el){ var c = g(el.dataset.p);
+    try { el.textContent = new Intl.NumberFormat(loc,{style:"currency",currency:"EUR"}).format(c/100); } catch(e){ el.textContent = (c/100).toFixed(2).replace(".",",") + " €"; } });
+    var one = g("wuzzo_start") === g("wuzzo_jahr");
+    document.querySelectorAll(".pr-one").forEach(function(el){ el.hidden = !one; });
+    document.querySelectorAll(".pr-two").forEach(function(el){ el.hidden = one; }); }
   show(null);
   // Preise kommen live vom Wuzzo-Server (gleiche Zahlen wie im Panel und in der App)
   try { fetch("https://hbusxiioorpsskzvjxza.supabase.co/rest/v1/rpc/app_prices", { method:"POST",

@@ -281,8 +281,8 @@ function setCfg(c){ try { c ? localStorage.setItem("wuzzo-admin-cfg", JSON.strin
 function demoData(){
   const today = new Date(); today.setHours(12,0,0,0);
   // ab 0.49.9: Beispiele für Preise, Hinweise und Wachstum
-  S.prices = { wuzzo_start:99, wuzzo_jahr:199, wuzzo_premium_6m:399, wuzzo_vip_6m:699 }; S.plan = {};
-  S.alerts = [ { id:2, level:"info", kind:"kauf", text:"💰 Beispiel: Ana hat ⭐ Premium gekauft (3,99 €).", created_at:new Date(Date.now()-36e5).toISOString() },
+  S.prices = { wuzzo_start:899, wuzzo_jahr:899, wuzzo_premium_6m:899, wuzzo_vip_6m:2499 }; S.plan = {};
+  S.alerts = [ { id:2, level:"info", kind:"kauf", text:"💰 Beispiel: Ana hat ⭐ Premium gekauft (8,99 €).", created_at:new Date(Date.now()-36e5).toISOString() },
                { id:1, level:"gelb", kind:"ansturm", text:"📈 Viele neue Nutzer: 107 in den letzten 7 Tagen (sonst ca. 30 pro Woche). Kosten im Blick behalten!", created_at:new Date(Date.now()-9e6).toISOString() } ];
   S.growth = { today:19, week:107, week_prev:31, month:148, month_prev:0, year:148, year_prev:0, total:148,
     weeks:[{w:"2026-10-05",n:4},{w:"2026-10-12",n:9},{w:"2026-10-19",n:7},{w:"2026-10-26",n:12},{w:"2026-11-02",n:18},{w:"2026-11-09",n:31},{w:"2026-11-16",n:107}],
@@ -811,7 +811,7 @@ function legacyCards(main, list){
     bc.append($("b",null,"💳 Bezahlung über Google Play"));
     const bi = $("p","note","Lädt …"); bc.append(bi);
     const bb = $("button","btn","…"); bb.disabled = true; bc.append(bb);
-    bc.append($("p","note","🎟️ Jahrespass: erstes Jahr 0,99 € (+1 Monat Premium), danach 1,99 € im Jahr · ⭐ Premium 3,99 € · 👑 VIP 6,99 € (je 6 Monate, Pass inklusive). Alt-Kunden, 🏅 Familie/Tester und das Team zahlen nie. AN = wer keinen Pass hat, ist 💤 Basis (lesen, 20 Nachrichten/Tag, SOS). ⚠️ Erst EINSCHALTEN, wenn alle 4 Produkte in der Play Console aktiv sind."));
+    bc.append($("p","note","🎟️ Jahrespass: erstes Jahr " + pe("wuzzo_start") + " (+1 Monat Premium), danach " + pe("wuzzo_jahr") + " im Jahr · ⭐ Premium " + pe("wuzzo_premium_6m") + " · 👑 VIP " + pe("wuzzo_vip_6m") + " (je 6 Monate, Pass inklusive). Alt-Kunden, 🏅 Familie/Tester und das Team zahlen nie. AN = wer keinen Pass hat, ist 💤 Basis (lesen, 20 Nachrichten/Tag, SOS). ⚠️ Erst EINSCHALTEN, wenn alle 4 Produkte in der Play Console aktiv sind."));
     main.append(bc);
     rpc("admin_payment_info").then(d => {
       bi.textContent = (d.required ? "🟢 Jahrespass wird verlangt (sonst 💤 Basis)" : "⚪ Gerade KOSTENLOS – alle haben alles") +
@@ -821,7 +821,7 @@ function legacyCards(main, list){
       bb.textContent = d.required ? "Wieder kostenlos machen" : "Jahrespass einschalten";
       bb.disabled = !darf("programmierer");
       bb.onclick = () => {
-        if (!confirm(d.required ? "Alle können Wuzzo dann wieder ohne Jahrespass voll nutzen.\n\nFortfahren?" : "Ab jetzt braucht man den Jahrespass (erstes Jahr 0,99 €). Wer keinen hat, ist 💤 Basis.\nAlt-Kunden, 🏅 Familie/Tester und das Team sind ausgenommen.\nSind alle 4 Produkte in der Play Console aktiv?\n\nFortfahren?")) return;
+        if (!confirm(d.required ? "Alle können Wuzzo dann wieder ohne Jahrespass voll nutzen.\n\nFortfahren?" : "Ab jetzt braucht man den Jahrespass (erstes Jahr " + pe("wuzzo_start") + "). Wer keinen hat, ist 💤 Basis.\nAlt-Kunden, 🏅 Familie/Tester und das Team sind ausgenommen.\nSind alle 4 Produkte in der Play Console aktiv?\n\nFortfahren?")) return;
         act_(() => rpc("admin_set_payment_required", { p_on: !d.required }));
       };
     }).catch(() => { bi.textContent = "Noch nicht eingerichtet (plus32.sql ausführen)."; });
@@ -833,7 +833,7 @@ function legacyCards(main, list){
     const vc2 = $("div","card"); vc2.style.margin = "10px 0 4px";
     vc2.append($("b",null,"👑 VIP-Familie"));
     const vi = $("p","note","Lädt …"); vc2.append(vi);
-    vc2.append($("p","note","6,99 € für 6 Monate (ab 0.48), Käufer + bis zu 4 Familienmitglieder, Jahrespass inklusive. Produkt-ID in der Play Console: wuzzo_vip_6m. Tester und Team haben VIP immer."));
+    vc2.append($("p","note",pe("wuzzo_vip_6m") + " für 6 Monate, Käufer + bis zu 4 Familienmitglieder, Jahrespass inklusive. Produkt-ID in der Play Console: wuzzo_vip_6m. Tester und Team haben VIP immer."));
     main.append(vc2);
     rpc("admin_vip_info").then(d => {
       vi.textContent = "🛒 VIP-Käufe: " + nf(d.vip_sales) + " · 👑 aktive Käufer: " + nf(d.vip_owners) + " · 👨‍👩‍👧 eingeladene Familienmitglieder: " + nf(d.vip_members);
@@ -1135,7 +1135,7 @@ function fixKosten(){
   return { supabase: f.supabase ?? 23, livekit: f.livekit ?? 0, domain: f.domain ?? 1 };
 }
 /* ---------- 🏷️ Preise (ab 0.49.9 im Panel einstellbar) ---------- */
-const PREIS_STD = { wuzzo_start:99, wuzzo_jahr:199, wuzzo_premium_6m:399, wuzzo_vip_6m:699 };
+const PREIS_STD = { wuzzo_start:899, wuzzo_jahr:899, wuzzo_premium_6m:899, wuzzo_vip_6m:2499 };
 function preis(id){ return Number(((S.prices || {})[id] ?? PREIS_STD[id])) / 100; }
 function pe(id){ return eur(preis(id)); }
 function netto(brutto){ return brutto / 1.19 * 0.85; }
@@ -2226,7 +2226,7 @@ function renderOperation(g){
     off.onclick = () => { sales = false; off.classList.add("on"); on.classList.remove("on"); };
     o2.append(on, off); c2.append(o2);
     const lu = d.paid_last_until ? fmtDate(d.paid_last_until) : null;
-    c2.append($("p","note","AUS: Niemand kann mehr etwas kaufen, der Eintritt (0,99 €) wird abgeschaltet. Wer schon gekauft hat, behält sein Paket bis zum Ende."));
+    c2.append($("p","note","AUS: Niemand kann mehr etwas kaufen, der Jahrespass (" + pe("wuzzo_start") + ") wird abgeschaltet. Wer schon gekauft hat, behält sein Paket bis zum Ende."));
     const facts = $("div","facts");
     [["Nutzer mit laufendem ⭐/👑", nf(d.paid_active)], ["Letztes gekauftes Paket läuft bis", lu || "–"], ["Letzter Kauf", d.last_purchase ? fmtDate(d.last_purchase) : "–"], ["Längstes Paket", "6 Monate"]]
       .forEach(([k,v]) => { const x = $("div",null,k); x.append($("b",null,v)); facts.append(x); });

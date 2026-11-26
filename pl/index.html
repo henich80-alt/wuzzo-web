@@ -32,6 +32,7 @@ function wzLang(c,u){ try{ localStorage.setItem("wz_lang",c); }catch(e){} locati
 </script>
 
 
+
 <style id="wz-pakete-css">
 .pk h2,.wzfaq h2{font-size:22px;margin:26px 0 4px}
 .pk .sub{color:var(--muted);margin:0 0 12px}
@@ -74,8 +75,9 @@ function wzLang(c,u){ try{ localStorage.setItem("wz_lang",c); }catch(e){} locati
   </section>
 
   
+  
   <!-- wz-pakete -->
-  <section class="pk"><h2>Pakiety i ceny</h2><p class="sub">Wiadomości tekstowe, naklejki, tłumaczenie w telefonie i SOS są zawsze w cenie.</p><div class="cards"><div class="c"><h3>🎟️ Karnet roczny</h3><div class="pr"><b data-p="wuzzo_start"></b> w 1. roku, potem <b data-p="wuzzo_jahr"></b> rocznie</div><ul><li>Czaty, zdjęcia, filmy i wiadomości głosowe</li><li>Rozmowy głosowe i grupowe</li><li>Udział w rozmowach wideo</li><li>🤖 Pomocnik AI: 20 pytań miesięcznie</li></ul></div><div class="c top"><h3>⭐ Premium</h3><div class="pr"><b data-p="wuzzo_premium_6m"></b> na 6 miesięcy · karnet roczny w cenie</div><ul><li>🎥 Rozpoczynanie rozmów wideo – w grupach do 8 osób</li><li>🖥️ Udostępnianie ekranu</li><li>✨ Profesjonalne tłumaczenie z AI</li><li>Więcej miejsca na zdjęcia i filmy</li></ul></div><div class="c"><h3>👑 Rodzina VIP</h3><div class="pr"><b data-p="wuzzo_vip_6m"></b> na 6 miesięcy · dla maks. 5 osób</div><ul><li>Wszystko z Premium dla całej rodziny</li><li>🎥 Grupowe rozmowy wideo do 12 osób</li><li>Najwięcej miejsca i minut wideo</li></ul></div></div><p class="pay">Płatność bezpiecznie przez Google Play. Ceny z VAT.</p></section>
+  <section class="pk"><h2>Pakiety i ceny</h2><p class="sub">Wiadomości tekstowe, naklejki, tłumaczenie w telefonie i SOS są zawsze w cenie.</p><div class="cards"><div class="c"><h3>🎟️ Karnet roczny</h3><div class="pr"><span class="pr-two"><b data-p="wuzzo_start"></b> w 1. roku, potem <b data-p="wuzzo_jahr"></b> rocznie</span><span class="pr-one" hidden><b data-p="wuzzo_jahr"></b> rocznie</span></div><ul><li>Czaty, zdjęcia, filmy i wiadomości głosowe</li><li>Rozmowy głosowe i grupowe</li><li>Udział w rozmowach wideo</li><li>🤖 Pomocnik AI: 20 pytań miesięcznie</li></ul></div><div class="c top"><h3>⭐ Premium</h3><div class="pr"><b data-p="wuzzo_premium_6m"></b> na 6 miesięcy · karnet roczny w cenie</div><ul><li>🎥 Rozpoczynanie rozmów wideo – w grupach do 8 osób</li><li>🖥️ Udostępnianie ekranu</li><li>✨ Profesjonalne tłumaczenie z AI</li><li>Więcej miejsca na zdjęcia i filmy</li></ul></div><div class="c"><h3>👑 Rodzina VIP</h3><div class="pr"><b data-p="wuzzo_vip_6m"></b> na 6 miesięcy · dla maks. 5 osób</div><ul><li>Wszystko z Premium dla całej rodziny</li><li>🎥 Grupowe rozmowy wideo do 12 osób</li><li>Najwięcej miejsca i minut wideo</li></ul></div></div><p class="pay">Płatność bezpiecznie przez Google Play. Ceny z VAT.</p></section>
   <section class="wzfaq"><h2>Częste pytania</h2><details><summary>Czy moje wiadomości są bezpieczne?</summary><p>Tak. Czaty we dwoje są szyfrowane end-to-end – tylko wy dwoje możecie je przeczytać.</p></details><details><summary>Jak działa tłumaczenie?</summary><p>Wiadomości są tłumaczone bezpośrednio w telefonie – za darmo, bez limitu, a nawet bez internetu.</p></details><details><summary>Jak zapłacić?</summary><p>Bezpiecznie przez Google Play – tak, jak masz to ustawione w Google. Wuzzo nigdy nie widzi Twoich danych płatniczych.</p></details><details><summary>Czy Wuzzo jest na iPhone&#x27;a lub komputer?</summary><p>Wersja na iPhone&#x27;a pojawi się wkrótce. Na komputerze Wuzzo działa już pod adresem wuzzo.de/pc.</p></details></section>
 <!-- /wz-pakete -->
 
@@ -109,9 +111,13 @@ function wzLang(c,u){ try{ localStorage.setItem("wz_lang",c); }catch(e){} locati
 </script>
 <script id="wz-pakete-js">
 (function(){
-  var STD = {"wuzzo_start": 99, "wuzzo_jahr": 199, "wuzzo_premium_6m": 399, "wuzzo_vip_6m": 699}, loc = "pl-PL";
-  function show(p){ document.querySelectorAll("[data-p]").forEach(function(el){ var c = Number((p||{})[el.dataset.p] || STD[el.dataset.p]);
-    try { el.textContent = new Intl.NumberFormat(loc,{style:"currency",currency:"EUR"}).format(c/100); } catch(e){ el.textContent = (c/100).toFixed(2).replace(".",",") + " €"; } }); }
+  var STD = {"wuzzo_start": 899, "wuzzo_jahr": 899, "wuzzo_premium_6m": 899, "wuzzo_vip_6m": 2499}, loc = "pl-PL";
+  function show(p){ var g = function(k){ return Number((p||{})[k] || STD[k]); };
+    document.querySelectorAll("[data-p]").forEach(function(el){ var c = g(el.dataset.p);
+    try { el.textContent = new Intl.NumberFormat(loc,{style:"currency",currency:"EUR"}).format(c/100); } catch(e){ el.textContent = (c/100).toFixed(2).replace(".",",") + " €"; } });
+    var one = g("wuzzo_start") === g("wuzzo_jahr");
+    document.querySelectorAll(".pr-one").forEach(function(el){ el.hidden = !one; });
+    document.querySelectorAll(".pr-two").forEach(function(el){ el.hidden = one; }); }
   show(null);
   // Preise kommen live vom Wuzzo-Server (gleiche Zahlen wie im Panel und in der App)
   try { fetch("https://hbusxiioorpsskzvjxza.supabase.co/rest/v1/rpc/app_prices", { method:"POST",
