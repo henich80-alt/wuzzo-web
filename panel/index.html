@@ -1968,6 +1968,17 @@ function renderCockpit(main){
   big.append($("p","note", A.lvl === "test" ? "Die Ampel startet, sobald du den Jahrespass einschaltest oder der erste Kauf da ist (nach Händlerkonto + Gewerbe). Bis dahin zeigt sie nur deine laufenden Kosten." : A.lvl === "ok" ? "Die Einnahmen tragen die Kosten. Weiter so!" :
     "Tipp: ⚙️ System → 🚦 Betrieb → 🐢 Spar-Modus einschalten und die 🤖 KI-Bremse senken. Video starten geht ohnehin nur mit Premium/VIP."));
   main.append(big);
+  // 💳 Bezahlen: direkt zur richtigen Seite (Login macht der Anbieter selbst)
+  const pay = $("div","card wide"); pay.style.marginBottom = "12px";
+  pay.append($("b",null,"💳 Rechnungen bezahlen / Paket ändern"),
+    $("p","note","Ein Klick öffnet die Bezahl-Seite des Anbieters (du bist dort angemeldet). Danach die Rechnung in 🧾 Buchhaltung (EÜR) hochladen."));
+  const payRow = $("div"); payRow.style.cssText = "display:flex;gap:8px;flex-wrap:wrap";
+  [["🟢 Supabase Pro (25 $ ≈ 23 €/Monat)", "https://supabase.com/dashboard/org/vnzuowikhrjobtyztfki/billing"],
+   ["📱 SMS-Guthaben Brevo", "https://app.brevo.com/"],
+   ["🤖 KI-Guthaben Claude", "https://console.anthropic.com/settings/billing"]].forEach(([t, u]) => {
+    const a = $("a","btn",t); a.href = u; a.target = "_blank"; a.rel = "noopener"; a.style.textDecoration = "none"; payRow.append(a);
+  });
+  pay.append(payRow); main.append(pay);
   const tiles = $("div","tiles6");
   const tile = (k, v, sub, cls) => { const t = $("div","tile" + (cls ? " " + cls : "")); t.append($("div","k",k), $("div","v",v)); if (sub) t.append($("div","s",sub)); tiles.append(t); };
   tile("💰 Einnahmen Monat (netto)", eur(A.ein), "brutto " + euro(m.revenue_month_cents) + " – MwSt – 15 % Google");
