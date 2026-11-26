@@ -1191,7 +1191,11 @@ function renderStart(main){
   if (darf("programmierer") && (h.logins_today || 0) >= 200) add((h.logins_today >= 260 ? "red" : "yel"),"✉️", "Anmeldungen heute: " + nf(h.logins_today) + " von 300", "Brevo verschickt kostenlos 300 Code-Mails am Tag – bald Paket erweitern", () => go("links"));
   const heute = new Date();
   let proOn = false; try { proOn = localStorage.getItem("wz_supa_pro") === "1"; } catch(e){}
-  if (darf("programmierer") && heute < new Date("2026-12-09") && !proOn) add("yel","💳","Supabase Pro einschalten – bis 8.12.2026", "Sonst wird Wuzzo ab 15.12. eingeschränkt (25 $ im Monat). Klick hier → 💳 Bezahlen. Erledigt? System → Heute → Haken bei „Supabase Pro“", () => go("pay"));
+  if (darf("programmierer")){ // 💳 Zahlungs-Ampel
+    const PA = payAmpel();
+    if (PA.lvl === "rot") add("red","🔴","Zahlungen: " + PA.n.rot + " dringend" + (PA.n.gelb ? " · " + PA.n.gelb + " bald fällig" : ""), "Klick hier → 💳 Bezahlen", () => go("pay"));
+    else if (PA.lvl === "gelb") add("yel","🟡","Zahlungen: " + PA.n.gelb + " bald fällig oder prüfen", "Klick hier → 💳 Bezahlen", () => go("pay"));
+  }
   if (darf("programmierer") && S.money){
     const A = ampel();
     if (A.lvl === "red") add("red","🔴","Finanz-Ampel ROT: Ausgaben höher als Einnahmen", "Geld → Cockpit: Spar-Modus einschalten oder Kosten senken", () => go("money","cockpit"));
@@ -2322,7 +2326,7 @@ const DIENSTE_LISTE = [
 // [id, Titel, Link, Was/wofür, Kosten, wie oft: "monat" | "jahr" | "auffuellen" | "einmal" | "bescheid", wichtig bis (JJJJ-MM-TT) oder ""]
 const ZAHLUNGEN = [
   ["Jetzt wichtig", [
-    ["supa","🟢 Supabase Pro (Datenbank, Server, Speicher)","https://supabase.com/dashboard/org/vnzuowikhrjobtyztfki/billing",
+    ["supa","🗄️ Supabase Pro (Datenbank, Server, Speicher)","https://supabase.com/dashboard/org/vnzuowikhrjobtyztfki/billing",
       "„Change plan“ → Pro · Spend Cap AN lassen · Karte selbst eintragen – danach bucht Supabase jeden Monat selbst ab","25 $ ≈ 23 € im Monat","monat","2026-12-16"],
     ["gew","🏢 Gewerbe-Gebühr Stadt Bünde","",
       "Kommt als Bescheid/Rechnung von der Stadt – dann per Überweisung mit den Daten auf dem Bescheid bezahlen","26 € einmalig","bescheid",""],
@@ -2339,7 +2343,7 @@ const ZAHLUNGEN = [
     ["dom","🌐 Domain wuzzo.de – IONOS","https://mein.ionos.de/domain/details/wuzzo.de",
       "Verlängert sich meist automatisch – nur prüfen, ob die Zahlungsart noch stimmt","ca. 1 € im Monat (laut IONOS-Rechnung)","jahr",""],
     ["apple","🍏 Apple Developer (iPhone-Version)","https://developer.apple.com/account",
-      "Erst wenn die iPhone-Version kommt","99 $ im Jahr","jahr",""],
+      "Erst wenn die iPhone-Version kommt","99 $ im Jahr","spaeter",""],
   ]],
   ["Steuern & Behörden", [
     ["elster","🧾 Finanzamt – ELSTER","https://www.elster.de/",
@@ -2352,20 +2356,51 @@ const ZAHLUNGEN = [
 ];
 function payState(){ try { return JSON.parse(localStorage.getItem("wz_bezahlt") || "{}"); } catch(e){ return {}; } }
 function paySave(st){ try { localStorage.setItem("wz_bezahlt", JSON.stringify(st)); } catch(e){} }
-function payOffen(){
-  const st = payState(), heute = new Date(); let n = 0;
-  ZAHLUNGEN.forEach(([, list]) => list.forEach(([id,,,,, oft, bis]) => {
-    if (oft !== "monat") return;
-    const d = st[id] ? new Date(st[id]) : null;
-    const dieserMonat = d && d.getMonth() === heute.getMonth() && d.getFullYear() === heute.getFullYear();
-    const faellig = !bis || heute >= new Date(new Date(bis).getTime() - 21 * 864e5);
-    if (!dieserMonat && faellig) n++;
-  }));
-  return n;
+// 🚦 Ampel pro Zahlung: rot = jetzt bezahlen · gelb = bald / prüfen · grün = erledigt · grau = gerade nichts zu tun
+const PAY_ALERT = { sms:"guthaben_sms", ki:"guthaben_anthropic", dg:"guthaben_deepgram" };
+function payStatus(z, st){
+  const [id,,,,, oft, bis] = z; const heute = new Date(); const d = st[id] ? new Date(st[id]) : null;
+  const tage = x => Math.ceil((x - heute) / 864e5);
+  if (oft === "einmal") return { lvl:"gruen", txt:"erledigt" };
+  if (oft === "spaeter") return { lvl:"grau", txt:"noch nicht nötig" };
+  if (oft === "auffuellen"){
+    const a = (S.alerts || []).find(x => x.kind === PAY_ALERT[id]);
+    if (a) return { lvl: a.level === "rot" ? "rot" : "gelb", txt: a.level === "rot" ? "Guthaben leer – jetzt aufladen!" : "Guthaben wird knapp – bald aufladen" };
+    return { lvl:"gruen", txt:"Guthaben reicht – Wuzzo warnt dich rechtzeitig" };
+  }
+  if (oft === "bescheid") return d ? { lvl:"gruen", txt:"bezahlt am " + d.toLocaleDateString("de-DE") } : { lvl:"grau", txt:"wartet auf Bescheid/Rechnung" };
+  if (oft === "jahr"){
+    if (d && heute - d < 335 * 864e5) return { lvl:"gruen", txt:"bezahlt am " + d.toLocaleDateString("de-DE") };
+    if (d && heute - d < 365 * 864e5) return { lvl:"gelb", txt:"Verlängerung bald fällig" };
+    return { lvl:"gelb", txt: d ? "Jahr ist um – bitte prüfen" : "einmal prüfen und „Bezahlt“ klicken" };
+  }
+  // monatlich
+  if (d && d.getMonth() === heute.getMonth() && d.getFullYear() === heute.getFullYear()) return { lvl:"gruen", txt:"diesen Monat bezahlt (" + d.toLocaleDateString("de-DE") + ")" };
+  if (bis && !d){
+    const t = tage(new Date(bis));
+    if (t < 0) return { lvl:"rot", txt:"überfällig seit " + new Date(bis).toLocaleDateString("de-DE") + "!" };
+    if (t <= 21) return { lvl: t <= 5 ? "rot" : "gelb", txt:"noch " + t + " Tag" + (t === 1 ? "" : "e") + " – bis " + new Date(bis).toLocaleDateString("de-DE") };
+    return { lvl:"gruen", txt:"noch Zeit bis " + new Date(bis).toLocaleDateString("de-DE") };
+  }
+  return heute.getDate() <= 10 ? { lvl:"gelb", txt:"neuer Monat – Abbuchung/Rechnung prüfen" } : { lvl:"rot", txt:"diesen Monat noch nicht abgehakt" };
 }
+const AMPEL_ICON = { rot:"🔴", gelb:"🟡", gruen:"🟢", grau:"⚪" };
+const AMPEL_FARBE = { rot:"#ff5c7a", gelb:"#FFC94D", gruen:"#34d399", grau:"#8aa0d6" };
+function payAmpel(){
+  const st = payState(); const n = { rot:0, gelb:0, gruen:0, grau:0 };
+  ZAHLUNGEN.forEach(([, list]) => list.forEach(z => n[payStatus(z, st).lvl]++));
+  return { n, lvl: n.rot ? "rot" : n.gelb ? "gelb" : "gruen" };
+}
+function payOffen(){ const a = payAmpel(); return a.n.rot + a.n.gelb; }
 function renderPay(main){
   pageHead(main, "💳 Bezahlen", "Alles, was nur du bezahlen kannst – an einem Ort. Ein Klick öffnet die richtige Seite. Karten- und Bankdaten gibst du immer nur beim Anbieter selbst ein.");
   const st = payState();
+  const A = payAmpel();
+  const amp = $("div","card wide"); amp.style.cssText = "margin-bottom:12px;border:2px solid " + AMPEL_FARBE[A.lvl];
+  amp.append($("b",null, A.lvl === "rot" ? "🔴 Jetzt bezahlen – " + A.n.rot + " Zahlung" + (A.n.rot > 1 ? "en" : "") + " dringend" :
+                         A.lvl === "gelb" ? "🟡 Bald fällig / bitte prüfen – " + A.n.gelb + " Punkt" + (A.n.gelb > 1 ? "e" : "") : "🟢 Alles bezahlt – nichts zu tun"),
+             $("p","note","🔴 " + A.n.rot + " dringend · 🟡 " + A.n.gelb + " bald/prüfen · 🟢 " + A.n.gruen + " erledigt · ⚪ " + A.n.grau + " gerade nicht nötig"));
+  main.append(amp);
   const how = $("div","card wide"); how.style.marginBottom = "12px";
   how.append($("b",null,"So geht’s – Schritt für Schritt"));
   const ol = document.createElement("ol"); ol.style.cssText = "margin:6px 0 0 18px;padding:0;font-size:13.5px;line-height:1.6";
@@ -2374,19 +2409,21 @@ function renderPay(main){
    "Zurück hier auf „✔️ Bezahlt“ klicken – dann weißt du, dass es erledigt ist.",
    "Rechnung herunterladen und auf „🧾 Rechnung hochladen“ klicken (Buchhaltung)."].forEach(t => { const li = document.createElement("li"); li.textContent = t; ol.append(li); });
   how.append(ol); main.append(how);
-  const OFT = { monat:"🔁 jeden Monat", jahr:"📅 einmal im Jahr", auffuellen:"🔋 bei Bedarf", einmal:"✅ einmalig", bescheid:"📨 nach Bescheid" };
+  const OFT = { monat:"🔁 jeden Monat", jahr:"📅 einmal im Jahr", auffuellen:"🔋 bei Bedarf", einmal:"✅ einmalig", bescheid:"📨 nach Bescheid", spaeter:"⏳ später" };
   ZAHLUNGEN.forEach(([gruppe, list]) => {
     const c = $("div","card wide"); c.style.marginBottom = "12px";
     c.append($("b",null,gruppe));
-    list.forEach(([id, t, url, was, kosten, oft, bis]) => {
-      const r = $("div"); r.style.cssText = "display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--line)";
+    const RANG = { rot:0, gelb:1, gruen:2, grau:3 };
+    [...list].sort((x, y) => RANG[payStatus(x, st).lvl] - RANG[payStatus(y, st).lvl]).forEach(z => {
+      const [id, t, url, was, kosten, oft, bis] = z; const P = payStatus(z, st);
+      const r = $("div"); r.style.cssText = "display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:10px 0 10px 10px;border-bottom:1px solid var(--line);border-left:4px solid " + AMPEL_FARBE[P.lvl];
       const info = $("div"); info.style.cssText = "flex:1;min-width:240px";
       const tt = $("div",null,t); tt.style.fontWeight = "700";
-      const bez = st[id] ? "✔️ bezahlt am " + new Date(st[id]).toLocaleDateString("de-DE") : (bis ? "⏰ bis " + new Date(bis).toLocaleDateString("de-DE") : "");
-      info.append(tt, $("div","note", "💶 " + kosten + " · " + (OFT[oft] || "") + (bez ? " · " + bez : "")), $("div","note", was));
+      const ampel = $("div",null, AMPEL_ICON[P.lvl] + " " + P.txt); ampel.style.cssText = "font-size:13px;font-weight:700;color:" + AMPEL_FARBE[P.lvl] + ";margin:2px 0";
+      info.append(tt, ampel, $("div","note", "💶 " + kosten + " · " + (OFT[oft] || "")), $("div","note", was));
       const knoepfe = $("div"); knoepfe.style.cssText = "display:flex;gap:6px;flex-wrap:wrap";
       if (url){ const a = $("a","btn","➡️ Öffnen"); a.href = url; a.target = "_blank"; a.rel = "noopener"; a.style.textDecoration = "none"; knoepfe.append(a); }
-      if (oft !== "einmal"){
+      if (oft !== "einmal" && oft !== "spaeter" && oft !== "auffuellen"){
         const ok = $("button","btn ghost", st[id] ? "↩️ Zurücksetzen" : "✔️ Bezahlt");
         ok.onclick = () => { const s2 = payState(); if (s2[id]) delete s2[id]; else s2[id] = new Date().toISOString(); paySave(s2); render(); };
         knoepfe.append(ok);
@@ -2396,7 +2433,7 @@ function renderPay(main){
     });
     main.append(c);
   });
-  main.append($("p","note","„✔️ Bezahlt“ merkt sich dieser Browser. Monatliche Zahlungen zeigen ab dem 1. des nächsten Monats wieder „offen“ (roter Punkt links im Menü). Neue Dienste mit Kosten kommen automatisch hier dazu."));
+  main.append($("p","note","🚦 Ampel: 🔴 jetzt bezahlen · 🟡 bald fällig oder prüfen · 🟢 erledigt · ⚪ gerade nicht nötig. Guthaben (SMS, KI, Deepgram) schaltet von selbst auf 🟡/🔴, wenn Wuzzo meldet, dass es knapp wird. „✔️ Bezahlt“ merkt sich dieser Browser; monatliche Zahlungen springen am 1. wieder auf 🟡. Die Zahl am Menüpunkt = rote + gelbe Punkte."));
 }
 function renderLinks(main){
   pageHead(main, "🔗 Dienste", "Alle Konten, die Wuzzo braucht – mit Kosten. Ein Klick öffnet die Seite.");
