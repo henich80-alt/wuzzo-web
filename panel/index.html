@@ -2463,7 +2463,7 @@ function launchSave(st){ try { localStorage.setItem("wz_start", JSON.stringify(s
 function launchDone(id, st){
   if (id === "supa"){ const pz = payState().supa; if (pz) return true; }
   if (id === "sicher"){ try { const h = JSON.parse(localStorage.getItem("wz_sicher") || "{}"); if (Object.values(h).filter(Boolean).length >= 12) return true; } catch(e){} }
-  if (id === "web" || id === "panel") return true;
+  if (id === "web" || id === "panel" || id === "sql50d") return true; // sql50d: am 26.11. ausgeführt
   return !!st[id];
 }
 function launchStatus(z, st){
