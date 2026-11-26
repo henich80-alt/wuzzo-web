@@ -631,19 +631,22 @@ function renderCosts(main){
 
   main.append($("h2",null,"Guthaben eintragen"));
   const f = $("div","form");
-  f.append($("p","note","Wenn du in einer Console Guthaben aufgeladen hast, trag es hier ein – dann stimmt die Anzeige „übrig“."));
+  f.append($("p","note","Wenn du Guthaben aufgeladen hast (z. B. 20 € bei Brevo für SMS), trag es hier ein. Dann stimmt die Anzeige „übrig“, die Ausgabe steht automatisch in der 🧾 Buchhaltung (du hängst dort nur noch die Rechnung an) und Wuzzo warnt dich, bevor das Guthaben leer ist."));
   const row = $("div","row");
   const sel = document.createElement("select");
   Object.entries(DIENSTE).filter(([k,v]) => !v.free).forEach(([k,v]) => { const o = document.createElement("option"); o.value = k; o.textContent = v.name; sel.append(o); });
-  const amt = document.createElement("input"); amt.type = "number"; amt.min = "0.01"; amt.step = "0.01"; amt.placeholder = "Betrag in $"; amt.style.width = "130px";
+  const amt = document.createElement("input"); amt.type = "number"; amt.min = "0.01"; amt.step = "0.01"; amt.placeholder = "Betrag"; amt.style.width = "110px";
+  const cur = document.createElement("select"); [["EUR","€"],["USD","$"]].forEach(([v, t]) => { const o = document.createElement("option"); o.value = v; o.textContent = t; cur.append(o); });
+  sel.onchange = () => { cur.value = sel.value === "sms" ? "EUR" : "USD"; }; sel.onchange(); // Brevo rechnet in Euro, Claude/Deepgram in Dollar
+  const day = document.createElement("input"); day.type = "date"; day.value = new Date().toLocaleDateString("sv-SE"); day.title = "Wann bezahlt?";
   const note = document.createElement("input"); note.placeholder = "Notiz (optional)"; note.style.flex = "1";
   const add = $("button","btn","Hinzufügen");
   add.onclick = () => {
     const v = Number(String(amt.value).replace(",", "."));
     if (!(v > 0)){ alert("Bitte einen Betrag eingeben."); return; }
-    act_(() => rpc("admin_add_topup", { p_service: sel.value, p_amount: v, p_note: note.value }));
+    act_(() => rpc("admin_add_topup", { p_service: sel.value, p_amount: v, p_note: note.value, p_currency: cur.value, p_date: day.value || null }));
   };
-  row.append(sel, amt, note, add); f.append(row);
+  row.append(sel, amt, cur, day, note, add); f.append(row);
   (c.topups || []).forEach(tp => {
     const r = $("div","row"); r.style.cssText = "justify-content:space-between;border-top:1px solid var(--line);padding-top:6px";
     r.append($("span","note", fmtDate(tp.created_at) + " · " + ((DIENSTE[tp.service] || {}).name || tp.service) + (tp.note ? " · " + tp.note : "")), $("span","amt in", "+ " + usd(tp.amount)));
