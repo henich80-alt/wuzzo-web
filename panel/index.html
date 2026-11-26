@@ -239,6 +239,7 @@ tr:last-child td{border-bottom:none}
     <nav id="tabs" class="nav" role="tablist">
       <button class="tab" data-tab="start"><i>🏠</i><span>Start</span></button>
       <button class="tab" data-tab="users"><i>👥</i><span>Nutzer</span></button>
+      <button class="tab" data-tab="pay"><i>💳</i><span>Bezahlen</span><b class="badge" id="b-pay"></b></button>
       <button class="tab" data-tab="inbox"><i>📥</i><span>Meldungen</span><b class="badge" id="b-inbox"></b></button>
       <button class="tab" data-tab="money"><i>💶</i><span>Geld</span></button>
       <button class="tab" data-tab="system"><i>⚙️</i><span>System</span><b class="badge" id="b-system"></b></button>
@@ -385,9 +386,9 @@ function render(){
   side.hidden = !inside;                                 // 🔒 vor der Anmeldung keine Menüs
   document.getElementById("top").style.display = inside ? "none" : "flex";
   document.getElementById("logout").style.display = inside ? "" : "none";
-  if (!["start","users","inbox","money","system","links","authority"].includes(S.tab)) S.tab = "start";
+  if (!["start","users","pay","inbox","money","system","links","authority"].includes(S.tab)) S.tab = "start";
   // 🔐 Wer sieht was? 👮 Moderator: Start, Nutzer, Meldungen · 🛡️ Admin: + System · 👑 Programmierer: alles
-  const NEED = { start:"moderator", users:"moderator", inbox:"moderator", system:"admin", money:"programmierer", links:"programmierer", authority:"programmierer" };
+  const NEED = { start:"moderator", users:"moderator", inbox:"moderator", system:"admin", money:"programmierer", links:"programmierer", authority:"programmierer", pay:"programmierer" };
   if (!darf(NEED[S.tab] || "programmierer")) S.tab = "start";
   tabs.querySelectorAll(".tab").forEach(b => {
     b.setAttribute("aria-selected", String(b.dataset.tab === S.tab));
@@ -407,6 +408,7 @@ function render(){
   else if (S.tab === "money") renderMoney(main);
   else if (S.tab === "system") renderSystem(main);
   else if (S.tab === "links") renderLinks(main);
+  else if (S.tab === "pay") renderPay(main);
   else renderAuthority(main);
 }
 /* 📦 Kompakt: Alle Karten als zugeklappte Kacheln nebeneinander – ein Klick klappt sie auf. */
@@ -1160,6 +1162,7 @@ function updateBadges(){
   const set = (id, n) => { const b = document.getElementById(id); if (!b) return; b.textContent = n > 99 ? "99+" : String(n || ""); b.classList.toggle("on", n > 0); };
   set("b-inbox", (h.reports_open || 0) + (h.ai_reports_open || 0) + (h.feedback_open || 0));
   set("b-system", h.errors_open || 0);
+  set("b-pay", darf("programmierer") ? payOffen() : 0);
 }
 
 /* ---------- 🏠 Start ---------- */
@@ -1188,7 +1191,7 @@ function renderStart(main){
   if (darf("programmierer") && (h.logins_today || 0) >= 200) add((h.logins_today >= 260 ? "red" : "yel"),"✉️", "Anmeldungen heute: " + nf(h.logins_today) + " von 300", "Brevo verschickt kostenlos 300 Code-Mails am Tag – bald Paket erweitern", () => go("links"));
   const heute = new Date();
   let proOn = false; try { proOn = localStorage.getItem("wz_supa_pro") === "1"; } catch(e){}
-  if (darf("programmierer") && heute < new Date("2026-12-09") && !proOn) add("yel","💳","Supabase Pro einschalten – bis 8.12.2026", "Sonst wird Wuzzo ab 15.12. eingeschränkt (25 $ im Monat). Erledigt? System → Heute → Haken bei „Supabase Pro“", () => window.open("https://supabase.com/dashboard/org/vnzuowikhrjobtyztfki/billing","_blank"));
+  if (darf("programmierer") && heute < new Date("2026-12-09") && !proOn) add("yel","💳","Supabase Pro einschalten – bis 8.12.2026", "Sonst wird Wuzzo ab 15.12. eingeschränkt (25 $ im Monat). Klick hier → 💳 Bezahlen. Erledigt? System → Heute → Haken bei „Supabase Pro“", () => go("pay"));
   if (darf("programmierer") && S.money){
     const A = ampel();
     if (A.lvl === "red") add("red","🔴","Finanz-Ampel ROT: Ausgaben höher als Einnahmen", "Geld → Cockpit: Spar-Modus einschalten oder Kosten senken", () => go("money","cockpit"));
@@ -2315,6 +2318,86 @@ const DIENSTE_LISTE = [
     ["🍏 Apple Developer", "https://developer.apple.com/account", "Für die iPhone-Version", "99 $ im Jahr (erst wenn iPhone kommt)", true],
   ]],
 ];
+/* ---------- 💳 Bezahlen: alles, was du selbst bezahlen musst – an einem Ort ---------- */
+// [id, Titel, Link, Was/wofür, Kosten, wie oft: "monat" | "jahr" | "auffuellen" | "einmal" | "bescheid", wichtig bis (JJJJ-MM-TT) oder ""]
+const ZAHLUNGEN = [
+  ["Jetzt wichtig", [
+    ["supa","🟢 Supabase Pro (Datenbank, Server, Speicher)","https://supabase.com/dashboard/org/vnzuowikhrjobtyztfki/billing",
+      "„Change plan“ → Pro · Spend Cap AN lassen · Karte selbst eintragen – danach bucht Supabase jeden Monat selbst ab","25 $ ≈ 23 € im Monat","monat","2026-12-16"],
+    ["gew","🏢 Gewerbe-Gebühr Stadt Bünde","",
+      "Kommt als Bescheid/Rechnung von der Stadt – dann per Überweisung mit den Daten auf dem Bescheid bezahlen","26 € einmalig","bescheid",""],
+  ]],
+  ["Guthaben aufladen (nur wenn Wuzzo warnt)", [
+    ["sms","📱 SMS-Guthaben – Brevo","https://app.brevo.com/",
+      "Oben rechts auf dein Konto → „Pläne/Billing“ → SMS-Guthaben kaufen. Danach im Panel: Geld → 🔋 Guthaben & Verbrauch eintragen","z. B. 20 € (verfällt nicht)","auffuellen",""],
+    ["ki","🤖 KI-Guthaben – Claude (Anthropic)","https://console.anthropic.com/settings/billing",
+      "„Buy credits“ / Guthaben kaufen. Danach im Panel: Geld → 🔋 Guthaben & Verbrauch eintragen","z. B. 10 $ · Wuzzo stoppt bei 10 $/Monat","auffuellen",""],
+    ["dg","🎤 Sprache → Text – Deepgram","https://console.deepgram.com/",
+      "Erst nötig, wenn das Startguthaben leer ist (Wuzzo warnt dich)","Startguthaben, danach nach Verbrauch","auffuellen",""],
+  ]],
+  ["Jährlich", [
+    ["dom","🌐 Domain wuzzo.de – IONOS","https://mein.ionos.de/domain/details/wuzzo.de",
+      "Verlängert sich meist automatisch – nur prüfen, ob die Zahlungsart noch stimmt","ca. 1 € im Monat (laut IONOS-Rechnung)","jahr",""],
+    ["apple","🍏 Apple Developer (iPhone-Version)","https://developer.apple.com/account",
+      "Erst wenn die iPhone-Version kommt","99 $ im Jahr","jahr",""],
+  ]],
+  ["Steuern & Behörden", [
+    ["elster","🧾 Finanzamt – ELSTER","https://www.elster.de/",
+      "Steuer-Erklärung, Vorauszahlungen (falls das Finanzamt welche festsetzt)","laut Bescheid","bescheid",""],
+  ]],
+  ["Schon bezahlt", [
+    ["play","▶️ Google Play Entwicklerkonto","https://play.google.com/console/u/1/developers/8787141740191790937/app/4974409909997434422/app-dashboard",
+      "Einmalig – ist erledigt ✅","25 $ einmalig (bezahlt)","einmal",""],
+  ]],
+];
+function payState(){ try { return JSON.parse(localStorage.getItem("wz_bezahlt") || "{}"); } catch(e){ return {}; } }
+function paySave(st){ try { localStorage.setItem("wz_bezahlt", JSON.stringify(st)); } catch(e){} }
+function payOffen(){
+  const st = payState(), heute = new Date(); let n = 0;
+  ZAHLUNGEN.forEach(([, list]) => list.forEach(([id,,,,, oft, bis]) => {
+    if (oft !== "monat") return;
+    const d = st[id] ? new Date(st[id]) : null;
+    const dieserMonat = d && d.getMonth() === heute.getMonth() && d.getFullYear() === heute.getFullYear();
+    const faellig = !bis || heute >= new Date(new Date(bis).getTime() - 21 * 864e5);
+    if (!dieserMonat && faellig) n++;
+  }));
+  return n;
+}
+function renderPay(main){
+  pageHead(main, "💳 Bezahlen", "Alles, was nur du bezahlen kannst – an einem Ort. Ein Klick öffnet die richtige Seite. Karten- und Bankdaten gibst du immer nur beim Anbieter selbst ein.");
+  const st = payState();
+  const how = $("div","card wide"); how.style.marginBottom = "12px";
+  how.append($("b",null,"So geht’s – Schritt für Schritt"));
+  const ol = document.createElement("ol"); ol.style.cssText = "margin:6px 0 0 18px;padding:0;font-size:13.5px;line-height:1.6";
+  ["Auf „➡️ Öffnen“ klicken – die Bezahl-Seite des Anbieters geht auf.",
+   "Dort bezahlen (Karte/Konto gibst du nur dort ein, nie im Panel).",
+   "Zurück hier auf „✔️ Bezahlt“ klicken – dann weißt du, dass es erledigt ist.",
+   "Rechnung herunterladen und auf „🧾 Rechnung hochladen“ klicken (Buchhaltung)."].forEach(t => { const li = document.createElement("li"); li.textContent = t; ol.append(li); });
+  how.append(ol); main.append(how);
+  const OFT = { monat:"🔁 jeden Monat", jahr:"📅 einmal im Jahr", auffuellen:"🔋 bei Bedarf", einmal:"✅ einmalig", bescheid:"📨 nach Bescheid" };
+  ZAHLUNGEN.forEach(([gruppe, list]) => {
+    const c = $("div","card wide"); c.style.marginBottom = "12px";
+    c.append($("b",null,gruppe));
+    list.forEach(([id, t, url, was, kosten, oft, bis]) => {
+      const r = $("div"); r.style.cssText = "display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--line)";
+      const info = $("div"); info.style.cssText = "flex:1;min-width:240px";
+      const tt = $("div",null,t); tt.style.fontWeight = "700";
+      const bez = st[id] ? "✔️ bezahlt am " + new Date(st[id]).toLocaleDateString("de-DE") : (bis ? "⏰ bis " + new Date(bis).toLocaleDateString("de-DE") : "");
+      info.append(tt, $("div","note", "💶 " + kosten + " · " + (OFT[oft] || "") + (bez ? " · " + bez : "")), $("div","note", was));
+      const knoepfe = $("div"); knoepfe.style.cssText = "display:flex;gap:6px;flex-wrap:wrap";
+      if (url){ const a = $("a","btn","➡️ Öffnen"); a.href = url; a.target = "_blank"; a.rel = "noopener"; a.style.textDecoration = "none"; knoepfe.append(a); }
+      if (oft !== "einmal"){
+        const ok = $("button","btn ghost", st[id] ? "↩️ Zurücksetzen" : "✔️ Bezahlt");
+        ok.onclick = () => { const s2 = payState(); if (s2[id]) delete s2[id]; else s2[id] = new Date().toISOString(); paySave(s2); render(); };
+        knoepfe.append(ok);
+      }
+      const up = $("button","btn ghost","🧾 Rechnung hochladen"); up.onclick = () => go("money","books"); knoepfe.append(up);
+      r.append(info, knoepfe); c.append(r);
+    });
+    main.append(c);
+  });
+  main.append($("p","note","„✔️ Bezahlt“ merkt sich dieser Browser. Monatliche Zahlungen zeigen ab dem 1. des nächsten Monats wieder „offen“ (roter Punkt links im Menü). Neue Dienste mit Kosten kommen automatisch hier dazu."));
+}
 function renderLinks(main){
   pageHead(main, "🔗 Dienste", "Alle Konten, die Wuzzo braucht – mit Kosten. Ein Klick öffnet die Seite.");
   // 🔐 Sicherheits-Liste (Haken bleiben in diesem Browser gespeichert)
