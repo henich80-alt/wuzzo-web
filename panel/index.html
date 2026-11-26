@@ -924,7 +924,7 @@ function legacyCards(main, list){
     const yi = $("div"); yi.append($("p","note","Lädt …")); yc.append(yi);
     const links = $("div"); links.style.cssText = "display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px";
     [["🤖 Claude: Ausgaben-Limit", "https://console.anthropic.com/settings/limits"],
-     ["💳 Supabase: Rechnung & Paket", "https://supabase.com/dashboard/org/vnzuowikhrjobtyztfki/billing"],
+     ["💳 Supabase: Rechnung & Paket", "https://supabase.com/dashboard/org/vnzuowikhrjobtyztfki/billing?panel=subscriptionPlan"],
      ["📈 Supabase: Verbrauch", "https://supabase.com/dashboard/org/vnzuowikhrjobtyztfki/usage"],
      ["📲 Brevo: SMS-Guthaben", "https://app.brevo.com/"]].forEach(([t, h]) => {
       const a = $("a",null,t); a.href = h; a.target = "_blank"; a.rel = "noopener"; a.style.color = "var(--volt,#2ee6ff)"; links.append(a);
@@ -1980,7 +1980,7 @@ function renderCockpit(main){
   pay.append($("b",null,"💳 Rechnungen bezahlen / Paket ändern"),
     $("p","note","Ein Klick öffnet die Bezahl-Seite des Anbieters (du bist dort angemeldet). Danach die Rechnung in 🧾 Buchhaltung (EÜR) hochladen."));
   const payRow = $("div"); payRow.style.cssText = "display:flex;gap:8px;flex-wrap:wrap";
-  [["🟢 Supabase Pro (25 $ ≈ 23 €/Monat)", "https://supabase.com/dashboard/org/vnzuowikhrjobtyztfki/billing"],
+  [["🟢 Supabase Pro (25 $ ≈ 23 €/Monat)", "https://supabase.com/dashboard/org/vnzuowikhrjobtyztfki/billing?panel=subscriptionPlan"],
    ["📱 SMS-Guthaben Brevo", "https://app.brevo.com/"],
    ["🤖 KI-Guthaben Claude", "https://console.anthropic.com/settings/billing"]].forEach(([t, u]) => {
     const a = $("a","btn",t); a.href = u; a.target = "_blank"; a.rel = "noopener"; a.style.textDecoration = "none"; payRow.append(a);
@@ -2276,7 +2276,7 @@ function renderOperation(g){
 const DIENSTE_LISTE = [
   ["⚡ Server & Datenbank", [
     ["⚡ Supabase – Projekt", "https://supabase.com/dashboard/project/hbusxiioorpsskzvjxza", "Datenbank, Anmeldung, Dateien, Functions", "Pro: 25 $ im Monat (ab 8.12.)", true],
-    ["💳 Supabase – Rechnung & Paket", "https://supabase.com/dashboard/org/vnzuowikhrjobtyztfki/billing", "Pro einschalten, Ausgaben-Grenze (Spend Cap)", "", false],
+    ["💳 Supabase – Rechnung & Paket", "https://supabase.com/dashboard/org/vnzuowikhrjobtyztfki/billing?panel=subscriptionPlan", "Pro einschalten, Ausgaben-Grenze (Spend Cap)", "", false],
     ["📊 Supabase – Verbrauch", "https://supabase.com/dashboard/org/vnzuowikhrjobtyztfki/usage", "Speicher, Verbindungen, Datenverkehr", "", false],
     ["📝 SQL Editor", "https://supabase.com/dashboard/project/hbusxiioorpsskzvjxza/sql/new", "Hier kommen die plus…sql-Dateien rein", "", false],
     ["⚙️ Edge Functions", "https://supabase.com/dashboard/project/hbusxiioorpsskzvjxza/functions", "push, sms, sos, ai, cleanup, kauf …", "", false],
@@ -2326,8 +2326,8 @@ const DIENSTE_LISTE = [
 // [id, Titel, Link, Was/wofür, Kosten, wie oft: "monat" | "jahr" | "auffuellen" | "einmal" | "bescheid", wichtig bis (JJJJ-MM-TT) oder ""]
 const ZAHLUNGEN = [
   ["Jetzt wichtig", [
-    ["supa","🗄️ Supabase Pro (Datenbank, Server, Speicher)","https://supabase.com/dashboard/org/vnzuowikhrjobtyztfki/billing",
-      "„Change plan“ → Pro · Spend Cap AN lassen · Karte selbst eintragen – danach bucht Supabase jeden Monat selbst ab","25 $ ≈ 23 € im Monat","monat","2026-12-16"],
+    ["supa","🗄️ Supabase Pro (Datenbank, Server, Speicher)","https://supabase.com/dashboard/org/vnzuowikhrjobtyztfki/billing?panel=subscriptionPlan",
+      "Öffnet direkt die Paket-Auswahl → Pro wählen („Upgrade“) · Spend Cap AN lassen · Karte selbst eintragen – danach bucht Supabase jeden Monat selbst ab","25 $ ≈ 23 € im Monat","monat","2026-12-16"],
     ["gew","🏢 Gewerbe-Gebühr Stadt Bünde","",
       "Kommt als Bescheid/Rechnung von der Stadt – dann per Überweisung mit den Daten auf dem Bescheid bezahlen","26 € einmalig","bescheid",""],
   ]],
