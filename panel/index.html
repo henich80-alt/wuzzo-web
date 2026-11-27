@@ -2539,7 +2539,7 @@ const START_LISTE = [
   ["supa",   "🗄️ Supabase Pro bezahlt (sonst ab 15.12. eingeschränkt)", "du", "#pay", "2026-12-14", "Hakt sich von selbst ab, wenn du in 💳 Bezahlen „✔️ Bezahlt“ klickst"],
   ["sql50d", "🗄️ SQL plus50d-gruppenlimit.sql in Supabase ausgeführt", "du", "https://supabase.com/dashboard/project/hbusxiioorpsskzvjxza/sql/new", "2026-12-05", "Datei aus wuzzo-paket-51-0.zip → einfügen → Run"],
   ["app",    "📲 App 0.51.3 (Versionscode 77) im geschlossenen Test hochgeladen", "du", "https://play.google.com/console/u/1/developers/8787141740191790937/app/4974409909997434422/tracks/closed-testing", "2026-12-05", "Erledigt am 27.11. ✅ – nächste Version: 0.51.4 / 78"],
-  ["test",   "👨‍👩‍👧 Mit der Familie getestet: Anruf, Gruppen-Video, Sprachnachricht, Video senden", "du", "", "2026-12-10", "Fehler? Foto an Claude schicken"],
+  ["test",   "👨‍👩‍👧 Mit der Familie getestet: Anruf, Gruppen-Video, Sprachnachricht, Video senden", "du", "", "2026-12-10", "Liste unten: 🧪 Was wir als Nutzer prüfen müssen – Fehler? Foto an Claude schicken"],
   ["gewerbe","🏢 Gewerbe angemeldet (Mail an Stadt Bünde mit PDF + Ausweis)", "du", "", "2026-12-10", "Gebühr 26 € kommt per Bescheid → 💳 Bezahlen"],
   ["store",  "🛍️ Store-Eintrag: Texte (unten zum Kopieren), Screenshots, Symbol", "du", "https://play.google.com/console/u/1/developers/8787141740191790937/app/4974409909997434422/app-dashboard", "2026-12-12", "Texte unten mit „📋 Kopieren“"],
   ["inhalt", "📋 Google Play: Datensicherheit & App-Inhalte vollständig (keine roten Punkte)", "du", "https://play.google.com/console/u/1/developers/8787141740191790937/app/4974409909997434422/app-dashboard", "2026-12-12", ""],
@@ -2582,6 +2582,43 @@ function copyText(t, btn){
   try { navigator.clipboard.writeText(t).then(ok, () => fallback()); } catch(e){ fallback(); }
   function fallback(){ const ta = document.createElement("textarea"); ta.value = t; document.body.append(ta); ta.select(); try { document.execCommand("copy"); ok(); } catch(e){} ta.remove(); }
 }
+// 🧪 ab 27.11.2026: Test-Liste – was wir als Nutzer vor dem Start prüfen (Version 0.51.4)
+// [id, Bereich, Was prüfen, Wie (Schritt), wie viele Handys]
+const TEST_LISTE = [
+  ["login_mail","🔑 Anmelden","Anmelden mit E-Mail-Code","Abmelden → mit derselben E-Mail wieder anmelden → alle Chats sind noch da",1],
+  ["login_lang","🔑 Anmelden","App in anderer Sprache","Profil → Aussehen → Sprache Ukrainisch/Russisch → Menüs, Neuigkeiten und Bot-Nachrichten sind übersetzt",1],
+  ["profil","🔑 Anmelden","Profil ändern","Name, Profilbild, Status „Heute in Emojis“ ändern → beim anderen sichtbar",2],
+  ["text","💬 Chats","Text senden + empfangen","Nachricht schicken → kommt sofort an, ✓✓ wird blau beim Lesen",2],
+  ["uebersetzen","💬 Chats","Automatisch übersetzen","Deutsch an jemanden mit Ukrainisch schicken → kommt auf Ukrainisch an (und umgekehrt)",2],
+  ["foto","💬 Chats","Foto senden","Foto aus Galerie + Foto mit Kamera → beide kommen scharf an",2],
+  ["video","💬 Chats","Video senden","Video bis 3 Min. → wird verkleinert, kommt an und spielt ab",2],
+  ["sprache","💬 Chats","Sprachnachricht","Mikrofon gedrückt halten → senden → beim anderen abspielen",2],
+  ["doku","💬 Chats","Datei / Dokument","📎 → PDF senden → beim anderen öffnen",2],
+  ["sticker","💬 Chats","Sticker, GIF, Emojis","Sticker + GIF senden, mit ❤️ reagieren (doppelt tippen)",2],
+  ["antwort","💬 Chats","Antworten + Bearbeiten","Nachricht nach rechts wischen = antworten · eigene lange drücken → Bearbeiten",2],
+  ["loeschen","💬 Chats","🆕 Löschen","Lange drücken → „Für mich löschen“ · eigene → „Für alle löschen“ · ⋮ → „Chat leeren“ / „Chat löschen“",2],
+  ["stupsen","💬 Chats","🆕 Anstupsen","Handy auf „Vibrieren“, Bildschirm AUS → anstupsen lassen → Handy vibriert kräftig",2],
+  ["standort","💬 Chats","🆕 Bin gleich da + Karte","⋮ → Bin gleich da → beim anderen „🗺️ Auf der Karte zeigen“ → Karte geht auf",2],
+  ["gruppe","💬 Chats","Gruppe","Gruppe erstellen, 3 Leute hinzufügen, Name + Bild ändern, Admin vergeben",3],
+  ["push","🔔 Benachrichtigung","Wuzzo geschlossen","Wuzzo ganz schließen → Nachricht bekommen → Ton + Vibration + Text in der eigenen Sprache",2],
+  ["anruf","📞 Anrufe","Sprachanruf","Anrufen, Handy gesperrt → klingelt, über der Sperre annehmen, Lautsprecher an/aus",2],
+  ["videoanruf","📞 Anrufe","Videoanruf","Video-Anruf → Bild bei beiden gleich scharf, Kamera wechseln, Kamera aus/an",2],
+  ["kopfhoerer","📞 Anrufe","Kopfhörer","Mit Kabel- und Bluetooth-Kopfhörer telefonieren → man hört sich",2],
+  ["gruppenanruf","📞 Anrufe","Gruppen-Video","3–4 Leute: einer startet, die anderen tippen auf den grünen Knopf „Beitreten“ → alle im Raster, „x von y dabei“",3],
+  ["ass_text","🤖 KI","Assistent tippen","Assistent → Frage stellen → sinnvolle Antwort",1],
+  ["ass_mic","🤖 KI","🆕 Assistent reinsprechen","🎤 Mikrofon im Eingabefeld → sprechen → Text steht im Feld",1],
+  ["ass_foto","🤖 KI","🆕 Assistent mit Foto","📷 → Foto einer Rechenaufgabe → Rechenweg + „Ergebnis: …“ stimmt",1],
+  ["brief","🤖 KI","Brief-Erklärer","Alltags-Helfer → Brief fotografieren → Erklärung in einfacher Sprache",1],
+  ["sos","💚 Familie & SOS","SOS-Knopf","SOS antippen (vorher Familie Bescheid sagen!) → die eingetragenen Nummern bekommen die Nachricht",2],
+  ["gutgehts","💚 Familie & SOS","„Mir geht's gut“ + Tabletten","Erinnerung stellen → kommt pünktlich",1],
+  ["pakete","⭐ Pakete","Paket-Seite","Profil → Wuzzo Premium & VIP → Start-Pass, Mini-Pass, Premium, VIP mit richtigen Preisen (Kaufen erst mit Händlerkonto)",1],
+  ["update","📲 Update","Update-Meldung","Bei neuer Version: Bot-Nachricht kommt, „Aktualisieren“ führt in den Play Store, danach Neuigkeiten-Fenster",1],
+  ["pc","🖥️ Wuzzo am PC","Wuzzo am PC","wuzzo.de/pc öffnen → QR mit dem Handy scannen → Chats am PC lesen und schreiben",1],
+  ["alt","👵 Ältere Nutzer","Große Schrift","Profil → Aussehen → Schrift groß → alles lesbar, nichts abgeschnitten",1],
+];
+function testState(){ try { return JSON.parse(localStorage.getItem("wz_test") || "{}"); } catch(e){ return {}; } }
+function testSave(st){ try { localStorage.setItem("wz_test", JSON.stringify(st)); } catch(e){} }
+
 function renderLaunch(main){
   const tage = Math.ceil((new Date(START_TAG + "T00:00:00") - new Date()) / 864e5);
   pageHead(main, "🚀 Start am 17.12.2026", tage > 0 ? "Noch " + tage + " Tag" + (tage === 1 ? "" : "e") + " bis zum Start. Alles, was bis dahin fertig sein muss – mit Ampel." : "🎉 Wuzzo ist gestartet!");
@@ -2615,6 +2652,31 @@ function renderLaunch(main){
     r.append(info, k); c.append(r);
   });
   main.append(c);
+  // 🧪 Test-Liste: was wir als Nutzer prüfen müssen
+  const tst = testState(); const tn = TEST_LISTE.filter(z => tst[z[0]] === "ok").length;
+  const tf = TEST_LISTE.filter(z => tst[z[0]] === "fehler").length;
+  const tc = $("div","card wide"); tc.style.marginBottom = "12px";
+  tc.append($("b",null,"🧪 Was wir als Nutzer prüfen müssen (" + tn + " von " + TEST_LISTE.length + " ✅" + (tf ? " · " + tf + " ❌ Fehler" : "") + ")"),
+    $("p","note","Mit 2–3 Handys der Familie, jeder mit der neuesten Version (0.51.4). ✅ = klappt · ❌ = Fehler → Foto an Claude schicken, ich repariere es. Wenn alles ✅ ist, hakt sich „Mit der Familie getestet“ oben von selbst ab."));
+  const tbar = $("div"); tbar.style.cssText = "height:10px;border-radius:6px;background:var(--line);overflow:hidden;margin:6px 0 4px";
+  const tfill = $("div"); tfill.style.cssText = "height:100%;background:#34d399;width:" + Math.round(tn / TEST_LISTE.length * 100) + "%"; tbar.append(tfill); tc.append(tbar);
+  let lastArea = "";
+  TEST_LISTE.forEach(([id, area, was, wie, n]) => {
+    if (area !== lastArea){ const h = $("div",null,area); h.style.cssText = "margin:14px 0 4px;font-weight:800;color:var(--volt)"; tc.append(h); lastArea = area; }
+    const v = tst[id] || "";
+    const r = $("div"); r.style.cssText = "display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:8px 0 8px 10px;border-bottom:1px solid var(--line);border-left:4px solid " + (v === "ok" ? "#34d399" : v === "fehler" ? "#fb7185" : "var(--line)");
+    const info = $("div"); info.style.cssText = "flex:1;min-width:240px";
+    const t1 = $("div",null,(v === "ok" ? "✅ " : v === "fehler" ? "❌ " : "⬜ ") + was + "  ·  📱×" + n); t1.style.fontWeight = "700";
+    info.append(t1, $("div","note",wie));
+    const k = $("div"); k.style.cssText = "display:flex;gap:6px";
+    const set = val => { const s2 = testState(); if (s2[id] === val) delete s2[id]; else s2[id] = val;
+      testSave(s2); const all = TEST_LISTE.every(z => s2[z[0]] === "ok");
+      const ls = launchState(); if (all) ls.test = new Date().toISOString(); else delete ls.test; launchSave(ls); render(); };
+    const bOk = $("button","btn" + (v === "ok" ? "" : " ghost"),"✅ Klappt"); bOk.onclick = () => set("ok");
+    const bNo = $("button","btn" + (v === "fehler" ? " danger" : " ghost"),"❌ Fehler"); bNo.onclick = () => set("fehler");
+    k.append(bOk, bNo); r.append(info, k); tc.append(r);
+  });
+  main.append(tc);
   // 🛍️ Texte für den Play Store – fertig zum Kopieren
   const s = $("div","card wide"); s.style.marginBottom = "12px";
   s.append($("b",null,"🛍️ Texte für den Play Store – fertig zum Kopieren"),
