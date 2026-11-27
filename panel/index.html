@@ -999,6 +999,9 @@ function legacyCards(main, list){
         head.append($("b",null,"×" + nf(e.count) + " · " + nf(e.users) + " Nutzer"),
                     $("span","meta","v" + (e.version || "?") + " · zuletzt " + new Date(e.last_at).toLocaleString("de-DE")));
         const msg = $("div",null,e.message); msg.style.cssText = "margin:6px 0;word-break:break-word";
+        // 📱 ab 0.51.2: auf welchen Handys der Fehler kam
+        const dev = e.platform ? $("div","meta","📱 " + String(e.platform).split(" | ").join(" · ")) : null;
+        if (dev) dev.style.cssText = "margin:0 0 6px;word-break:break-word";
         const det = document.createElement("details");
         const sum = document.createElement("summary"); sum.textContent = "Technische Details"; det.append(sum);
         const pre = document.createElement("pre"); pre.textContent = e.stack || "–";
@@ -1009,7 +1012,7 @@ function legacyCards(main, list){
         const del = $("button","btn danger","🗑️ Löschen");
         del.onclick = () => rpc("admin_error_mark", { p_hash: e.hash, p_delete: true }).then(load);
         act.append(ok, del);
-        box.append(head, msg, det, act); fi.append(box);
+        box.append(head, msg); if (dev) box.append(dev); box.append(det, act); fi.append(box);
       });
     }).catch(() => { fi.innerHTML = ""; fi.append($("p","note","Noch nicht eingerichtet (plus46.sql ausführen).")); });
     load();
