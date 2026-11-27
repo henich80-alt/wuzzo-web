@@ -248,6 +248,7 @@ tr:last-child td{border-bottom:none}
       <button class="tab" data-tab="authority"><i>⚖️</i><span>Behörden</span></button>
     </nav>
     <div id="who" class="note" style="padding:0 8px;margin-top:auto"></div>
+    <div id="wz-auto" class="note" style="padding:0 8px;font-size:11.5px;opacity:.75"></div>
     <button class="ghost" id="logout" style="display:none">Abmelden</button>
   </aside>
   <div class="wrap">
@@ -351,6 +352,33 @@ function demoRpc(name, p){
 const ROLLEN = { programmierer:"👑 Programmierer", admin:"🛡️ Admin", moderator:"👮 Moderator" };
 const STUFE = { programmierer:3, admin:2, moderator:1 };
 function darf(need){ return S.mode === "demo" || (STUFE[S.role] || 0) >= (STUFE[need] || 1); }
+
+// 🔄 ab 27.11.2026: Panel hält sich selbst aktuell (alle 60 Sek. + beim Zurückkommen in den Tab)
+// Nur Start, Nutzer, Meldungen und System – und nie, während du etwas tippst oder ein Fenster offen ist.
+let _autoBusy = false, _autoLast = Date.now();
+async function autoRefresh(force){
+  if (S.mode !== "live" || _autoBusy || document.hidden) return;
+  if (!force && Date.now() - _autoLast < 55000) return;
+  if (!["start","users","inbox","system"].includes(S.tab)) return;
+  const ae = document.activeElement;
+  if (ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA" || ae.tagName === "SELECT" || ae.isContentEditable)) return;
+  if (document.querySelector(".drawer") || document.querySelector("details[open]")) return;
+  _autoBusy = true;
+  try {
+    const [stats, reports, users] = await Promise.all([
+      rpc("admin_stats"), rpc("admin_reports", { p_status: null }), rpc("admin_users", { p_search: S.q })
+    ]);
+    S.stats = stats; S.reports = reports || []; S.users = users || [];
+    try { S.home = await rpc("admin_home"); } catch(e){}
+    try { S.feedback = await rpc("admin_feedback") || []; } catch(e){}
+    _autoLast = Date.now();
+    const y = window.scrollY; render(); window.scrollTo(0, y);
+    const st = document.getElementById("wz-auto"); if (st) st.textContent = "🔄 aktualisiert " + new Date().toLocaleTimeString("de-DE", { hour:"2-digit", minute:"2-digit" });
+  } catch(e){} finally { _autoBusy = false; }
+}
+setInterval(() => autoRefresh(false), 60000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) autoRefresh(true); });
+window.addEventListener("focus", () => autoRefresh(true));
 
 async function loadAll(){
   if (S.mode === "demo") return;
