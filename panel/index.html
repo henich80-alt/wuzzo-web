@@ -1002,6 +1002,20 @@ function legacyCards(main, list){
         // 📱 ab 0.51.2: auf welchen Handys der Fehler kam
         const dev = e.platform ? $("div","meta","📱 " + String(e.platform).split(" | ").join(" · ")) : null;
         if (dev) dev.style.cssText = "margin:0 0 6px;word-break:break-word";
+        // 👤 ab 0.51.3: bei wem kam der Fehler? (Namen antippen → Nutzer suchen)
+        let wer = null;
+        if (Array.isArray(e.names) && e.names.length){
+          wer = $("div","meta"); wer.style.cssText = "margin:0 0 6px;display:flex;flex-wrap:wrap;gap:6px;align-items:center";
+          wer.append($("span",null,"👤 Bei:"));
+          e.names.forEach(n => {
+            const b = $("button","btn", n.name); b.style.cssText = "padding:2px 10px;font-size:12.5px";
+            b.title = "Diesen Nutzer in 👥 Nutzer suchen";
+            b.onclick = async () => { S.q = n.name; S.ufilter = "all";
+              if (S.mode === "live"){ try { S.users = await rpc("admin_users", { p_search:S.q }) || []; } catch(err){} }
+              go("users"); };
+            wer.append(b);
+          });
+        }
         const det = document.createElement("details");
         const sum = document.createElement("summary"); sum.textContent = "Technische Details"; det.append(sum);
         const pre = document.createElement("pre"); pre.textContent = e.stack || "–";
@@ -1012,7 +1026,7 @@ function legacyCards(main, list){
         const del = $("button","btn danger","🗑️ Löschen");
         del.onclick = () => rpc("admin_error_mark", { p_hash: e.hash, p_delete: true }).then(load);
         act.append(ok, del);
-        box.append(head, msg); if (dev) box.append(dev); box.append(det, act); fi.append(box);
+        box.append(head, msg); if (dev) box.append(dev); if (wer) box.append(wer); box.append(det, act); fi.append(box);
       });
     }).catch(() => { fi.innerHTML = ""; fi.append($("p","note","Noch nicht eingerichtet (plus46.sql ausführen).")); });
     load();
