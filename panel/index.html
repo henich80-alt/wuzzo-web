@@ -248,6 +248,12 @@ tr:last-child td{border-bottom:none}
       <button class="tab" data-tab="authority"><i>⚖️</i><span>Behörden</span></button>
     </nav>
     <div id="who" class="note" style="padding:0 8px;margin-top:auto"></div>
+    <div class="note" style="padding:0 8px;font-size:12px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+      <button id="wz-auto-now" class="btn" style="padding:3px 10px;font-size:12px" title="Jetzt sofort neu laden">🔄 Jetzt</button>
+      <select id="wz-auto-sel" title="Wie oft soll sich das Panel selbst aktualisieren?" style="font-size:12px;padding:3px 6px;border-radius:8px;background:var(--deep);color:var(--text);border:1px solid var(--line)">
+        <option value="1">alle 1 Min.</option><option value="5">alle 5 Min.</option><option value="10">alle 10 Min.</option><option value="20">alle 20 Min.</option><option value="0">nur von Hand</option>
+      </select>
+    </div>
     <div id="wz-auto" class="note" style="padding:0 8px;font-size:11.5px;opacity:.75"></div>
     <button class="ghost" id="logout" style="display:none">Abmelden</button>
   </aside>
@@ -356,9 +362,12 @@ function darf(need){ return S.mode === "demo" || (STUFE[S.role] || 0) >= (STUFE[
 // 🔄 ab 27.11.2026: Panel hält sich selbst aktuell (alle 60 Sek. + beim Zurückkommen in den Tab)
 // Nur Start, Nutzer, Meldungen und System – und nie, während du etwas tippst oder ein Fenster offen ist.
 let _autoBusy = false, _autoLast = Date.now();
+// ⏱️ selbst einstellbar (links unten): 1 / 5 / 10 / 20 Min. oder aus – merkt sich der Browser
+function autoMin(){ try { const v = Number(localStorage.getItem("wz_auto_min")); return [0,1,5,10,20].includes(v) && localStorage.getItem("wz_auto_min") !== null ? v : 1; } catch(e){ return 1; } }
 async function autoRefresh(force){
   if (S.mode !== "live" || _autoBusy || document.hidden) return;
-  if (!force && Date.now() - _autoLast < 55000) return;
+  const mins = autoMin();
+  if (!force && (!mins || Date.now() - _autoLast < mins * 60000 - 5000)) return;
   if (!["start","users","inbox","system"].includes(S.tab)) return;
   const ae = document.activeElement;
   if (ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA" || ae.tagName === "SELECT" || ae.isContentEditable)) return;
@@ -376,9 +385,18 @@ async function autoRefresh(force){
     const st = document.getElementById("wz-auto"); if (st) st.textContent = "🔄 aktualisiert " + new Date().toLocaleTimeString("de-DE", { hour:"2-digit", minute:"2-digit" });
   } catch(e){} finally { _autoBusy = false; }
 }
-setInterval(() => autoRefresh(false), 60000);
-document.addEventListener("visibilitychange", () => { if (!document.hidden) autoRefresh(true); });
-window.addEventListener("focus", () => autoRefresh(true));
+setInterval(() => autoRefresh(false), 30000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden && autoMin()) autoRefresh(true); });
+document.addEventListener("DOMContentLoaded", () => {
+  const sel = document.getElementById("wz-auto-sel"), now = document.getElementById("wz-auto-now");
+  if (sel){ sel.value = String(autoMin()); sel.onchange = () => { try { localStorage.setItem("wz_auto_min", sel.value); } catch(e){}
+    const st = document.getElementById("wz-auto"); if (st) st.textContent = sel.value === "0" ? "⏸️ Automatik aus" : "⏱️ ab jetzt alle " + sel.value + " Min."; }; }
+  if (now) now.onclick = async () => { if (S.mode !== "live") return; now.disabled = true;
+    try { if (["start","users","inbox","system"].includes(S.tab)) await autoRefresh(true); else { await loadAll(); const y = scrollY; render(); scrollTo(0, y);
+      const st = document.getElementById("wz-auto"); if (st) st.textContent = "🔄 aktualisiert " + new Date().toLocaleTimeString("de-DE", { hour:"2-digit", minute:"2-digit" }); } }
+    finally { now.disabled = false; } };
+});
+window.addEventListener("focus", () => { if (autoMin()) autoRefresh(true); });
 
 async function loadAll(){
   if (S.mode === "demo") return;
