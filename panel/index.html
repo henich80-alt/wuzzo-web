@@ -1204,6 +1204,17 @@ function renderStart(main){
     if (PA.lvl === "rot") add("red","🔴","Zahlungen: " + PA.n.rot + " dringend" + (PA.n.gelb ? " · " + PA.n.gelb + " bald fällig" : ""), "Klick hier → 💳 Bezahlen", () => go("pay"));
     else if (PA.lvl === "gelb") add("yel","🟡","Zahlungen: " + PA.n.gelb + " bald fällig oder prüfen", "Klick hier → 💳 Bezahlen", () => go("pay"));
   }
+  if (darf("programmierer")){ // 🚀 ab 0.51.3: alles, was DU machen musst, direkt auf der Startseite
+    const st = launchState(); const RANGL = { rot:0, gelb:1, grau:2, gruen:3 };
+    const offen = START_LISTE.filter(z => z[2] === "du" && launchStatus(z, st).lvl !== "gruen")
+      .sort((x, y) => RANGL[launchStatus(x, st).lvl] - RANGL[launchStatus(y, st).lvl] || x[4].localeCompare(y[4]));
+    offen.slice(0, 4).forEach(z => {
+      const P = launchStatus(z, st); const link = z[3];
+      add(P.lvl === "rot" ? "red" : "yel", "👤", z[1], P.txt + (z[5] ? " · " + z[5] : "") + " – klick hier",
+        () => { if (link === "#pay") go("pay"); else if (link === "#links") go("links"); else if (link) window.open(link, "_blank", "noopener"); else go("launch"); });
+    });
+    if (offen.length > 4) add("yel","🚀", "Noch " + (offen.length - 4) + " weitere Aufgaben bis zum Start", "Alle anzeigen → 🚀 Start 17.12.", () => go("launch"));
+  }
   if (darf("programmierer") && S.money){
     const A = ampel();
     if (A.lvl === "red") add("red","🔴","Finanz-Ampel ROT: Ausgaben höher als Einnahmen", "Geld → Cockpit: Spar-Modus einschalten oder Kosten senken", () => go("money","cockpit"));
@@ -2361,7 +2372,7 @@ const ZAHLUNGEN = [
     ["sms","📱 SMS-Guthaben – Brevo","https://app.brevo.com/",
       "Brevo öffnet sich → unten links auf dein Konto → „Mein Plan“ → bei „SMS: Prepaid credits“ auf „Buy credits“ (Brevo hat dafür keinen Direkt-Link). Danach im Panel: Geld → 🔋 Guthaben & Verbrauch eintragen","z. B. 20 € (verfällt nicht)","auffuellen",""],
     ["ki","🤖 KI-Guthaben – Claude (Anthropic)","https://console.anthropic.com/settings/billing",
-      "Öffnet direkt die Bezahl-Seite → „Buy credits“. Danach im Panel: Geld → 🔋 Guthaben & Verbrauch eintragen","z. B. 10 $ · Wuzzo stoppt bei 10 $/Monat","auffuellen",""],
+      "Konto mit der ALTEN E-Mail (nicht wuzzo.1980@gmail.com) – öffnet die Bezahl-Seite → „Guthaben aufladen“. ⚠️ „Automatisches Aufladen“ AUS lassen = nie mehr als das Guthaben. Danach im Panel: Geld → 🔋 Guthaben & Verbrauch eintragen","z. B. 5–10 $ · Stand 27.11.: 4,98 $","auffuellen",""],
     ["dg","🎤 Sprache → Text – Deepgram","https://console.deepgram.com/",
       "Erst nötig, wenn das Startguthaben leer ist (Wuzzo warnt dich). Deepgram öffnet sich → links „Settings“ → „Billing“","Startguthaben, danach nach Verbrauch","auffuellen",""],
   ]],
@@ -2467,7 +2478,7 @@ const START_TAG = "2026-12-17";
 const START_LISTE = [
   ["supa",   "🗄️ Supabase Pro bezahlt (sonst ab 15.12. eingeschränkt)", "du", "#pay", "2026-12-14", "Hakt sich von selbst ab, wenn du in 💳 Bezahlen „✔️ Bezahlt“ klickst"],
   ["sql50d", "🗄️ SQL plus50d-gruppenlimit.sql in Supabase ausgeführt", "du", "https://supabase.com/dashboard/project/hbusxiioorpsskzvjxza/sql/new", "2026-12-05", "Datei aus wuzzo-paket-51-0.zip → einfügen → Run"],
-  ["app",    "📲 App 0.51.0 gebaut und in den Internen Test hochgeladen", "du", "https://play.google.com/console/u/1/developers/8787141740191790937/app/4974409909997434422/tracks/internal-testing", "2026-12-05", "wuzzo-paket-51-0.zip entpacken → wuzzo-bauen.ps1"],
+  ["app",    "📲 App 0.51.3 (Versionscode 77) im geschlossenen Test hochgeladen", "du", "https://play.google.com/console/u/1/developers/8787141740191790937/app/4974409909997434422/tracks/closed-testing", "2026-12-05", "Erledigt am 27.11. ✅ – nächste Version: 0.51.4 / 78"],
   ["test",   "👨‍👩‍👧 Mit der Familie getestet: Anruf, Gruppen-Video, Sprachnachricht, Video senden", "du", "", "2026-12-10", "Fehler? Foto an Claude schicken"],
   ["gewerbe","🏢 Gewerbe angemeldet (Mail an Stadt Bünde mit PDF + Ausweis)", "du", "", "2026-12-10", "Gebühr 26 € kommt per Bescheid → 💳 Bezahlen"],
   ["store",  "🛍️ Store-Eintrag: Texte (unten zum Kopieren), Screenshots, Symbol", "du", "https://play.google.com/console/u/1/developers/8787141740191790937/app/4974409909997434422/app-dashboard", "2026-12-12", "Texte unten mit „📋 Kopieren“"],
@@ -2488,7 +2499,7 @@ function launchSave(st){ try { localStorage.setItem("wz_start", JSON.stringify(s
 function launchDone(id, st){
   if (id === "supa"){ const pz = payState().supa; if (pz) return true; }
   if (id === "sicher"){ try { const h = JSON.parse(localStorage.getItem("wz_sicher") || "{}"); if (Object.values(h).filter(Boolean).length >= 12) return true; } catch(e){} }
-  if (id === "web" || id === "panel" || id === "sql50d" || id === "sql51" || id === "playsync") return true; // von Claude ausgeführt
+  if (id === "web" || id === "panel" || id === "sql50d" || id === "sql51" || id === "playsync" || id === "app") return true; // von Claude ausgeführt
   return !!st[id];
 }
 function launchStatus(z, st){
