@@ -33,11 +33,14 @@ function wzLang(c,u){ try{ localStorage.setItem("wz_lang",c); }catch(e){} locati
 
 
 
+
+
 <style id="wz-pakete-css">
 .pk h2,.wzfaq h2{font-size:22px;margin:26px 0 4px}
 .pk .sub{color:var(--muted);margin:0 0 12px}
-.pk .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-@media (max-width:720px){.pk .cards{grid-template-columns:1fr}}
+.pk .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media (max-width:960px){.pk .cards{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:600px){.pk .cards{grid-template-columns:1fr}}
 .pk .c{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
 .pk .c.top{border-color:var(--volt);box-shadow:0 0 22px rgba(46,230,255,.18)}
 .pk .c h3{margin:0 0 4px;font-size:18px}
@@ -76,8 +79,10 @@ function wzLang(c,u){ try{ localStorage.setItem("wz_lang",c); }catch(e){} locati
 
   
   
+  
+  
   <!-- wz-pakete -->
-  <section class="pk"><h2>Pakete &amp; Preise</h2><p class="sub">Texte, Sticker, Übersetzen auf dem Handy und SOS sind immer dabei.</p><div class="cards"><div class="c"><h3>🎟️ Jahrespass</h3><div class="pr"><span class="pr-two"><b data-p="wuzzo_start"></b> im 1. Jahr, danach <b data-p="wuzzo_jahr"></b> pro Jahr</span><span class="pr-one" hidden><b data-p="wuzzo_jahr"></b> pro Jahr</span></div><ul><li>Chats, Fotos, Videos &amp; Sprachnachrichten</li><li>Sprach- und Gruppenanrufe</li><li>Bei Videoanrufen mitmachen</li><li>🤖 KI-Helfer: 20 Fragen im Monat</li></ul></div><div class="c top"><h3>⭐ Premium</h3><div class="pr"><b data-p="wuzzo_premium_6m"></b> für 6 Monate · Jahrespass inklusive</div><ul><li>🎥 Videoanrufe starten – in Gruppen bis 8 Personen</li><li>🖥️ Bildschirm teilen</li><li>✨ Profi-Übersetzung mit KI</li><li>Mehr Platz für Fotos &amp; Videos</li></ul></div><div class="c"><h3>👑 VIP-Familie</h3><div class="pr"><b data-p="wuzzo_vip_6m"></b> für 6 Monate · für bis zu 5 Personen</div><ul><li>Alles aus Premium für die ganze Familie</li><li>🎥 Gruppen-Videoanrufe bis 12 Personen</li><li>Am meisten Platz und Video-Minuten</li></ul></div></div><p class="pay">Bezahlt wird sicher über Google Play. Preise inkl. MwSt.</p></section>
+  <section class="pk"><h2>Pakete &amp; Preise</h2><p class="sub">Texte, Sticker, Übersetzen auf dem Handy und SOS sind immer dabei.</p><div class="cards"><div class="c"><h3>🎟️ Start-Pass</h3><div class="pr"><b data-p="wuzzo_startpass"></b> pro Jahr</div><ul><li>Unbegrenzt schreiben, Sticker, Übersetzen</li><li>Anrufe annehmen und bei Gruppenanrufen mitmachen</li><li>50 MB Fotos &amp; Sprachnachrichten im Monat</li><li>🆘 SOS für die Familie</li></ul></div><div class="c"><h3>🎫 Mini-Pass</h3><div class="pr"><span class="pr-two"><b data-p="wuzzo_start"></b> im 1. Jahr, danach <b data-p="wuzzo_jahr"></b> pro Jahr</span><span class="pr-one" hidden><b data-p="wuzzo_jahr"></b> pro Jahr</span></div><ul><li>Alles aus dem Start-Pass</li><li>📞 Selbst anrufen, auch in Gruppen</li><li>500 MB Fotos, Videos &amp; Sprache</li><li>Bei Videoanrufen mitmachen</li><li>🤖 KI-Helfer: 20 Fragen im Monat</li></ul></div><div class="c top"><h3>⭐ Premium</h3><div class="pr"><b data-p="wuzzo_premium_6m"></b> für 6 Monate · Mini-Pass inklusive</div><ul><li>🎥 Videoanrufe starten – in Gruppen bis 8 Personen</li><li>🖥️ Bildschirm teilen</li><li>✨ Profi-Übersetzung mit KI</li><li>Mehr Platz für Fotos &amp; Videos</li></ul></div><div class="c"><h3>👑 VIP-Familie</h3><div class="pr"><b data-p="wuzzo_vip_6m"></b> für 6 Monate · für bis zu 5 Personen</div><ul><li>Alles aus Premium für die ganze Familie</li><li>🎥 Gruppen-Videoanrufe bis 12 Personen</li><li>Am meisten Platz und Video-Minuten</li></ul></div></div><p class="pay">Bezahlt wird sicher über Google Play. Preise inkl. MwSt.</p></section>
   <section class="wzfaq"><h2>Häufige Fragen</h2><details><summary>Sind meine Nachrichten sicher?</summary><p>Ja. Chats zu zweit sind Ende-zu-Ende-verschlüsselt – nur ihr beide könnt sie lesen.</p></details><details><summary>Wie funktioniert das Übersetzen?</summary><p>Nachrichten werden direkt auf deinem Handy übersetzt – kostenlos, unbegrenzt und sogar ohne Internet.</p></details><details><summary>Wie bezahle ich?</summary><p>Sicher über Google Play – so, wie du es bei Google eingerichtet hast. Wuzzo sieht deine Zahlungsdaten nie.</p></details><details><summary>Gibt es Wuzzo fürs iPhone oder den PC?</summary><p>Die iPhone-Version folgt. Am PC geht Wuzzo schon jetzt unter wuzzo.de/pc.</p></details></section>
 <!-- /wz-pakete -->
 
@@ -111,7 +116,7 @@ function wzLang(c,u){ try{ localStorage.setItem("wz_lang",c); }catch(e){} locati
 </script>
 <script id="wz-pakete-js">
 (function(){
-  var STD = {"wuzzo_start": 899, "wuzzo_jahr": 899, "wuzzo_premium_6m": 899, "wuzzo_vip_6m": 2499}, loc = "de-DE";
+  var STD = {"wuzzo_startpass": 499, "wuzzo_start": 999, "wuzzo_jahr": 999, "wuzzo_premium_6m": 999, "wuzzo_vip_6m": 2499}, loc = "de-DE";
   function show(p){ var g = function(k){ return Number((p||{})[k] || STD[k]); };
     document.querySelectorAll("[data-p]").forEach(function(el){ var c = g(el.dataset.p);
     try { el.textContent = new Intl.NumberFormat(loc,{style:"currency",currency:"EUR"}).format(c/100); } catch(e){ el.textContent = (c/100).toFixed(2).replace(".",",") + " €"; } });

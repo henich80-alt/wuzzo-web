@@ -281,7 +281,7 @@ function setCfg(c){ try { c ? localStorage.setItem("wuzzo-admin-cfg", JSON.strin
 function demoData(){
   const today = new Date(); today.setHours(12,0,0,0);
   // ab 0.49.9: Beispiele für Preise, Hinweise und Wachstum
-  S.prices = { wuzzo_start:899, wuzzo_jahr:899, wuzzo_premium_6m:899, wuzzo_vip_6m:2499 }; S.plan = {};
+  S.prices = { wuzzo_startpass:499, wuzzo_start:999, wuzzo_jahr:999, wuzzo_premium_6m:999, wuzzo_vip_6m:2499 }; S.plan = {};
   S.alerts = [ { id:2, level:"info", kind:"kauf", text:"💰 Beispiel: Ana hat ⭐ Premium gekauft (8,99 €).", created_at:new Date(Date.now()-36e5).toISOString() },
                { id:1, level:"gelb", kind:"ansturm", text:"📈 Viele neue Nutzer: 107 in den letzten 7 Tagen (sonst ca. 30 pro Woche). Kosten im Blick behalten!", created_at:new Date(Date.now()-9e6).toISOString() } ];
   S.growth = { today:19, week:107, week_prev:31, month:148, month_prev:0, year:148, year_prev:0, total:148,
@@ -1136,7 +1136,7 @@ function fixKosten(){
   return { supabase: f.supabase ?? 23, livekit: f.livekit ?? 0, domain: f.domain ?? 1 };
 }
 /* ---------- 🏷️ Preise (ab 0.49.9 im Panel einstellbar) ---------- */
-const PREIS_STD = { wuzzo_start:899, wuzzo_jahr:899, wuzzo_premium_6m:899, wuzzo_vip_6m:2499 };
+const PREIS_STD = { wuzzo_startpass:499, wuzzo_start:999, wuzzo_jahr:999, wuzzo_premium_6m:999, wuzzo_vip_6m:2499 }; // ab 0.51: 4 Pakete
 function preis(id){ return Number(((S.prices || {})[id] ?? PREIS_STD[id])) / 100; }
 function pe(id){ return eur(preis(id)); }
 function netto(brutto){ return brutto / 1.19 * 0.85; }
@@ -1147,6 +1147,7 @@ async function savePlan(patch){
 const PLAN_STD = {
   limits: {
     // ab 0.50.0: gleiche Standardwerte wie in der App (plus50.sql) · audio_min 0 = unbegrenzt
+    start:   { media_mb:50,   storage_mb:50,   video_min:0,   audio_min:0, ki:0,   flow_min:0,  dolm_min:0,  trans:300,  call_video:4 },
     normal:  { media_mb:500,  storage_mb:250,  video_min:0,   audio_min:0, ki:20,  flow_min:0,  dolm_min:0,  trans:300,  call_video:4 },
     premium: { media_mb:2048, storage_mb:2048, video_min:120, audio_min:0, ki:50,  flow_min:30, dolm_min:10, trans:1500, call_video:8 },
     vip:     { media_mb:8192, storage_mb:5120, video_min:300, audio_min:0, ki:125, flow_min:75, dolm_min:25, trans:4000, call_video:12 },
@@ -1552,7 +1553,7 @@ function renderMoney(main){
 }
 function preiseCard(){
   const info = $("div","card wide"); info.append($("b",null,"🏷️ Preise in Wuzzo (ändern: 💶 Geld → 🏷️ Preise & Grenzen)"));
-  [["🎟️ Jahrespass – erstes Jahr", pe("wuzzo_start") + " · wuzzo_start (+1 Monat Premium)"],["🔄 Jahrespass – jedes weitere Jahr", pe("wuzzo_jahr") + " · wuzzo_jahr"],
+  [["🎟️ Start-Pass – pro Jahr", pe("wuzzo_startpass") + " · wuzzo_startpass (schreiben, annehmen, 50 MB)"],["🎫 Mini-Pass – erstes Jahr", pe("wuzzo_start") + " · wuzzo_start (+1 Monat Premium)"],["🔄 Mini-Pass – jedes weitere Jahr", pe("wuzzo_jahr") + " · wuzzo_jahr"],
    ["⭐ Premium (Pass inklusive)", pe("wuzzo_premium_6m") + " für 6 Monate · wuzzo_premium_6m"],["👑 VIP-Familie (Pass inklusive)", pe("wuzzo_vip_6m") + " für 6 Monate · wuzzo_vip_6m"],
    ["🎟️ Alt-Kunden (vor 0.48 bezahlt)","für immer frei"],["Davon kommt bei dir an","Preis ÷ 1,19 (MwSt) × 0,85 (Google)"]]
     .forEach(([k,v]) => { const r = $("div"); r.style.cssText = "display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px solid #1d2a5c"; r.append($("span",null,k), $("b",null,v)); info.append(r); });
@@ -1569,7 +1570,7 @@ function renderPrices(main){
   c.append($("b",null,"🏷️ Deine Preise"),
     $("p","note","Hier trägst du die Preise ein. Wuzzo rechnet überall damit (Rechner, Cockpit, Geld-Wächter, Danke-Nachricht nach dem Kauf). " +
       "✅ Ab 0.50.4 trägt Wuzzo die Preise beim Speichern automatisch auch in Google Play ein – darunter siehst du, ob es geklappt hat."));
-  const felder = [["wuzzo_start","🎟️ Jahrespass – erstes Jahr"],["wuzzo_jahr","🔄 Jahrespass – Verlängerung (pro Jahr)"],
+  const felder = [["wuzzo_startpass","🎟️ Start-Pass – pro Jahr"],["wuzzo_start","🎫 Mini-Pass – erstes Jahr"],["wuzzo_jahr","🔄 Mini-Pass – Verlängerung (pro Jahr)"],
                   ["wuzzo_premium_6m","⭐ Premium – 6 Monate"],["wuzzo_vip_6m","👑 VIP-Familie – 6 Monate (bis 5 Personen)"]];
   const inp = {};
   const box = $("div"); box.style.cssText = "display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:8px 0";
@@ -1587,7 +1588,8 @@ function renderPrices(main){
     const ct = id => Math.round(Math.max(0, Number(inp[id].value) || 0) * 100);
     if (!confirm("Preise speichern?\n\nWuzzo trägt sie automatisch auch in Google Play ein (Ergebnis steht gleich darunter).")) return;
     S.playSyncWait = Date.now();
-    act_(() => rpc("admin_set_prices", { p_start: ct("wuzzo_start"), p_jahr: ct("wuzzo_jahr"), p_premium: ct("wuzzo_premium_6m"), p_vip: ct("wuzzo_vip_6m") }));
+    act_(() => rpc("admin_set_prices5", { p_startpass: ct("wuzzo_startpass"), p_start: ct("wuzzo_start"), p_jahr: ct("wuzzo_jahr"), p_premium: ct("wuzzo_premium_6m"), p_vip: ct("wuzzo_vip_6m") })
+      .catch(e => /admin_set_prices5/.test(e.message) ? rpc("admin_set_prices", { p_start: ct("wuzzo_start"), p_jahr: ct("wuzzo_jahr"), p_premium: ct("wuzzo_premium_6m"), p_vip: ct("wuzzo_vip_6m") }) : Promise.reject(e)));
   };
   const pl = $("a","btn","▶️ Preise in der Play Console ändern"); pl.href = "https://play.google.com/console/u/1/developers/8787141740191790937/app/4974409909997434422/monetization/products"; pl.target = "_blank"; pl.rel = "noopener"; pl.style.textDecoration = "none";
   const row = $("div"); row.style.cssText = "display:flex;gap:8px;flex-wrap:wrap"; row.append(sv, pl); c.append(row);
@@ -1619,11 +1621,11 @@ function renderPrices(main){
                   ["call_video","👥 Personen im Gruppen-Videoanruf (Sprache = doppelt, höchstens 32) – zählt das Paket des Anrufers"]];
   const tbl = document.createElement("table"); tbl.style.cssText = "width:100%;border-collapse:collapse;font-size:13px;margin:8px 0";
   const th = (t) => { const x = document.createElement("th"); x.textContent = t; x.style.cssText = "text-align:left;padding:6px;border-bottom:1px solid var(--line);color:var(--muted)"; return x; };
-  const hr = document.createElement("tr"); [ "Leistung", "🙂 Normal", "⭐ Premium", "👑 VIP (ganze Familie)" ].forEach(t => hr.append(th(t))); tbl.append(hr);
+  const hr = document.createElement("tr"); [ "Leistung", "🎟️ Start", "🎫 Mini", "⭐ Premium", "👑 VIP (ganze Familie)" ].forEach(t => hr.append(th(t))); tbl.append(hr);
   zeilen.forEach(([k, t]) => {
     const tr = document.createElement("tr");
     const td0 = document.createElement("td"); td0.textContent = t; td0.style.cssText = "padding:6px;border-bottom:1px solid var(--line)"; tr.append(td0);
-    ["normal","premium","vip"].forEach(pk => {
+    ["start","normal","premium","vip"].forEach(pk => {
       const td = document.createElement("td"); td.style.cssText = "padding:4px;border-bottom:1px solid var(--line)";
       const i = document.createElement("input"); i.type = "number"; i.min = "0"; i.value = P.limits[pk][k]; i.style.cssText = IN_STYLE + ";max-width:120px";
       i.oninput = () => { P.limits[pk][k] = Math.max(0, Number(i.value) || 0); rechne(); };
@@ -1656,8 +1658,9 @@ function renderPrices(main){
     out.replaceChildren();
     const t = $("div","tiles6");
     const pakete = [
-      ["🙂 Normal (1. Jahr)", netto(preis("wuzzo_start")) / 12, P.limits.normal],
-      ["🙂 Normal (Verlängerung)", netto(preis("wuzzo_jahr")) / 12, P.limits.normal],
+      ["🎟️ Start-Pass", netto(preis("wuzzo_startpass")) / 12, P.limits.start],
+      ["🎫 Mini-Pass (1. Jahr)", netto(preis("wuzzo_start")) / 12, P.limits.normal],
+      ["🎫 Mini-Pass (Verlängerung)", netto(preis("wuzzo_jahr")) / 12, P.limits.normal],
       ["⭐ Premium", netto(preis("wuzzo_premium_6m")) / 6, P.limits.premium],
       ["👑 VIP-Familie", netto(preis("wuzzo_vip_6m")) / 6, P.limits.vip],
     ];
@@ -1685,7 +1688,7 @@ function renderPrices(main){
   tq.append($("b",null,"📊 Wer stößt an seine Grenzen? (diesen Monat, ab 50 %)"));
   const tn = $("p","note","Lädt …"); tq.append(tn);
   const NAMEN = { media_mb:"📤 Medien", video_min:"🎥 Video", audio_min:"📞 Sprache", ki:"🤖 KI", flow_min:"🎙️ FlowTalk", dolm_min:"🗣️ Dolmetscher", trans:"🌍 Übersetzen" };
-  const TIER = { normal:"🙂 Normal", premium:"⭐ Premium", vip:"👑 VIP", basis:"💤 Basis" };
+  const TIER = { start:"🎟️ Start-Pass", normal:"🎫 Mini-Pass", premium:"⭐ Premium", vip:"👑 VIP", basis:"💤 Basis" };
   rpc("admin_quota_top").then(list => {
     tn.remove(); list = list || [];
     if (!list.length) tq.append($("p","note","Niemand über 50 % – alles ruhig. 😊"));
@@ -2460,8 +2463,8 @@ const START_TAG = "2026-12-17";
 // [id, Was, Wer, Link (http… oder "#pay"/"#links"), bis (JJJJ-MM-TT), Hinweis]
 const START_LISTE = [
   ["supa",   "🗄️ Supabase Pro bezahlt (sonst ab 15.12. eingeschränkt)", "du", "#pay", "2026-12-14", "Hakt sich von selbst ab, wenn du in 💳 Bezahlen „✔️ Bezahlt“ klickst"],
-  ["sql50d", "🗄️ SQL plus50d-gruppenlimit.sql in Supabase ausgeführt", "du", "https://supabase.com/dashboard/project/hbusxiioorpsskzvjxza/sql/new", "2026-12-05", "Datei aus wuzzo-paket-50-5.zip → einfügen → Run"],
-  ["app",    "📲 App 0.50.5 gebaut und in den Internen Test hochgeladen", "du", "https://play.google.com/console/u/1/developers/8787141740191790937/app/4974409909997434422/tracks/internal-testing", "2026-12-05", "wuzzo-paket-50-5.zip entpacken → wuzzo-bauen.ps1"],
+  ["sql50d", "🗄️ SQL plus50d-gruppenlimit.sql in Supabase ausgeführt", "du", "https://supabase.com/dashboard/project/hbusxiioorpsskzvjxza/sql/new", "2026-12-05", "Datei aus wuzzo-paket-51-0.zip → einfügen → Run"],
+  ["app",    "📲 App 0.51.0 gebaut und in den Internen Test hochgeladen", "du", "https://play.google.com/console/u/1/developers/8787141740191790937/app/4974409909997434422/tracks/internal-testing", "2026-12-05", "wuzzo-paket-51-0.zip entpacken → wuzzo-bauen.ps1"],
   ["test",   "👨‍👩‍👧 Mit der Familie getestet: Anruf, Gruppen-Video, Sprachnachricht, Video senden", "du", "", "2026-12-10", "Fehler? Foto an Claude schicken"],
   ["gewerbe","🏢 Gewerbe angemeldet (Mail an Stadt Bünde mit PDF + Ausweis)", "du", "", "2026-12-10", "Gebühr 26 € kommt per Bescheid → 💳 Bezahlen"],
   ["store",  "🛍️ Store-Eintrag: Texte (unten zum Kopieren), Screenshots, Symbol", "du", "https://play.google.com/console/u/1/developers/8787141740191790937/app/4974409909997434422/app-dashboard", "2026-12-12", "Texte unten mit „📋 Kopieren“"],
@@ -2470,6 +2473,8 @@ const START_LISTE = [
   ["produkte","🏷️ In-App-Produkte aktiv: Jahrespass, Premium, VIP – gleiche Preise wie im Panel", "du", "https://play.google.com/console/u/1/developers/8787141740191790937/app/4974409909997434422/monetization/products", "2026-12-15", "Preise im Panel: 💶 Geld → 🏷️ Preise & Grenzen"],
   ["sms",    "📱 Brevo-SMS-Guthaben aufgeladen (z. B. 20 €)", "du", "#pay", "2026-12-15", "Ohne Guthaben kommen keine SMS-Codes an"],
   ["sicher", "🔐 Sicherheits-Liste erledigt (2-Faktor überall, Notfall-Codes auf Papier)", "du", "#links", "2026-12-15", "Hakt sich von selbst ab, wenn in 🔗 Dienste alles erledigt ist"],
+  ["startpass","🎟️ Play Console: neues Produkt „wuzzo_startpass“ (Start-Pass, 4,99 €) anlegen und aktivieren", "du", "https://play.google.com/console/u/1/developers/8787141740191790937/app/4974409909997434422/monetization/products", "2026-12-05", "Produkt-ID genau: wuzzo_startpass · Name: Wuzzo Start-Pass · Preis 4,99 €"],
+  ["sql51",  "🗄️ SQL plus51-startpass.sql in Supabase ausgeführt (4 Pakete)", "claude", "", "2026-12-05", "Von Claude erledigt ✅"],
   ["playsync","🏷️ Preise automatisch an Google Play: SQL plus50f + Funktion „finanzen“ neu + Dienstkonto-Recht „Store-Präsenz verwalten“", "du", "https://play.google.com/console/u/1/developers/8787141740191790937/users-and-permissions", "2026-12-12", "Danach: Panel → Preise speichern → darunter steht 🟢, wenn Google die Preise übernommen hat"],
   ["prod",   "🚀 Produktion: Zugriff von Google erhalten und Version für alle freigegeben", "du", "https://play.google.com/console/u/1/developers/8787141740191790937/app/4974409909997434422/app-dashboard", "2026-12-16", "Dashboard → „Auf Produktion zugreifen“ / Release in „Produktion“"],
   ["web",    "🌐 Webseite fertig: Startseite mit Preisen & Fragen (10 Sprachen), Datenschutz, Hilfe", "claude", "https://wuzzo.de/", "2026-12-16", "Von Claude erledigt ✅ – ab 17.12. steht dort automatisch „Jetzt für alle“"],
@@ -2480,7 +2485,7 @@ function launchSave(st){ try { localStorage.setItem("wz_start", JSON.stringify(s
 function launchDone(id, st){
   if (id === "supa"){ const pz = payState().supa; if (pz) return true; }
   if (id === "sicher"){ try { const h = JSON.parse(localStorage.getItem("wz_sicher") || "{}"); if (Object.values(h).filter(Boolean).length >= 12) return true; } catch(e){} }
-  if (id === "web" || id === "panel" || id === "sql50d") return true; // sql50d: am 26.11. ausgeführt
+  if (id === "web" || id === "panel" || id === "sql50d" || id === "sql51") return true; // von Claude ausgeführt
   return !!st[id];
 }
 function launchStatus(z, st){
