@@ -769,6 +769,36 @@ function legacyCards(main, list){
   vb.append($("p","note","🟢 aktuell · 🟡 aus Google Play, aber älter · 🔴 alte Version (noch nicht umgestiegen oder ganz alt). Wer 🔴 hat, bekommt bei jedem Update die grüne Nachricht vom Wuzzo Bot – am besten zusätzlich kurz anschreiben."));
   main.append(vb);
   }
+  // 📲 ab 27.11.2026: An alle mit alter Version senden (Wuzzo erkennt selbst, wer veraltet ist)
+  if (want("force")) {
+  if (S.mode === "live" && darf("admin")){
+    const oc = $("div","card"); oc.style.margin = "10px 0 4px";
+    oc.append($("b",null,"📲 An alle mit alter Version senden"));
+    oc.append($("p","note","Wuzzo sucht selbst alle, die noch nicht die neueste Version haben, und schickt nur ihnen eine Nachricht vom Wuzzo-Bot mit Push: „Du hast noch Version X – bitte aktualisieren“, mit Anleitung und Link zum Play Store. In der Sprache des Nutzers. Jeder höchstens 1× in 6 Stunden. Tipp: erst senden, wenn Google die neue Version freigegeben hat."));
+    const ol = $("div","note","Lädt …"); oc.append(ol);
+    const ex = document.createElement("textarea"); ex.rows = 2; ex.maxLength = 500; ex.placeholder = "Optional: eigener Satz dazu, z. B. „Neu: Skyline spricht mit dir!“";
+    ex.style.cssText = "width:100%;margin:8px 0;padding:8px;border-radius:10px;background:var(--deep);color:var(--text);border:1px solid var(--line)";
+    const ob = $("button","btn","📲 Jetzt an alle mit alter Version senden"); ob.disabled = true;
+    oc.append(ex, ob); main.append(oc);
+    rpc("admin_old_versions", {}).then(d => {
+      const ppl = d.people || [];
+      ol.replaceChildren();
+      ol.append($("div",null,"Neueste Version: " + (d.version || "?") + " (Build " + (d.build || "?") + ") · " + ppl.length + " Person(en) mit alter Version:"));
+      const wrap = $("div"); wrap.style.cssText = "display:flex;flex-wrap:wrap;gap:6px;margin-top:6px";
+      ppl.forEach(p => { const pill = $("span","pill", "🔴 " + p.name + " · " + p.version + (p.nudged ? " · ✉️ " + new Date(p.nudged).toLocaleString("de-DE",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}) : "")); wrap.append(pill); });
+      if (!ppl.length) wrap.append($("span",null,"🎉 Alle haben die neueste Version."));
+      ol.append(wrap);
+      ob.disabled = !ppl.length;
+      ob.onclick = async () => {
+        if (!confirm("An " + ppl.length + " Person(en) mit alter Version die Update-Nachricht schicken?")) return;
+        ob.disabled = true;
+        try { const n = await rpc("admin_notify_old", { p_build: d.build, p_extra: ex.value.trim() || null });
+          ob.textContent = "✅ An " + n + " Person(en) gesendet"; }
+        catch(e){ ob.disabled = false; ob.textContent = "❌ " + (e.message || e); }
+      };
+    }).catch(() => { ol.textContent = "Noch nicht eingerichtet (plus51f-alte-versionen.sql)."; });
+  }
+  }
   // Update erzwingen (ab App-Version 0.24 wirksam)
   if (want("force")) {
   if (S.mode === "live" && darf("admin")){
