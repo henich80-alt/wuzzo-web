@@ -35,13 +35,17 @@ function wzLang(c,u){ try{ localStorage.setItem("wz_lang",c); }catch(e){} locati
 
 
 
+
 <style id="wz-pakete-css">
 .pk h2,.wzfaq h2{font-size:22px;margin:26px 0 4px}
 .pk .sub{color:var(--muted);margin:0 0 12px}
 .pk .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 @media (max-width:960px){.pk .cards{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:600px){.pk .cards{grid-template-columns:1fr}}
-.pk .c{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
+.pk .c{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;color:inherit;text-decoration:none;transition:transform .15s,border-color .15s}
+.pk .c:hover{transform:translateY(-3px);border-color:var(--volt)}
+.pk .c ul{flex:1}
+.pk .c .buy{display:block;margin-top:12px;text-align:center;padding:10px;border-radius:12px;background:var(--volt);color:#06122b;font-weight:800}
 .pk .c.top{border-color:var(--volt);box-shadow:0 0 22px rgba(46,230,255,.18)}
 .pk .c h3{margin:0 0 4px;font-size:18px}
 .pk .c .pr{color:var(--volt);font-weight:700;font-size:15px;margin-bottom:8px}
@@ -81,8 +85,9 @@ function wzLang(c,u){ try{ localStorage.setItem("wz_lang",c); }catch(e){} locati
   
   
   
+  
   <!-- wz-pakete -->
-  <section class="pk"><h2>Пакети й ціни</h2><p class="sub">Тексти, стікери, переклад на телефоні та SOS – завжди включено.</p><div class="cards"><div class="c"><h3>🎟️ Start-Pass</h3><div class="pr"><b data-p="wuzzo_startpass"></b> на рік</div><ul><li>Необмежено писати, стікери, переклад</li><li>Приймати дзвінки й долучатися до групових</li><li>50 МБ фото й голосових на місяць</li><li>🆘 SOS для родини</li></ul></div><div class="c"><h3>🎫 Mini-Pass</h3><div class="pr"><span class="pr-two"><b data-p="wuzzo_start"></b> у 1-й рік, далі <b data-p="wuzzo_jahr"></b> на рік</span><span class="pr-one" hidden><b data-p="wuzzo_jahr"></b> на рік</span></div><ul><li>Чати, фото, відео й голосові</li><li>Голосові та групові дзвінки</li><li>Участь у відеодзвінках</li><li>🤖 ШІ-помічник: 20 запитань на місяць</li></ul></div><div class="c top"><h3>⭐ Premium</h3><div class="pr"><b data-p="wuzzo_premium_6m"></b> на 6 місяців · річний пропуск включено</div><ul><li>🎥 Починати відеодзвінки – у групах до 8 осіб</li><li>🖥️ Показ екрана</li><li>✨ Професійний переклад зі ШІ</li><li>Більше місця для фото й відео</li></ul></div><div class="c"><h3>👑 VIP-сім&#x27;я</h3><div class="pr"><b data-p="wuzzo_vip_6m"></b> на 6 місяців · до 5 осіб</div><ul><li>Усе з Premium для всієї родини</li><li>🎥 Групові відеодзвінки до 12 осіб</li><li>Найбільше місця й хвилин відео</li></ul></div></div><p class="pay">Оплата безпечно через Google Play. Ціни з ПДВ.</p></section>
+  <section class="pk"><h2>Пакети й ціни</h2><p class="sub">Тексти, стікери, переклад на телефоні та SOS – завжди включено.</p><div class="cards"><a class="c" href="https://wuzzo.de/app/"><h3>🎟️ Start-Pass</h3><div class="pr"><b data-p="wuzzo_startpass"></b> на рік</div><ul><li>Необмежено писати, стікери, переклад</li><li>Приймати дзвінки й долучатися до групових</li><li>50 МБ фото й голосових на місяць</li><li>🆘 SOS для родини</li></ul><span class="buy">▶️ Отримати в застосунку</span></a><a class="c" href="https://wuzzo.de/app/"><h3>🎫 Mini-Pass</h3><div class="pr"><span class="pr-two"><b data-p="wuzzo_start"></b> у 1-й рік, далі <b data-p="wuzzo_jahr"></b> на рік</span><span class="pr-one" hidden><b data-p="wuzzo_jahr"></b> на рік</span></div><ul><li>Чати, фото, відео й голосові</li><li>Голосові та групові дзвінки</li><li>Участь у відеодзвінках</li><li>🤖 ШІ-помічник: 20 запитань на місяць</li></ul><span class="buy">▶️ Отримати в застосунку</span></a><a class="c top" href="https://wuzzo.de/app/"><h3>⭐ Premium</h3><div class="pr"><b data-p="wuzzo_premium_6m"></b> на 6 місяців · річний пропуск включено</div><ul><li>🎥 Починати відеодзвінки – у групах до 8 осіб</li><li>🖥️ Показ екрана</li><li>✨ Професійний переклад зі ШІ</li><li>Більше місця для фото й відео</li></ul><span class="buy">▶️ Отримати в застосунку</span></a><a class="c" href="https://wuzzo.de/app/"><h3>👑 VIP-сім&#x27;я</h3><div class="pr"><b data-p="wuzzo_vip_6m"></b> на 6 місяців · до 5 осіб</div><ul><li>Усе з Premium для всієї родини</li><li>🎥 Групові відеодзвінки до 12 осіб</li><li>Найбільше місця й хвилин відео</li></ul><span class="buy">▶️ Отримати в застосунку</span></a></div><p class="pay">Оплата безпечно через Google Play. Ціни з ПДВ.</p></section>
   <section class="wzfaq"><h2>Часті запитання</h2><details><summary>Чи захищені мої повідомлення?</summary><p>Так. Чати на двох мають наскрізне шифрування – прочитати їх можете лише ви двоє.</p></details><details><summary>Як працює переклад?</summary><p>Повідомлення перекладаються прямо на телефоні – безкоштовно, без обмежень і навіть без інтернету.</p></details><details><summary>Як оплатити?</summary><p>Безпечно через Google Play – так, як налаштовано у вашому Google. Wuzzo ніколи не бачить ваших платіжних даних.</p></details><details><summary>Чи є Wuzzo для iPhone або ПК?</summary><p>Версія для iPhone буде згодом. На ПК Wuzzo вже працює на wuzzo.de/pc.</p></details></section>
 <!-- /wz-pakete -->
 

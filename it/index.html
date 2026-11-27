@@ -35,13 +35,17 @@ function wzLang(c,u){ try{ localStorage.setItem("wz_lang",c); }catch(e){} locati
 
 
 
+
 <style id="wz-pakete-css">
 .pk h2,.wzfaq h2{font-size:22px;margin:26px 0 4px}
 .pk .sub{color:var(--muted);margin:0 0 12px}
 .pk .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 @media (max-width:960px){.pk .cards{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:600px){.pk .cards{grid-template-columns:1fr}}
-.pk .c{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
+.pk .c{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;color:inherit;text-decoration:none;transition:transform .15s,border-color .15s}
+.pk .c:hover{transform:translateY(-3px);border-color:var(--volt)}
+.pk .c ul{flex:1}
+.pk .c .buy{display:block;margin-top:12px;text-align:center;padding:10px;border-radius:12px;background:var(--volt);color:#06122b;font-weight:800}
 .pk .c.top{border-color:var(--volt);box-shadow:0 0 22px rgba(46,230,255,.18)}
 .pk .c h3{margin:0 0 4px;font-size:18px}
 .pk .c .pr{color:var(--volt);font-weight:700;font-size:15px;margin-bottom:8px}
@@ -81,8 +85,9 @@ function wzLang(c,u){ try{ localStorage.setItem("wz_lang",c); }catch(e){} locati
   
   
   
+  
   <!-- wz-pakete -->
-  <section class="pk"><h2>Pacchetti e prezzi</h2><p class="sub">Testi, sticker, traduzione sul telefono e SOS sono sempre inclusi.</p><div class="cards"><div class="c"><h3>🎟️ Start-Pass</h3><div class="pr"><b data-p="wuzzo_startpass"></b> all&#x27;anno</div><ul><li>Scrivere senza limiti, sticker, traduzione</li><li>Rispondere alle chiamate e unirsi a quelle di gruppo</li><li>50 MB di foto e vocali al mese</li><li>🆘 SOS per la famiglia</li></ul></div><div class="c"><h3>🎫 Mini-Pass</h3><div class="pr"><span class="pr-two"><b data-p="wuzzo_start"></b> il 1° anno, poi <b data-p="wuzzo_jahr"></b> all&#x27;anno</span><span class="pr-one" hidden><b data-p="wuzzo_jahr"></b> all&#x27;anno</span></div><ul><li>Chat, foto, video e messaggi vocali</li><li>Chiamate vocali e di gruppo</li><li>Partecipare alle videochiamate</li><li>🤖 Assistente IA: 20 domande al mese</li></ul></div><div class="c top"><h3>⭐ Premium</h3><div class="pr"><b data-p="wuzzo_premium_6m"></b> per 6 mesi · pass annuale incluso</div><ul><li>🎥 Avviare videochiamate – nei gruppi fino a 8 persone</li><li>🖥️ Condivisione schermo</li><li>✨ Traduzione professionale con IA</li><li>Più spazio per foto e video</li></ul></div><div class="c"><h3>👑 Famiglia VIP</h3><div class="pr"><b data-p="wuzzo_vip_6m"></b> per 6 mesi · fino a 5 persone</div><ul><li>Tutto di Premium per tutta la famiglia</li><li>🎥 Videochiamate di gruppo fino a 12 persone</li><li>Il massimo di spazio e minuti video</li></ul></div></div><p class="pay">Il pagamento avviene in modo sicuro tramite Google Play. Prezzi IVA inclusa.</p></section>
+  <section class="pk"><h2>Pacchetti e prezzi</h2><p class="sub">Testi, sticker, traduzione sul telefono e SOS sono sempre inclusi.</p><div class="cards"><a class="c" href="https://wuzzo.de/app/"><h3>🎟️ Start-Pass</h3><div class="pr"><b data-p="wuzzo_startpass"></b> all&#x27;anno</div><ul><li>Scrivere senza limiti, sticker, traduzione</li><li>Rispondere alle chiamate e unirsi a quelle di gruppo</li><li>50 MB di foto e vocali al mese</li><li>🆘 SOS per la famiglia</li></ul><span class="buy">▶️ Ottienilo nell&#x27;app</span></a><a class="c" href="https://wuzzo.de/app/"><h3>🎫 Mini-Pass</h3><div class="pr"><span class="pr-two"><b data-p="wuzzo_start"></b> il 1° anno, poi <b data-p="wuzzo_jahr"></b> all&#x27;anno</span><span class="pr-one" hidden><b data-p="wuzzo_jahr"></b> all&#x27;anno</span></div><ul><li>Chat, foto, video e messaggi vocali</li><li>Chiamate vocali e di gruppo</li><li>Partecipare alle videochiamate</li><li>🤖 Assistente IA: 20 domande al mese</li></ul><span class="buy">▶️ Ottienilo nell&#x27;app</span></a><a class="c top" href="https://wuzzo.de/app/"><h3>⭐ Premium</h3><div class="pr"><b data-p="wuzzo_premium_6m"></b> per 6 mesi · pass annuale incluso</div><ul><li>🎥 Avviare videochiamate – nei gruppi fino a 8 persone</li><li>🖥️ Condivisione schermo</li><li>✨ Traduzione professionale con IA</li><li>Più spazio per foto e video</li></ul><span class="buy">▶️ Ottienilo nell&#x27;app</span></a><a class="c" href="https://wuzzo.de/app/"><h3>👑 Famiglia VIP</h3><div class="pr"><b data-p="wuzzo_vip_6m"></b> per 6 mesi · fino a 5 persone</div><ul><li>Tutto di Premium per tutta la famiglia</li><li>🎥 Videochiamate di gruppo fino a 12 persone</li><li>Il massimo di spazio e minuti video</li></ul><span class="buy">▶️ Ottienilo nell&#x27;app</span></a></div><p class="pay">Il pagamento avviene in modo sicuro tramite Google Play. Prezzi IVA inclusa.</p></section>
   <section class="wzfaq"><h2>Domande frequenti</h2><details><summary>I miei messaggi sono al sicuro?</summary><p>Sì. Le chat a due sono crittografate end-to-end: solo voi due potete leggerle.</p></details><details><summary>Come funziona la traduzione?</summary><p>I messaggi vengono tradotti direttamente sul telefono: gratis, senza limiti e anche senza internet.</p></details><details><summary>Come pago?</summary><p>In modo sicuro tramite Google Play, come l&#x27;hai impostato in Google. Wuzzo non vede mai i tuoi dati di pagamento.</p></details><details><summary>Wuzzo c&#x27;è per iPhone o PC?</summary><p>La versione per iPhone arriverà presto. Sul PC Wuzzo funziona già su wuzzo.de/pc.</p></details></section>
 <!-- /wz-pakete -->
 

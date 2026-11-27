@@ -35,13 +35,17 @@ function wzLang(c,u){ try{ localStorage.setItem("wz_lang",c); }catch(e){} locati
 
 
 
+
 <style id="wz-pakete-css">
 .pk h2,.wzfaq h2{font-size:22px;margin:26px 0 4px}
 .pk .sub{color:var(--muted);margin:0 0 12px}
 .pk .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 @media (max-width:960px){.pk .cards{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:600px){.pk .cards{grid-template-columns:1fr}}
-.pk .c{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
+.pk .c{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;color:inherit;text-decoration:none;transition:transform .15s,border-color .15s}
+.pk .c:hover{transform:translateY(-3px);border-color:var(--volt)}
+.pk .c ul{flex:1}
+.pk .c .buy{display:block;margin-top:12px;text-align:center;padding:10px;border-radius:12px;background:var(--volt);color:#06122b;font-weight:800}
 .pk .c.top{border-color:var(--volt);box-shadow:0 0 22px rgba(46,230,255,.18)}
 .pk .c h3{margin:0 0 4px;font-size:18px}
 .pk .c .pr{color:var(--volt);font-weight:700;font-size:15px;margin-bottom:8px}
@@ -81,8 +85,9 @@ function wzLang(c,u){ try{ localStorage.setItem("wz_lang",c); }catch(e){} locati
   
   
   
+  
   <!-- wz-pakete -->
-  <section class="pk"><h2>Pakiety i ceny</h2><p class="sub">Wiadomości tekstowe, naklejki, tłumaczenie w telefonie i SOS są zawsze w cenie.</p><div class="cards"><div class="c"><h3>🎟️ Start-Pass</h3><div class="pr"><b data-p="wuzzo_startpass"></b> rocznie</div><ul><li>Pisanie bez limitu, naklejki, tłumaczenie</li><li>Odbieranie połączeń i dołączanie do grupowych</li><li>50 MB zdjęć i wiadomości głosowych miesięcznie</li><li>🆘 SOS dla rodziny</li></ul></div><div class="c"><h3>🎫 Mini-Pass</h3><div class="pr"><span class="pr-two"><b data-p="wuzzo_start"></b> w 1. roku, potem <b data-p="wuzzo_jahr"></b> rocznie</span><span class="pr-one" hidden><b data-p="wuzzo_jahr"></b> rocznie</span></div><ul><li>Czaty, zdjęcia, filmy i wiadomości głosowe</li><li>Rozmowy głosowe i grupowe</li><li>Udział w rozmowach wideo</li><li>🤖 Pomocnik AI: 20 pytań miesięcznie</li></ul></div><div class="c top"><h3>⭐ Premium</h3><div class="pr"><b data-p="wuzzo_premium_6m"></b> na 6 miesięcy · karnet roczny w cenie</div><ul><li>🎥 Rozpoczynanie rozmów wideo – w grupach do 8 osób</li><li>🖥️ Udostępnianie ekranu</li><li>✨ Profesjonalne tłumaczenie z AI</li><li>Więcej miejsca na zdjęcia i filmy</li></ul></div><div class="c"><h3>👑 Rodzina VIP</h3><div class="pr"><b data-p="wuzzo_vip_6m"></b> na 6 miesięcy · dla maks. 5 osób</div><ul><li>Wszystko z Premium dla całej rodziny</li><li>🎥 Grupowe rozmowy wideo do 12 osób</li><li>Najwięcej miejsca i minut wideo</li></ul></div></div><p class="pay">Płatność bezpiecznie przez Google Play. Ceny z VAT.</p></section>
+  <section class="pk"><h2>Pakiety i ceny</h2><p class="sub">Wiadomości tekstowe, naklejki, tłumaczenie w telefonie i SOS są zawsze w cenie.</p><div class="cards"><a class="c" href="https://wuzzo.de/app/"><h3>🎟️ Start-Pass</h3><div class="pr"><b data-p="wuzzo_startpass"></b> rocznie</div><ul><li>Pisanie bez limitu, naklejki, tłumaczenie</li><li>Odbieranie połączeń i dołączanie do grupowych</li><li>50 MB zdjęć i wiadomości głosowych miesięcznie</li><li>🆘 SOS dla rodziny</li></ul><span class="buy">▶️ Kup w aplikacji</span></a><a class="c" href="https://wuzzo.de/app/"><h3>🎫 Mini-Pass</h3><div class="pr"><span class="pr-two"><b data-p="wuzzo_start"></b> w 1. roku, potem <b data-p="wuzzo_jahr"></b> rocznie</span><span class="pr-one" hidden><b data-p="wuzzo_jahr"></b> rocznie</span></div><ul><li>Czaty, zdjęcia, filmy i wiadomości głosowe</li><li>Rozmowy głosowe i grupowe</li><li>Udział w rozmowach wideo</li><li>🤖 Pomocnik AI: 20 pytań miesięcznie</li></ul><span class="buy">▶️ Kup w aplikacji</span></a><a class="c top" href="https://wuzzo.de/app/"><h3>⭐ Premium</h3><div class="pr"><b data-p="wuzzo_premium_6m"></b> na 6 miesięcy · karnet roczny w cenie</div><ul><li>🎥 Rozpoczynanie rozmów wideo – w grupach do 8 osób</li><li>🖥️ Udostępnianie ekranu</li><li>✨ Profesjonalne tłumaczenie z AI</li><li>Więcej miejsca na zdjęcia i filmy</li></ul><span class="buy">▶️ Kup w aplikacji</span></a><a class="c" href="https://wuzzo.de/app/"><h3>👑 Rodzina VIP</h3><div class="pr"><b data-p="wuzzo_vip_6m"></b> na 6 miesięcy · dla maks. 5 osób</div><ul><li>Wszystko z Premium dla całej rodziny</li><li>🎥 Grupowe rozmowy wideo do 12 osób</li><li>Najwięcej miejsca i minut wideo</li></ul><span class="buy">▶️ Kup w aplikacji</span></a></div><p class="pay">Płatność bezpiecznie przez Google Play. Ceny z VAT.</p></section>
   <section class="wzfaq"><h2>Częste pytania</h2><details><summary>Czy moje wiadomości są bezpieczne?</summary><p>Tak. Czaty we dwoje są szyfrowane end-to-end – tylko wy dwoje możecie je przeczytać.</p></details><details><summary>Jak działa tłumaczenie?</summary><p>Wiadomości są tłumaczone bezpośrednio w telefonie – za darmo, bez limitu, a nawet bez internetu.</p></details><details><summary>Jak zapłacić?</summary><p>Bezpiecznie przez Google Play – tak, jak masz to ustawione w Google. Wuzzo nigdy nie widzi Twoich danych płatniczych.</p></details><details><summary>Czy Wuzzo jest na iPhone&#x27;a lub komputer?</summary><p>Wersja na iPhone&#x27;a pojawi się wkrótce. Na komputerze Wuzzo działa już pod adresem wuzzo.de/pc.</p></details></section>
 <!-- /wz-pakete -->
 
