@@ -1557,7 +1557,7 @@ function preiseCard(){
    ["⭐ Premium (Pass inklusive)", pe("wuzzo_premium_6m") + " für 6 Monate · wuzzo_premium_6m"],["👑 VIP-Familie (Pass inklusive)", pe("wuzzo_vip_6m") + " für 6 Monate · wuzzo_vip_6m"],
    ["🎟️ Alt-Kunden (vor 0.48 bezahlt)","für immer frei"],["Davon kommt bei dir an","Preis ÷ 1,19 (MwSt) × 0,85 (Google)"]]
     .forEach(([k,v]) => { const r = $("div"); r.style.cssText = "display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px solid #1d2a5c"; r.append($("span",null,k), $("b",null,v)); info.append(r); });
-  const a = $("a",null,"→ Produkte & Preise in der Play Console"); a.href = "https://play.google.com/console/u/0/developers/8787141740191790937/app/4974409909997434422/monetization/products"; a.target = "_blank"; a.rel = "noopener"; a.style.cssText = "color:var(--volt);font-size:13px;margin-top:6px";
+  const a = $("a",null,"→ Produkte & Preise in der Play Console"); a.href = "https://play.google.com/console/u/0/developers/8787141740191790937/app/4974409909997434422/one-time-products"; a.target = "_blank"; a.rel = "noopener"; a.style.cssText = "color:var(--volt);font-size:13px;margin-top:6px";
   info.append(a); return info;
 }
 
@@ -1591,7 +1591,7 @@ function renderPrices(main){
     act_(() => rpc("admin_set_prices5", { p_startpass: ct("wuzzo_startpass"), p_start: ct("wuzzo_start"), p_jahr: ct("wuzzo_jahr"), p_premium: ct("wuzzo_premium_6m"), p_vip: ct("wuzzo_vip_6m") })
       .catch(e => /admin_set_prices5/.test(e.message) ? rpc("admin_set_prices", { p_start: ct("wuzzo_start"), p_jahr: ct("wuzzo_jahr"), p_premium: ct("wuzzo_premium_6m"), p_vip: ct("wuzzo_vip_6m") }) : Promise.reject(e)));
   };
-  const pl = $("a","btn","▶️ Preise in der Play Console ändern"); pl.href = "https://play.google.com/console/u/1/developers/8787141740191790937/app/4974409909997434422/monetization/products"; pl.target = "_blank"; pl.rel = "noopener"; pl.style.textDecoration = "none";
+  const pl = $("a","btn","▶️ Preise in der Play Console ändern"); pl.href = "https://play.google.com/console/u/1/developers/8787141740191790937/app/4974409909997434422/one-time-products"; pl.target = "_blank"; pl.rel = "noopener"; pl.style.textDecoration = "none";
   const row = $("div"); row.style.cssText = "display:flex;gap:8px;flex-wrap:wrap"; row.append(sv, pl); c.append(row);
   // 🏷️ ab 0.50.4: Preise gehen automatisch an Google Play – hier steht, ob es geklappt hat
   const gp = $("div"); gp.style.cssText = "margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:10px;font-size:13px";
@@ -2470,8 +2470,8 @@ const START_LISTE = [
   ["store",  "🛍️ Store-Eintrag: Texte (unten zum Kopieren), Screenshots, Symbol", "du", "https://play.google.com/console/u/1/developers/8787141740191790937/app/4974409909997434422/app-dashboard", "2026-12-12", "Texte unten mit „📋 Kopieren“"],
   ["inhalt", "📋 Google Play: Datensicherheit & App-Inhalte vollständig (keine roten Punkte)", "du", "https://play.google.com/console/u/1/developers/8787141740191790937/app/4974409909997434422/app-dashboard", "2026-12-12", ""],
   ["haendler","💳 Google-Zahlungsprofil / Händlerkonto eingerichtet (nach dem Gewerbe)", "du", "https://pay.google.com/", "2026-12-14", "Erst wenn das Gewerbe angemeldet ist"],
-  ["produkte","🏷️ In-App-Produkte aktiv: Mini-Pass (wuzzo_start + wuzzo_jahr), Premium, VIP – gleiche Preise wie im Panel", "du", "https://play.google.com/console/u/1/developers/8787141740191790937/app/4974409909997434422/monetization/products", "2026-12-15", "Preise im Panel: 💶 Geld → 🏷️ Preise & Grenzen"],
-  ["startpass","🎟️ Play Console: neues Produkt „wuzzo_startpass“ (Start-Pass, 4,99 €) anlegen und aktivieren", "du", "https://play.google.com/console/u/1/developers/8787141740191790937/app/4974409909997434422/monetization/products", "2026-12-15", "Geht erst, wenn das Händlerkonto da ist (Google sperrt die Produkt-Seite bis dahin)"],
+  ["produkte","🏷️ In-App-Produkte aktiv: Mini-Pass (wuzzo_start + wuzzo_jahr), Premium, VIP – gleiche Preise wie im Panel", "du", "https://play.google.com/console/u/1/developers/8787141740191790937/app/4974409909997434422/one-time-products", "2026-12-15", "Preise im Panel: 💶 Geld → 🏷️ Preise & Grenzen"],
+  ["startpass","🎟️ Play Console: neues Produkt „wuzzo_startpass“ (Start-Pass, 4,99 €) anlegen und aktivieren", "du", "https://play.google.com/console/u/1/developers/8787141740191790937/app/4974409909997434422/one-time-products", "2026-12-15", "Geht erst, wenn das Händlerkonto da ist (Google sperrt die Produkt-Seite bis dahin)"],
   ["sms",    "📱 Brevo-SMS-Guthaben aufgeladen (z. B. 20 €)", "du", "#pay", "2026-12-15", "Ohne Guthaben kommen keine SMS-Codes an"],
   ["sicher", "🔐 Sicherheits-Liste erledigt (2-Faktor überall, Notfall-Codes auf Papier)", "du", "#links", "2026-12-15", "Hakt sich von selbst ab, wenn in 🔗 Dienste alles erledigt ist"],
   ["sql51",  "🗄️ SQL plus51-startpass.sql in Supabase ausgeführt (4 Pakete)", "claude", "", "2026-12-05", "Von Claude erledigt ✅"],
