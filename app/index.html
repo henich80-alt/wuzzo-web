@@ -26,6 +26,12 @@
   ];
   var heute = new Date().toISOString().slice(0, 10), ziel = PLAN[PLAN.length - 1][1];
   for (var i = 0; i < PLAN.length; i++) { if (heute >= PLAN[i][0]) { ziel = PLAN[i][1]; break; } }
+  // 🌍 ab 0.51: Google-Seite in der Sprache des Besuchers (Deutsch, Українська, Русский …)
+  var sp = "de";
+  try { sp = (new URLSearchParams(location.search).get("l") || localStorage.getItem("wz_lang") || navigator.language || "de"); } catch (e) { sp = navigator.language || "de"; }
+  sp = String(sp).slice(0, 2).toLowerCase();
+  if (["de","uk","ru","en","pl","tr","es","fr","it","pt"].indexOf(sp) < 0) sp = "en";
+  ziel += (ziel.indexOf("?") < 0 ? "?" : "&") + "hl=" + sp;
   location.replace(ziel);
 </script>
 </head>
