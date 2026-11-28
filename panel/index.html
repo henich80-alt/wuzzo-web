@@ -1456,8 +1456,12 @@ function renderUsers(main){
   const newest = Math.max(0, ...users.map(u => u.app_build || 0));
   const inviteBtn = $("button","btn","➕ Person einladen"); inviteBtn.onclick = openInvite;
   const playBtn = $("a","btn","▶️ Tester in Google Play"); playBtn.href = "https://play.google.com/console/u/0/developers/8787141740191790937/app/4974409909997434422/tracks/4700548647227979651?tab=testers"; playBtn.target = "_blank"; playBtn.rel = "noopener"; playBtn.style.textDecoration = "none";
+  // 📲 ab 28.11.2026: Update für ALLE erzwingen (einzeln geht weiter über die Person → „📲 Update erzwingen“)
+  const forceAllBtn = $("button","btn","📲 Update für alle erzwingen");
+  forceAllBtn.id = "wz-force-all";
+  forceAllBtn.onclick = () => forceAllUpdate(users);
   pageHead(main, "👥 Nutzer", nf(users.length) + " Nutzer" + (inv.length ? " · " + nf(inv.length) + " eingeladen" : "") + " · auf eine Person tippen = alles ändern",
-    darf("admin") ? (darf("programmierer") ? [inviteBtn, playBtn] : [inviteBtn]) : []);
+    darf("admin") ? (darf("programmierer") ? [forceAllBtn, inviteBtn, playBtn] : [forceAllBtn, inviteBtn]) : []);
   const F = [
     ["all","Alle", u => true],
     ["free","🏅 Für immer kostenlos", u => planOf(u).k === "free"],
@@ -1483,6 +1487,40 @@ function renderUsers(main){
   const list = $("div","ulist"); list.id = "urows"; main.append(list);
   S._ufn = (F.find(f => f[0] === S.ufilter) || F[0])[2];
   drawUserRows();
+}
+// 📲 Update für alle erzwingen: Mindestversion = neueste Version, die Google schon verteilt hat.
+// Wer älter ist, sieht beim Öffnen „⛔ Bitte aktualisieren“ (nicht wegklickbar) und bekommt zusätzlich
+// die Bot-Nachricht mit Play-Store-Link. Nochmal drücken = Pflicht wieder ausschalten.
+async function forceAllUpdate(users){
+  if (S.mode !== "live"){ alertNote("Geht nur mit echter Verbindung (nicht im Demo-Modus)."); return; }
+  const b = document.getElementById("wz-force-all");
+  try {
+    if (b){ b.disabled = true; b.textContent = "⏳ Prüfe Versionen …"; }
+    const d = await rpc("admin_update_info");
+    const rel = (d.releases || []).filter(x => x.ready).sort((x, y) => y.build - x.build)[0];
+    if (d.min_build && rel && d.min_build >= rel.build){
+      if (confirm("Pflicht-Update ist schon AN (Mindestversion " + rel.version + ").\n\nWieder AUSschalten?")){
+        await rpc("admin_set_min_build", { p_build: 0 });
+        alertNote("✅ Pflicht-Update für alle ist aus.");
+      }
+      return;
+    }
+    if (!rel){ alertNote("Noch keine Version von Google verteilt – erst nach der Freigabe möglich."); return; }
+    const notReady = (d.releases || []).filter(x => !x.ready && x.build > rel.build).map(x => x.version);
+    const old = (users || []).filter(u => !u.app_build || u.app_build < rel.build);
+    const msg = "Alle mit einer Version älter als " + rel.version + " (" + old.length + " Person(en)) müssen beim nächsten Öffnen sofort aktualisieren.\n" +
+      "Zusätzlich bekommen sie eine Nachricht vom Wuzzo-Bot mit Link zum Play Store.\n" +
+      (notReady.length ? "\nHinweis: " + notReady.join(", ") + " ist noch bei Google in Prüfung – gilt erst nach der Freigabe.\n" : "") +
+      "\nJetzt für alle erzwingen?";
+    if (!confirm(msg)) return;
+    await rpc("admin_set_min_build", { p_build: rel.build });
+    let n = 0; try { n = await rpc("admin_notify_old", { p_build: rel.build, p_extra: null }); } catch(e){}
+    alertNote("✅ Update für alle erzwungen (ab " + rel.version + "). Nachricht an " + n + " Person(en) geschickt.");
+  } catch(e){
+    alertNote("❌ Hat nicht geklappt: " + (e.message || e));
+  } finally {
+    if (b){ b.disabled = false; b.textContent = "📲 Update für alle erzwingen"; }
+  }
 }
 function drawUserRows(){
   const list = document.getElementById("urows"); if (!list) return; list.replaceChildren();
