@@ -1488,34 +1488,43 @@ function renderUsers(main){
   S._ufn = (F.find(f => f[0] === S.ufilter) || F[0])[2];
   drawUserRows();
 }
-// 📲 Update für alle erzwingen: Mindestversion = neueste Version, die Google schon verteilt hat.
-// Wer älter ist, sieht beim Öffnen „⛔ Bitte aktualisieren“ (nicht wegklickbar) und bekommt zusätzlich
-// die Bot-Nachricht mit Play-Store-Link. Nochmal drücken = Pflicht wieder ausschalten.
+// 📲 Update für alle erzwingen (ab 28.11.2026): ALLE Gelben und Roten müssen auf die neueste
+// (grüne) Version. Wer älter ist, sieht beim Öffnen „⛔ Bitte aktualisieren“ (nicht wegklickbar)
+// und bekommt zusätzlich die Bot-Nachricht mit Play-Store-Link. Nochmal drücken = Pflicht aus.
 async function forceAllUpdate(users){
   if (S.mode !== "live"){ alertNote("Geht nur mit echter Verbindung (nicht im Demo-Modus)."); return; }
   const b = document.getElementById("wz-force-all");
   try {
     if (b){ b.disabled = true; b.textContent = "⏳ Prüfe Versionen …"; }
     const d = await rpc("admin_update_info");
-    const rel = (d.releases || []).filter(x => x.ready).sort((x, y) => y.build - x.build)[0];
-    if (d.min_build && rel && d.min_build >= rel.build){
-      if (confirm("Pflicht-Update ist schon AN (Mindestversion " + rel.version + ").\n\nWieder AUSschalten?")){
+    const rels = d.releases || [];
+    // neueste Version = grün: höchste Version, die jemand hat oder die eingetragen ist
+    let ziel = 0, zielV = "";
+    (users || []).forEach(u => { if ((u.app_build || 0) > ziel){ ziel = u.app_build; zielV = u.app_version || ""; } });
+    rels.forEach(r => { if (r.build > ziel){ ziel = r.build; zielV = r.version; } });
+    if (!ziel){ alertNote("Keine Version gefunden."); return; }
+    if (d.min_build && d.min_build >= ziel){
+      if (confirm("Pflicht-Update für alle ist schon AN (neueste Version " + (zielV || ziel) + ").\n\nWieder AUSschalten?")){
         await rpc("admin_set_min_build", { p_build: 0 });
         alertNote("✅ Pflicht-Update für alle ist aus.");
       }
       return;
     }
-    if (!rel){ alertNote("Noch keine Version von Google verteilt – erst nach der Freigabe möglich."); return; }
-    const notReady = (d.releases || []).filter(x => !x.ready && x.build > rel.build).map(x => x.version);
-    const old = (users || []).filter(u => !u.app_build || u.app_build < rel.build);
-    const msg = "Alle mit einer Version älter als " + rel.version + " (" + old.length + " Person(en)) müssen beim nächsten Öffnen sofort aktualisieren.\n" +
-      "Zusätzlich bekommen sie eine Nachricht vom Wuzzo-Bot mit Link zum Play Store.\n" +
-      (notReady.length ? "\nHinweis: " + notReady.join(", ") + " ist noch bei Google in Prüfung – gilt erst nach der Freigabe.\n" : "") +
+    const gelb = (users || []).filter(u => u.app_build && u.app_build < ziel);
+    const rot  = (users || []).filter(u => !u.app_build);
+    const rel = rels.find(r => r.build === ziel);
+    const nochNicht = !rel || !rel.ready; // nicht als „verteilt“ eingetragen → vielleicht noch bei Google in Prüfung
+    const msg = "Update erzwingen auf die neueste Version " + (zielV || ziel) + ":\n\n" +
+      "🟡 " + gelb.length + " Person(en) mit alter Version\n" +
+      "🔴 " + rot.length + " Person(en) mit unbekannter Version (noch nie geöffnet – bekommen es beim ersten Öffnen)\n\n" +
+      "Alle müssen beim nächsten Öffnen sofort aktualisieren und bekommen eine Nachricht vom Wuzzo-Bot mit Link zum Play Store.\n" +
+      (nochNicht ? "\n⚠️ Nur drücken, wenn Google " + (zielV || ziel) + " schon freigegeben hat! Sonst sehen die Tester das Fenster, können aber noch nicht aktualisieren.\n" : "") +
       "\nJetzt für alle erzwingen?";
     if (!confirm(msg)) return;
-    await rpc("admin_set_min_build", { p_build: rel.build });
-    let n = 0; try { n = await rpc("admin_notify_old", { p_build: rel.build, p_extra: null }); } catch(e){}
-    alertNote("✅ Update für alle erzwungen (ab " + rel.version + "). Nachricht an " + n + " Person(en) geschickt.");
+    await rpc("admin_set_min_build", { p_build: ziel });
+    let n = 0; try { n = await rpc("admin_notify_old", { p_build: ziel, p_extra: null }); } catch(e){}
+    alertNote("✅ Update für alle erzwungen (neueste Version " + (zielV || ziel) + "). Nachricht an " + n + " Person(en) geschickt" +
+      (n < gelb.length ? " – wer in den letzten 6 Std. schon eine bekommen hat, bekommt keine zweite." : "."));
   } catch(e){
     alertNote("❌ Hat nicht geklappt: " + (e.message || e));
   } finally {
