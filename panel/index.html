@@ -1557,7 +1557,16 @@ function drawUserRows(){
               $("small",null,u.phone || ""));
     const pl = $("span"); pl.append($("span","pill " + p.c, p.k === "free" ? "🏅 " + (FREI[u.free_label] || "kostenlos") : p.k === "vip" ? "👑 VIP" : p.k === "premium" ? "⭐ Premium" : "🙂 Normal"));
     const v = !u.app_build ? "🔴 unbekannt" : (u.app_build >= newest ? "🟢 " : "🟡 ") + (u.app_version || "Build " + u.app_build);
-    r.append(nm, pl, $("span","c3",v), $("span","c4",ago(u.last_seen || u.app_seen_at)), $("span","ch","›"));
+    // 🔍 ab 28.11.2026: dazu, WANN die App ihre Version gemeldet hat (Versionen vor 0.51.4 melden nur beim Start)
+    const vc = $("span","c3"); vc.append(document.createTextNode(v));
+    if (u.app_seen_at){
+      const alt = u.last_seen && (new Date(u.last_seen) - new Date(u.app_seen_at)) > 6 * 3600000;
+      const sm = $("small",null,(alt ? "⚠️ " : "") + "gemeldet " + ago(u.app_seen_at));
+      sm.style.cssText = "display:block;opacity:.65;font-size:11px";
+      if (alt) sm.title = "Diese alte Wuzzo-Version meldet sich nur beim Neustart. Nach dem Update ist die Anzeige immer aktuell.";
+      vc.append(sm);
+    }
+    r.append(nm, pl, vc, $("span","c4",ago(u.last_seen || u.app_seen_at)), $("span","ch","›"));
     r.onclick = () => openUser(u);
     list.append(r);
   });
